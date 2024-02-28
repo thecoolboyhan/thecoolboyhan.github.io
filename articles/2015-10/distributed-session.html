@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="随着网站的功能和用户越来越多，单机器服务部署的Web应用已经不能再支持了。这时候就需要优化或调整目前的架构，具体怎么优化，或先优化哪部分，这取决于网站的具体情况，并非总是一个套路。">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="大型网站之分布式会话管理 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="大型网站之分布式会话管理 | zhujiajun">
+  <meta name="twitter:description" content="随着网站的功能和用户越来越多，单机器服务部署的Web应用已经不能再支持了。这时候就需要优化或调整目前的架构，具体怎么优化，或先优化哪部分，这取决于网站的具体情况，并非总是一个套路。">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="大型网站之分布式会话管理 | zhujiajun">
+  <meta property="og:description" content="随着网站的功能和用户越来越多，单机器服务部署的Web应用已经不能再支持了。这时候就需要优化或调整目前的架构，具体怎么优化，或先优化哪部分，这取决于网站的具体情况，并非总是一个套路。">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>大型网站之分布式会话管理 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2015-10/distributed-session">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="大型网站之分布式会话管理">大型网站之分布式会话管理</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        1 OCT 2015
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>随着网站的功能和用户越来越多，单机器服务部署的Web应用已经不能再支持了。这时候就需要优化或调整目前的架构，具体怎么优化，或先优化哪部分，这取决于网站的具体情况，
+并非总是一个套路。
+<!--more--></p>
+
+<p>如根据使用情况得知，数据库压力大，则就可以先设施读写分离，分库分表，是垂直划分(可以简单的理解为按业务功能划分)，
+还是水平划分(如用户表数据量很多，就可以按一定的规则分表设计,表结构仍然是相同的)。如Web应用服务器压力大,可以增加一台服务部署应用，
+即从单台服务变为集群。变为集群后，用户访问网站，到底是选择哪一台服务器呢？这就需要在应用服务器前增加负载均衡设备来解决。还有点就是会话session
+管理的问题，接下来会详细说明这问题。</p>
+
+<h3 id="具体的问题">具体的问题</h3>
+<p>当一个带有会话表示的Http请求到Web服务器后，需求在请求中的处理过程中找到session数据。而问题就在于，session是保存在单机上的。
+假设我们有应用A和应用B，现在一位用户第一次访问网站，session数据保存在应用A中。如果我们不做处理，怎么保障接下来的请求每次都请求到应用A呢?
+如请求到了应用B中，就会发现没有这位用户的session数据，这绝对是不能容忍的。</p>
+
+<h3 id="解决方案">解决方案</h3>
+
+<p>解决方案有Session Stick，Session复制，Session集中管理，基于Cookie管理，下面一一说明。</p>
+
+<h2 id="session-stick">Session Stick</h2>
+<p>在单机情况，session保存在单机上，请求也是到这台单机上，不会有问题。变成多台后，如果能保障每次请求都到同一台服务，那就和单机一样了。
+这需要在负载均衡设备上修改。这就是Session Stick，这种方式也会有问题：</p>
+
+<ul>
+  <li>
+    <p>如果某一台服务器宕机或重启，那么这台服务器上的session数据就丢失了。如果session数据中还有登录状态信息，那么用户需要重现登录。</p>
+  </li>
+  <li>
+    <p>负载均衡要处理具体的session到服务器的映射。</p>
+  </li>
+</ul>
+
+<h2 id="session复制">Session复制</h2>
+<p>Session复制顾名思义，就是每台应用服务，都保存会话session数据，一般的应用容器都支持。与Session Stick相比，sessioon复制对负载均衡
+没有太多的要求。不过这个方案还是有缺点：</p>
+
+<ul>
+  <li>
+    <p>同步session数据带来都网络开销。只要session数据变化，就需要同步到所有机器上，机器越多，网络开销越大。</p>
+  </li>
+  <li>
+    <p>由于每台服务器都保存session数据，如果集群的session数据很多，比如90万人在访问网站，每台机器用于保存session数据的内容占用很严重。</p>
+  </li>
+</ul>
+
+<p>这就是Session复制，这个方案是靠应用容器来完成，并不依赖应用，如果应用服务数量并不是很多，可以考虑。</p>
+
+<h2 id="session集中管理">Session集中管理</h2>
+
+<p>这个也很好理解，再加一台服务，专门来管理session数据，每台应用服务都从专门的session管理服务中取会话session数据。可以使用数据库，NOSQL数据库等。
+和Session复制相比，减少了每台应用服务的内存使用，同步session带来的网络开销问题。但还是有缺点：</p>
+
+<ul>
+  <li>
+    <p>读写session引入了网络操作，相对于本机读写session，带来了延时和不稳定性。</p>
+  </li>
+  <li>
+    <p>如Session集中服务有问题，会影响应用。</p>
+  </li>
+</ul>
+
+<h2 id="基于cookie管理">基于Cookie管理</h2>
+
+<p>最后一个是基于Cookie管理，我们把session数据存放在cookie中，然后请求过来后，从cookie中获取session数据。与集中管理相比，这个方案并不依赖外部
+的存储系统，读写session数据带来的网络操作延时和不稳定性。但依然有缺点：</p>
+
+<ul>
+  <li>
+    <p>Cookie有长度限制，这会影响session数据的长度。</p>
+  </li>
+  <li>
+    <p>安全性。session数据本来存储在服务端的，而这个方案是让session数据转到外部网络或客户端中，所以会有安全性问题。不过可以对写入Cookie的session
+数据做加密。</p>
+  </li>
+  <li>
+    <p>带宽消耗。由于加了session数据，带宽当然也会增加一点。</p>
+  </li>
+  <li>
+    <p>性能消耗。每次Http请求和响应都带有Session数据，对于Web服务器来说，在同样的处理情况下，响应的结果输出越少，支持的并发请求越多。</p>
+  </li>
+</ul>
+
+<h3 id="总结">总结</h3>
+<p>这4种方案都是可用的方案，我比较倾向于使用Session集中管理，不过这4种方案都各有优劣，需要根据具体的实际场景做出合适的选择。</p>
+
+<p>本文同时发表在<a href="http://ifeve.com/dis-session-manager/" target="_blank">并发编程网 - ifeve.com</a></p>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2015-10/distributed-session" target="_blank">大型网站之分布式会话管理</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2015-10/distributed-session" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2015-10/distributed-session" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2015-10/distributed-session" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2015-10/distributed-session" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2015-10/distributed-session" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

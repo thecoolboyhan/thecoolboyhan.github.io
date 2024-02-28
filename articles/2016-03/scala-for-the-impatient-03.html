@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="第三篇,控制结构和函数下篇">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="快学scala笔记——控制结构和函数下篇 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="快学scala笔记——控制结构和函数下篇 | zhujiajun">
+  <meta name="twitter:description" content="第三篇,控制结构和函数下篇">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="快学scala笔记——控制结构和函数下篇 | zhujiajun">
+  <meta property="og:description" content="第三篇,控制结构和函数下篇">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>快学scala笔记——控制结构和函数下篇 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2016-03/scala-for-the-impatient-03">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="快学scala笔记——控制结构和函数下篇">快学scala笔记——控制结构和函数下篇</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        6 MAR 2016
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    5 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>第三篇,控制结构和函数下篇
+<!--more--></p>
+
+<ul>
+  <li>
+    <p>scala有java相同的while和do循环。</p>
+  </li>
+  <li>
+    <p>scala没有for(初始化变量；检查变量是否满足条件；更新变量）循环。</p>
+  </li>
+  <li>
+    <p>一般用for (i &lt;- 表达式) 语法结构</p>
+  </li>
+  <li>
+    <p>变量i遍历&lt;- 右边表达式的所有值。这个遍历具体如何执行，则取决于表达式的类型。</p>
+  </li>
+  <li>
+    <p>for循环的变量之前并没有val或var指定，该变量的类型是集合的元素类型，循环变量的作用域一直持续到循环结束。</p>
+  </li>
+  <li>
+    <p>until方法返回一个并不包含上限的区间</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">s</span> <span class="k">=</span> <span class="s">"Hello"</span>
+<span class="k">var</span> <span class="n">sum</span> <span class="k">=</span> <span class="mi">0</span>
+<span class="nf">for</span> <span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="nv">s</span><span class="o">.</span><span class="py">length</span><span class="o">)</span> <span class="c1">//i最后的一个取值是s.length - 1</span>
+    <span class="n">sum</span> <span class="o">+=</span> <span class="nf">s</span><span class="o">(</span><span class="n">i</span><span class="o">)</span></code></pre></figure>
+
+<p>上面的例子中，其实并不需要使用下标，可以直接遍历字符序列</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">var</span> <span class="n">sum</span> <span class="k">=</span> <span class="mi">0</span>
+<span class="nf">for</span> <span class="o">(</span><span class="n">ch</span> <span class="k">&lt;-</span> <span class="s">"Hello"</span><span class="o">)</span> <span class="n">sum</span> <span class="o">+=</span> <span class="n">ch</span></code></pre></figure>
+
+<ul>
+  <li>scala的for循环比起java功能要丰富的多</li>
+</ul>
+
+<p>可以以变量 &lt;- 表达式 的形式提供多个生成器，用分号隔开。</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">for</span> <span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">3</span><span class="o">;</span> <span class="n">j</span> <span class="k">&lt;-</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">3</span><span class="o">)</span> <span class="nf">println</span><span class="o">((</span><span class="mi">10</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">)</span> <span class="o">+</span> <span class="s">" "</span><span class="o">)</span>
+<span class="c1">//打印 11 12 13 21 22 23 31 32 33</span></code></pre></figure>
+
+<p>每个生成器都可以带一个守卫，以if开头的boolean表达式。</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">for</span> <span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">3</span><span class="o">;</span> <span class="n">j</span> <span class="k">&lt;-</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">j</span><span class="o">)</span> <span class="nf">println</span><span class="o">((</span><span class="mi">10</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">)</span> <span class="o">+</span> <span class="s">" "</span><span class="o">)</span>
+<span class="c1">//打印 12 13 21 23 31 32</span></code></pre></figure>
+
+<p>可以使用任意多的定义，引入可以在循环中使用变量。</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">for</span> <span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">3</span><span class="o">;</span> <span class="n">from</span> <span class="k">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">i</span><span class="o">;</span> <span class="n">j</span> <span class="k">&lt;-</span> <span class="n">from</span> <span class="n">to</span> <span class="mi">3</span><span class="o">)</span> <span class="nf">println</span><span class="o">((</span><span class="mi">10</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">)</span> <span class="o">+</span> <span class="s">" "</span><span class="o">)</span>
+<span class="c1">//打印 13 22 23 31 32 33</span></code></pre></figure>
+
+<p>如果for循环的循环体以yield开始，则该循环会构造出一个集合，每次迭代生产集合中的一个值。</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">for</span> <span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">10</span><span class="o">)</span> <span class="k">yield</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span>
+<span class="c1">//生成 Vector(1,2,0,1,2,0,1,2,0,1)</span></code></pre></figure>
+
+<p>这类循环叫做for推导式。</p>
+
+<p>for推导式生成的集合与它第一个生成器是类型兼容的。</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">for</span> <span class="o">(</span> <span class="n">c</span> <span class="k">&lt;-</span> <span class="s">"Hello"</span><span class="o">;</span> <span class="n">i</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">to</span> <span class="mi">1</span><span class="o">)</span> <span class="nf">yield</span> <span class="o">(</span><span class="n">c</span> <span class="o">+</span> <span class="n">i</span><span class="o">).</span><span class="py">toChar</span>
+<span class="c1">//生成 "HIeflmlmop"</span>
+<span class="nf">for</span> <span class="o">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="n">to</span> <span class="mi">1</span><span class="o">;</span> <span class="n">c</span> <span class="k">&lt;-</span> <span class="s">"Hello"</span><span class="o">)</span> <span class="nf">yield</span> <span class="o">(</span><span class="n">c</span> <span class="o">+</span> <span class="n">i</span><span class="o">).</span><span class="py">toChar</span>
+<span class="c1">//生成 Vector('H','e','l','l','o','I','f','m','m','p')</span></code></pre></figure>
+
+<ul>
+  <li>scala除了方法外还支持函数。方法对对象进行操作，函数不是。</li>
+</ul>
+
+<p>定义函数</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">abs</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=</span> <span class="nf">if</span> <span class="o">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="n">x</span> <span class="k">else</span> <span class="o">-</span><span class="n">x</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>必须给出所有参数的类型。</p>
+  </li>
+  <li>
+    <p>函数只要不是递归的，就不需要指定返回类型，scala编译器可以通过＝符合右侧的表达式类型推断出返回类型。</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">//递归必须指定返回类型</span>
+<span class="k">def</span> <span class="nf">fac</span><span class="o">(</span><span class="n">n</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="nf">if</span> <span class="o">(</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">n</span> <span class="o">*</span> <span class="nf">fac</span><span class="o">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>如函数体需要多个表达式完成，可以用代码块。块中最后一个表达式的值就是函数的返回值。</p>
+  </li>
+  <li>
+    <p>在调用某些函数时并不显示地给出所有参数值，对于这些函数可以使用默认参数。</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">decorate</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span><span class="n">left</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"["</span><span class="o">,</span><span class="n">right</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"]"</span><span class="o">)</span> <span class="k">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">str</span> <span class="o">+</span> <span class="n">right</span></code></pre></figure>
+
+<p>这个函数的left和right参数带有默认值 “[” 和 “]”。</p>
+
+<ul>
+  <li>
+    <p>如果调用decorate(“Hello”)，会得到”[Hello]”。</p>
+  </li>
+  <li>
+    <p>如果不喜欢默认值，可以给出自己的版本，decorate(“Hello”,”«&lt;”,”»&gt;”)。</p>
+  </li>
+  <li>
+    <p>如果相对参数的数量，给出的值不够，默认参数会从后往前逐个应用进来。比如，</p>
+  </li>
+</ul>
+
+<p>decorate(“Hello”,”»&gt;[“)会使用right参数的默认值，得到”»&gt;[Hello]”。</p>
+
+<ul>
+  <li>可以在提供参数值的时候提供参数名。</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">decorate</span><span class="o">(</span><span class="n">left</span> <span class="k">=</span> <span class="s">"&lt;&lt;&lt;"</span><span class="o">,</span> <span class="n">str</span> <span class="k">=</span> <span class="s">"Hello"</span><span class="o">,</span> <span class="n">right</span> <span class="k">=</span> <span class="s">"&gt;&gt;&gt;"</span><span class="o">)</span>
+<span class="c1">// &lt;&lt;&lt;Hello&gt;&gt;&gt;</span></code></pre></figure>
+
+<p>带名参数并不需要跟参数列表的顺序完全一致，带名参数使函数更加可读。</p>
+
+<ul>
+  <li>可以混用未命名参数和带名参数，只要未命名的参数是排在前面的即可。</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">decorate</span><span class="o">(</span><span class="s">"Hello"</span><span class="o">,</span><span class="n">right</span> <span class="k">=</span> <span class="s">"]&lt;&lt;&lt;"</span><span class="o">)</span>
+<span class="c1">//将调用 decorate("Hello","[","]&lt;&lt;&lt;")</span></code></pre></figure>
+
+<ul>
+  <li>可变长度参数列表的函数,相当于java中String… args，以下是示例语法。</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">sum</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">Int*</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">var</span> <span class="n">result</span> <span class="k">=</span> <span class="mi">0</span>
+    <span class="nf">for</span> <span class="o">(</span><span class="n">arg</span> <span class="k">&lt;-</span> <span class="n">args</span><span class="o">)</span> <span class="n">result</span> <span class="o">+=</span> <span class="n">arg</span>
+    <span class="n">result</span>
+<span class="o">}</span>
+<span class="k">val</span> <span class="nv">s</span> <span class="k">=</span> <span class="nf">sum</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">)</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>函数得到的是一个类型为Seq的参数。</p>
+  </li>
+  <li>
+    <p>val s = sum(1 to 5) //错误的</p>
+  </li>
+  <li>
+    <p>val s = sum(1 to 5:_*) //将1 to 5当做参数序列处理</p>
+  </li>
+  <li>
+    <p>调用变长参数且参数类型为Object的java方法，需要手工对基本类型进行转换。</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">static</span> <span class="nc">String</span> <span class="nf">format</span><span class="o">(</span><span class="nc">String</span> <span class="n">pattern</span><span class="o">,</span> <span class="nc">Object</span> <span class="o">...</span> <span class="n">arguments</span><span class="o">)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">str</span> <span class="k">=</span> <span class="nv">MessageFormat</span><span class="o">.</span><span class="py">format</span><span class="o">(</span><span class="s">"The answer to {0} is {1}"</span><span class="o">,</span><span class="s">"everything"</span><span class="o">,</span><span class="mf">42.</span><span class="n">asInstanceOf</span><span class="o">[</span><span class="kt">AnyRef</span><span class="o">])</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>scala对于不返回值的函数有特殊的表示方法。如果函数体包含在花括号当中但没有前面的＝号，那么返回类型就是Unit。这样的函数被称做过程(procedure)。</p>
+  </li>
+  <li>
+    <p>过程不返回值，调用它仅仅是为了它的副作用。</p>
+  </li>
+  <li>
+    <p>代码例子</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">box</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="nv">str</span> <span class="k">=</span> <span class="s">"---"</span> <span class="o">+</span> <span class="n">s</span> <span class="o">+</span> <span class="s">"---"</span>
+    <span class="nf">println</span><span class="o">(</span><span class="n">str</span><span class="o">)</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>显示的声明Unit返回类型。</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">box</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="o">...</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>懒值，当val被声明为lazy时，它的初始化将被推迟，直到首次对它取值。</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">lazy</span> <span class="k">val</span> <span class="nv">words</span> <span class="k">=</span> <span class="nv">Source</span><span class="o">.</span><span class="py">fromFile</span><span class="o">(</span><span class="s">"/your/path/words"</span><span class="o">).</span><span class="py">mkString</span></code></pre></figure>
+
+<p>如果程序不访问words，那么文件也不会被打开。</p>
+
+<ul>
+  <li>
+    <p>懒值对于开销较大的初始化语句十分有用。</p>
+  </li>
+  <li>
+    <p>可以把懒值当作是介于val和def的中间状态。</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">words</span> <span class="k">=</span> <span class="nv">Source</span><span class="o">.</span><span class="py">fromFile</span><span class="o">(</span><span class="s">"/your/path/words"</span><span class="o">).</span><span class="py">mkString</span>
+<span class="c1">//在words被定义时即被取值</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="nv">words</span> <span class="k">=</span> <span class="nv">Source</span><span class="o">.</span><span class="py">fromFile</span><span class="o">(</span><span class="s">"/your/path/words"</span><span class="o">).</span><span class="py">mkString</span>
+<span class="c1">//在words首次使用时取值</span>
+<span class="k">def</span> <span class="nf">words</span> <span class="k">=</span> <span class="nv">Source</span><span class="o">.</span><span class="py">fromFile</span><span class="o">(</span><span class="s">"/your/path/words"</span><span class="o">).</span><span class="py">mkString</span>
+<span class="c1">//在每一次words被使用是取值</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>懒值并不是没有额外的开销。每次访问懒值，都会有一个方法被调用，这个方法将会以线程安全的方法检查该值是否已被初始化。</p>
+  </li>
+  <li>
+    <p>scala异常工作机制和java一样。跑出异常</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">throw</span> <span class="k">new</span> <span class="nc">RuntimeException</span><span class="o">(</span><span class="s">"Something wrong"</span><span class="o">)</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>和java一样，抛出的对象必须是java.lang.Throwable的子类。</p>
+  </li>
+  <li>
+    <p>没有java的受检查异常，就是说不需要声明函数或方法可能会抛出某种异常。</p>
+  </li>
+  <li>
+    <p>throw表达式有特殊的类型Nothing。在if/else表达式中很有用。如果一个分支的类型是Nothing，</p>
+  </li>
+</ul>
+
+<p>那么if/else表达式的类型就是另一个分支的类型。</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">if</span> <span class="o">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">)</span> <span class="o">{</span>
+    <span class="nf">sqrt</span><span class="o">(</span><span class="n">x</span><span class="o">)</span>
+<span class="o">}</span> <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">RuntimeException</span><span class="o">(</span><span class="s">"Something wrong"</span><span class="o">)</span></code></pre></figure>
+
+<p>第一个分支类型是Double，第二个分支类型是Nothing，因此if/else表达式类型是Double。</p>
+
+<ul>
+  <li>捕获异常的语法采用的是模式匹配的语法。</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">try</span> <span class="o">{</span>
+    <span class="nf">println</span><span class="o">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">0</span><span class="o">)</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="k">_:</span> <span class="kt">ArithmeticException</span> <span class="o">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"Something wrong"</span><span class="o">)</span>
+    <span class="k">case</span> <span class="n">ex</span><span class="k">:</span> <span class="kt">RuntimeException</span> <span class="o">=&gt;</span> <span class="nv">ex</span><span class="o">.</span><span class="py">printStackTrace</span><span class="o">()</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>和java一样，更通用的异常应该排在更具体的异常之后。</p>
+
+<p>如果不需要使用捕获的异常对象，可以使用_来代替变量名。</p>
+
+<ul>
+  <li>try/finally语句可以释放资源，不论异常有没有发生。</li>
+</ul>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2016-03/scala-for-the-impatient-03" target="_blank">快学scala笔记——控制结构和函数下篇</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2016-03/scala-for-the-impatient-03" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2016-03/scala-for-the-impatient-03" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2016-03/scala-for-the-impatient-03" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2016-03/scala-for-the-impatient-03" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2016-03/scala-for-the-impatient-03" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

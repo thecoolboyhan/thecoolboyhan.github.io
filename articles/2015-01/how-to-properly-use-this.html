@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="this关键字在java中，通常都是指“这个对象”或者“当前对象”的含义，它本身表示对当前对象的引用。">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="this的由来和正确的使用方式 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="this的由来和正确的使用方式 | zhujiajun">
+  <meta name="twitter:description" content="this关键字在java中，通常都是指“这个对象”或者“当前对象”的含义，它本身表示对当前对象的引用。">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="this的由来和正确的使用方式 | zhujiajun">
+  <meta property="og:description" content="this关键字在java中，通常都是指“这个对象”或者“当前对象”的含义，它本身表示对当前对象的引用。">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>this的由来和正确的使用方式 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2015-01/how-to-properly-use-this">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="this的由来和正确的使用方式">this的由来和正确的使用方式</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        1 JAN 2015
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    2 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>this关键字在java中，通常都是指“这个对象”或者“当前对象”的含义，它本身表示对当前对象的引用。
+<!--more--></p>
+
+<h3 id="this的由来">this的由来</h3>
+
+<p>那为什么会有这个关键字呢？</p>
+
+<p>来看下Think in Java中对this的描述，如果有同一类型的两个对象，分别是a和b。你可能想知道，如何才能让过这两个对象都能调用peel()方法呢：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Foo</span> <span class="o">{</span>
+	<span class="kt">void</span> <span class="nf">peel</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">)</span> <span class="o">{</span> <span class="o">}</span>
+<span class="o">}</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">FooPeel</span> <span class="o">{</span>
+	<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span> <span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+		<span class="nc">Foo</span> <span class="n">a</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Foo</span><span class="o">(),</span>
+			<span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Foo</span><span class="o">();</span>
+		<span class="n">f1</span><span class="o">.</span><span class="na">peel</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+		<span class="n">f2</span><span class="o">.</span><span class="na">peel</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+	<span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>如果只有一个peel方法，它如何知道是被a还是b所调用的呢？
+为了能用简便、面向对象的语法来编写代码——既“发送消息给对象”，编译器做了一些幕后工作。它暗自把“所操纵对象的引用”作为第一个参数传递给peel()。所以上述两个方法的调用就变成了这样：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Foo</span><span class="o">.</span><span class="na">peel</span><span class="o">(</span><span class="n">a</span><span class="o">,</span><span class="mi">1</span><span class="o">);</span>
+<span class="nc">Foo</span><span class="o">.</span><span class="na">peel</span><span class="o">(</span><span class="n">b</span><span class="o">,</span><span class="mi">2</span><span class="o">);</span></code></pre></figure>
+
+<p>这是内部的表示形式。当然我们肯定不能这样写代码，也不会编译通过，这样写就是帮助大家了解实际所发生的事情。
+那么问题来了，如果你希望在方法的内部获得对当前对象的引用，该如何获得这个引用呢？由于这个引用是由编译器“偷偷”传入的，是没有标识符可用。所以，为此有个专门的关键字，是的，它就是this。this关键字只能在方法内部使用，表示对“调用方法的那个对象”的引用。</p>
+
+<h3 id="this的正确使用方式">this的正确使用方式</h3>
+<p>首先，我们来看下面两段代码：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Apple</span> <span class="o">{</span>
+    <span class="kt">void</span> <span class="nf">getApple</span><span class="o">(){</span>
+    <span class="o">}</span>
+    <span class="kt">void</span> <span class="nf">getBigApple</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">getApple</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Apple</span> <span class="o">{</span>
+    <span class="kt">void</span> <span class="nf">getApple</span><span class="o">(){</span>
+    <span class="o">}</span>
+    <span class="kt">void</span> <span class="nf">getBigApple</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">getApple</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>上面两段代码都演示了在方法内部调用同一个类的另一个方法，这两者写法没有对错。但是<strong>没有加this调用才是最优的</strong>。有些人喜欢在每一个方法调用和字段引用前，认为这样“更清楚更明确”。其实不然，使用高级语言的原因之一就是它们能帮我们做一些事情，在这里编译器能帮我们自动添加。
+只有当需要明确指出对当前对象的引用时，才需要使用this关键字。例如，返回对当前对象的引用时，就常常在return语句里这样写：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Apple</span> <span class="o">{</span>
+	<span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+	<span class="nc">Apple</span> <span class="nf">incr</span><span class="o">()</span> <span class="o">{</span>
+		<span class="n">i</span><span class="o">++;</span>
+		<span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+	<span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>要是你把this放在一些没必要的地方，会使读你代码的人不知所错，因为别人写的代码不会到处使用this，只在必要处使用this。</p>
+
+<p>可能为一个类写了多个构造器，有时可能想在一个构造器中调用另一个构造器，以避免重复代码。可用this做到这一点。
+在构造器中，如果为this添加了参数列表，那么就有了不同的含义。这将产生对符合此参数列表的某个构造器的明确调用。</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Apple</span> <span class="o">{</span>
+	<span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+	<span class="nc">String</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"initial value"</span><span class="o">;</span>
+	<span class="nc">Apple</span><span class="o">(</span><span class="kt">int</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+		<span class="n">count</span> <span class="o">=</span> <span class="n">value</span><span class="o">;</span>
+	<span class="o">}</span>
+	<span class="nc">Apple</span><span class="o">(</span><span class="nc">String</span> <span class="n">ss</span><span class="o">)</span> <span class="o">{</span>
+		<span class="n">s</span> <span class="o">=</span> <span class="n">ss</span><span class="o">;</span>
+	<span class="o">}</span>
+	<span class="nc">Apple</span><span class="o">(</span><span class="nc">String</span> <span class="n">s</span><span class="o">,</span><span class="kt">int</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+		<span class="k">this</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+		<span class="c1">//this(s); can't call two</span>
+		<span class="k">this</span><span class="o">.</span><span class="na">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">;</span> 
+	<span class="o">}</span>
+	<span class="nc">Apple</span> <span class="o">()</span> <span class="o">{</span>
+		<span class="k">this</span><span class="o">(</span><span class="s">"9leg"</span><span class="o">,</span><span class="mi">88</span><span class="o">);</span>
+	<span class="o">}</span>
+	<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span> <span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+		<span class="nc">Apple</span> <span class="n">apple</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Apple</span><span class="o">();</span>
+	<span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>上面的代码很简单，构造器<em>Apple(String s,int value)</em>表明，尽管可以用this调用一个构造器，但却不能调用两个。此外，必须将构造器调用置于最起始处，否则编译器会报错。
+这里还展示了this的另一种用法。由于参数s的名称和数据成员s的名字相同，会产生歧义，使用<em>this.s</em>来代表数据成员就能解决。</p>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2015-01/how-to-properly-use-this" target="_blank">this的由来和正确的使用方式</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2015-01/how-to-properly-use-this" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2015-01/how-to-properly-use-this" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2015-01/how-to-properly-use-this" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2015-01/how-to-properly-use-this" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2015-01/how-to-properly-use-this" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

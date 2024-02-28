@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="第七篇,对象">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="快学scala笔记——对象 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="快学scala笔记——对象 | zhujiajun">
+  <meta name="twitter:description" content="第七篇,对象">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="快学scala笔记——对象 | zhujiajun">
+  <meta property="og:description" content="第七篇,对象">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>快学scala笔记——对象 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2016-08/scala-for-the-impatient-07">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="快学scala笔记——对象">快学scala笔记——对象</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        9 AUG 2016
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>第七篇,对象
+<!--more--></p>
+
+<ul>
+  <li>scala没有静态字段或静态方法,可以用object语法结构达到同样的目的</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">Accounts</span> <span class="o">{</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">lastNumber</span> <span class="k">=</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="nf">newUniqueNumber</span><span class="o">()</span> <span class="k">=</span> <span class="o">{</span>
+        <span class="n">lastNumber</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
+        <span class="n">lastNumber</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>对象的构造器在该对象第一次被使用时调用,如Accounts.newUniqueNumber()首次调用时执行构造器,如果一个对象从未被使用,那么构造器也不会执行</p>
+  </li>
+  <li>
+    <p>对象的本质上可以拥有类的所有特性,甚至可以扩展其他类或特质</p>
+  </li>
+  <li>
+    <p>只有一个例外,不能提供构造器参数</p>
+  </li>
+  <li>
+    <p>在java中,类可以有实例方法又可以有静态方法。在scala中,可以通过类和与类同名的伴生对象达到目的</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Account</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="nv">id</span> <span class="k">=</span> <span class="nv">Account</span><span class="o">.</span><span class="py">newUniqueNumber</span><span class="o">()</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">balance</span> <span class="k">=</span>  <span class="mf">0.0</span>
+    <span class="k">def</span> <span class="nf">deposit</span><span class="o">(</span><span class="n">amount</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">balance</span> <span class="o">+=</span> <span class="n">amount</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">Account</span> <span class="o">{</span> <span class="c1">//伴生对象</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">lastNumber</span> <span class="k">=</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="nf">newUniqueNumber</span><span class="o">()</span> <span class="k">=</span> <span class="o">{</span>
+        <span class="n">lastNumber</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
+        <span class="n">lastNumber</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>类和它的伴生对象可以相互访问私有特性,但必须在同一个源文件中</p>
+  </li>
+  <li>
+    <p>类的伴生对象可以被访问,但并不在作用域当中,必须通过Account.newUniqueNumber()而不是直接用newUniqueNumber()</p>
+  </li>
+  <li>
+    <p>对象的apply方法,当遇到Object(参数1,…,参数N),apply方法就会被调用</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Account</span> <span class="nf">private</span> <span class="o">(</span><span class="k">val</span> <span class="nv">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">initialBalance</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">balance</span> <span class="k">=</span> <span class="n">initialBalance</span>
+    <span class="o">...</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">Account</span> <span class="o">{</span> <span class="c1">//伴生对象</span>
+    <span class="k">def</span> <span class="nf">apply</span><span class="o">(</span><span class="n">initialBalance</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=</span>
+        <span class="k">new</span> <span class="nc">Account</span><span class="o">(</span><span class="nf">newUniqueNumber</span><span class="o">(),</span><span class="n">initialBalance</span><span class="o">)</span>
+    <span class="o">...</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>这样就可以用val acct = Account(1000.0)构造了</p>
+  </li>
+  <li>
+    <p>应用程序对象</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">Hello</span> <span class="o">{</span>
+
+    <span class="k">def</span> <span class="nf">main</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span> <span class="o">{</span>
+        <span class="c1">//doWork</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>扩展App特质</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">Hello</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+    <span class="c1">//doWork</span>
+<span class="o">}</span>
+
+<span class="c1">//命令行参数通过args获取</span>
+<span class="k">object</span> <span class="nc">Hello</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+    <span class="nf">if</span> <span class="o">(</span><span class="nv">args</span><span class="o">.</span><span class="py">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span>
+        <span class="c1">//doWork</span>
+    <span class="k">else</span>
+        <span class="c1">//doWork</span>
+<span class="o">}</span></code></pre></figure>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2016-08/scala-for-the-impatient-07" target="_blank">快学scala笔记——对象</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2016-08/scala-for-the-impatient-07" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2016-08/scala-for-the-impatient-07" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2016-08/scala-for-the-impatient-07" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2016-08/scala-for-the-impatient-07" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2016-08/scala-for-the-impatient-07" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

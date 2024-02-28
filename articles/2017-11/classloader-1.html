@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="classLoader类加载器，作用如下：      将class加载到JVM中。        检查每个类应该由谁加载，是一种父优先的等级加载机制。        将class字节码重新解析成JVM统一要求的对象格式。  ">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="分析ClassLoader工作机制-1 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="分析ClassLoader工作机制-1 | zhujiajun">
+  <meta name="twitter:description" content="classLoader类加载器，作用如下：      将class加载到JVM中。        检查每个类应该由谁加载，是一种父优先的等级加载机制。        将class字节码重新解析成JVM统一要求的对象格式。  ">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="分析ClassLoader工作机制-1 | zhujiajun">
+  <meta property="og:description" content="classLoader类加载器，作用如下：      将class加载到JVM中。        检查每个类应该由谁加载，是一种父优先的等级加载机制。        将class字节码重新解析成JVM统一要求的对象格式。  ">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>分析ClassLoader工作机制-1 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2017-11/classloader-1">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="分析ClassLoader工作机制-1">分析ClassLoader工作机制-1</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        28 NOV 2017
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>classLoader类加载器，作用如下：</p>
+<ul>
+  <li>
+    <p>将class加载到JVM中。</p>
+  </li>
+  <li>
+    <p>检查每个类应该由谁加载，是一种父优先的等级加载机制。</p>
+  </li>
+  <li>
+    <p>将class字节码重新解析成JVM统一要求的对象格式。
+<!--more--></p>
+  </li>
+</ul>
+
+<h5 id="classloader常用方法分析">ClassLoader常用方法分析</h5>
+<p>以下是经常会用到的classLoader方法。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>method</th>
+      <th>return</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>defineClass(byte[], int, int)</td>
+      <td>Class&lt;?&gt;</td>
+    </tr>
+    <tr>
+      <td>findClass(String)</td>
+      <td>Class&lt;?&gt;</td>
+    </tr>
+    <tr>
+      <td>loadClass(String)</td>
+      <td>Class&lt;?&gt;</td>
+    </tr>
+    <tr>
+      <td>resolveClass(Class&lt;?&gt;)</td>
+      <td>void</td>
+    </tr>
+  </tbody>
+</table>
+
+<ul>
+  <li>
+    <p>defineClass方法用来将byte字节流解析成JVM能够识别的class对象。有了这个方法意味着不仅仅可以通过class文件实例化对象，还可以通过其他方式实例化对象，如通过网络接收一个类的字节码，拿这个字节码流直接创建类的class对象形式实例化对象。如果直接调用这个方法生成类的class对象，这个类的class对象还没有resolve，这个resolve将会在这个对象真正实例化时进行。</p>
+  </li>
+  <li>
+    <p>defineClass通常是和findClass方法一起使用的，通过直接覆盖ClassLoader父类的findClass方法来实现类的加载规则，从而取得要加载类的字节码。然后调用defineClass方法生成类的class对象，如果想在类被加载到JVM中时就被链接，那可以调用resolveClass方法。</p>
+  </li>
+  <li>
+    <p>如果不想重新定义加载类的规则，也没有复杂的处理逻辑，只想在运行时能够加载自己指定的一个类，那么可以用this.getClass().getClassLoader().loadClass(“class”)
+调用ClassLoader的loadClass方法获取这个类的class对象。还有个loadClass(String name, boolean resolve)重载方法，可以决定在什么时候解析这个类。</p>
+  </li>
+  <li>
+    <p>ClassLoader是个抽象类，它有很多子类。一般的，如果要实现自己的ClassLoader，都会继承URLClassLoader这个子类，因为这个类已经帮我们实现了大部分工作。</p>
+  </li>
+  <li>
+    <p>findClass方法在ClassLoader类中只有方法声明，没有实现，是个模版方法，loadClass方法中会调用findClass方法。</p>
+  </li>
+</ul>
+
+<h5 id="classloader的等级加载机制">ClassLoader的等级加载机制</h5>
+<p>整个JVM平台提供三层ClassLoader：</p>
+<ul>
+  <li>
+    <p><strong>BootstrapClassLoader</strong>，启动类加载器，加载JVM自身工作需要的类(JAVA_HOME/lib,可以通过-Xbootclasspath选项指定的jar包到内存)，完全由JVM自己控制，需要加载哪个类，怎么加载都由JVM自己控制，别人也访问不到这个类，没有更高一级的父加载器，也没有子加载器。</p>
+  </li>
+  <li>
+    <p><strong>ExtClassLoader</strong>，扩展类加载器(JAVA_HOME/lib/ext,可以通过-Xjava.ext.dirs指定位置中的类库加载到内存,如指定了则原有的ext下的java包不会被引入)，服务的特定目标在System.getProperty(“java.ext.dirs”)。</p>
+  </li>
+  <li>
+    <p><strong>AppClassLoader</strong>，系统类加载器，它的父加载器是ExtClassLoader，所有在System.getProperty(“java.class.path”)目录下的类都可以被这个类加载器加载，这个目录就是经常用到的classpath，可以通过-Xjava.class.path或-classpath指定。实现自己的类加载器，它的父加载器都是AppClassLoader。因为不管调用哪个父类构造器，创建的对象都必须最终调用getSystemClassLoader()作为父加载器，而getSystemClassLoader()获取到的正是AppClassLoader。</p>
+  </li>
+</ul>
+
+<p><strong>很多文章都把BootstrapClassLoader做为ExtClassLoader上一级，其实BootstrapClassLoader并不属于JVM的类等级层次，因为BootstrapClassLoader并没有遵守ClassLoader加载规则，另外BootstrapClassLoader并没有子类，ExtClassLoader的父类也不是BootstrapClassLoader，ExtClassLoader并没有父类，在应用在能提取到的顶层父类是ExtClassLoader。</strong></p>
+
+<p>ExtClassLoader和AppClassLoader都继承了URLClassLoader类，而URLClassLoader又实现了抽象类ClassLoader。在创建Launcher对象是首先会创建ExtClassLoader，然后将ExtClassLoader对象作为父加载器创建AppClassLoader对象，通过Launcher.getLauncher().getClassLoader()方法获取的ClassLoader就是AppClassLoader对象。所以如果在java应用中没有定向其他ClassLoader，那么除了System.getProperty(“java.ext.dirs”)目录下的类是由ExtClassLoader加载外，其他类都由AppClassLoader来加载。</p>
+
+<p>JVM加载class文件到内存有两种方式：</p>
+<ul>
+  <li>
+    <p>隐式加载，所谓隐式加载就是不通过在代码里调用ClassLoader来加载所需要的类，而是通过JVM来自动加载需要的类到内存的方式。例如，当我们在类中继承或者引用某个类时，JVM在解析当前这个类时发现引用的类不存在内存中，那么就会自动将这些类加载到内存中。</p>
+  </li>
+  <li>
+    <p>显式加载，在代码中通过调用ClassLoader类来加载一个类的方式。如this.getClass().getClassLoader().loadClass()或者Class.forName()，或者自己实现的的ClassLoader的findClass()方法。</p>
+  </li>
+</ul>
+
+<p>这两种方式是混合使用的。如通过自定义的ClassLoader显式加载一个类时，这个类又引用了其他类，那么这些类就是隐式加载的。</p>
+
+<p><strong>双亲委托机制</strong>，每个ClassLoader实例都要一个父类加载器的引用。当一个ClassLoader实例需要加载某个类时，它会试图搜索某个类之前，先把这个任务委托给它的父类加载器，这个过程是由上至下依次检查的，首先由BootstrapClassLoader开始加载，如果没加载到，则由ExtClassLoader试图加载，如果还是没有，则由AppClassLoader进行加载，还是没有的话，则返回给委托的发起者，由它来查找并加载类。如果都没有加载到这个类时，则抛出ClassNotFoundException异常。</p>
+
+<p>为什么要使用双亲委托机制呢？</p>
+<ul>
+  <li>
+    <p>避免重复加载，当父类加载了该类的时候，就没有必要子ClassLoader再加载一次。</p>
+  </li>
+  <li>
+    <p>考虑安全因素, 如果不使用委托机制，就可以随时使用自定义的String来动态代替java核心的api中定义的类型，这样会存在安全隐患。</p>
+  </li>
+</ul>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2017-11/classloader-1" target="_blank">分析ClassLoader工作机制-1</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2017-11/classloader-1" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2017-11/classloader-1" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2017-11/classloader-1" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2017-11/classloader-1" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2017-11/classloader-1" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

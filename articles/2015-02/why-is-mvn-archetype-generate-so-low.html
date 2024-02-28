@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="用IDEA创建maven project(使用了archetype)，速度慢的令人不敢相信,记录下如何解决的。">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="用maven骨架生成项目速度慢的问题 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="用maven骨架生成项目速度慢的问题 | zhujiajun">
+  <meta name="twitter:description" content="用IDEA创建maven project(使用了archetype)，速度慢的令人不敢相信,记录下如何解决的。">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="用maven骨架生成项目速度慢的问题 | zhujiajun">
+  <meta property="og:description" content="用IDEA创建maven project(使用了archetype)，速度慢的令人不敢相信,记录下如何解决的。">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>用maven骨架生成项目速度慢的问题 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="用maven骨架生成项目速度慢的问题">用maven骨架生成项目速度慢的问题</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        1 FEB 2015
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>用IDEA创建maven project(使用了archetype)，速度慢的令人不敢相信,记录下如何解决的。
+<!--more--></p>
+
+<h3 id="问题出现">问题出现</h3>
+<p>最近从IntelliJ Idea 14的Community版本切换到Ultimate。安装之后，在创建maven project时(使用了archetype)，速度慢的令人不敢相信，从Idea的控制台可以看到信息停留在：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="o">[</span><span class="no">INFO</span><span class="o">]</span> <span class="o">&lt;&lt;&lt;</span> <span class="n">maven</span><span class="o">-</span><span class="n">archetype</span><span class="o">-</span><span class="nl">plugin:</span><span class="mf">2.2</span><span class="o">:</span><span class="n">generate</span> <span class="o">(</span><span class="k">default</span><span class="o">-</span><span class="n">cli</span><span class="o">)</span> <span class="o">&lt;</span> <span class="n">generate</span><span class="o">-</span><span class="n">sources</span>
+<span class="err">@</span> <span class="n">standalone</span><span class="o">-</span><span class="n">pom</span> <span class="o">&lt;&lt;&lt;</span>
+<span class="o">[</span><span class="no">INFO</span><span class="o">]</span>
+<span class="o">[</span><span class="no">INFO</span><span class="o">]</span> <span class="o">---</span> <span class="n">maven</span><span class="o">-</span><span class="n">archetype</span><span class="o">-</span><span class="nl">plugin:</span><span class="mf">2.2</span><span class="o">:</span><span class="n">generate</span> <span class="o">(</span><span class="k">default</span><span class="o">-</span><span class="n">cli</span><span class="o">)</span> <span class="err">@</span> <span class="n">standalone</span><span class="o">-</span><span class="n">pom</span> <span class="o">--</span>
+<span class="o">-</span>
+<span class="o">[</span><span class="no">INFO</span><span class="o">]</span> <span class="nc">Generating</span> <span class="n">project</span> <span class="n">in</span> <span class="nc">Batch</span> <span class="n">mode</span></code></pre></figure>
+
+<p>重试了很多次，都在<strong><em>Generating project in Batch mode</em></strong>等待，但Idea的状态栏显示还在不停的运行，并没有卡死，大约30分钟之后，才完成项目的创建。</p>
+
+<h3 id="问题分析">问题分析</h3>
+<p>为什么会等怎么久呢？我先用mvn原生的命令试了一次，</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">mvn</span> <span class="nl">archetype:</span><span class="n">generate</span> <span class="o">-</span><span class="nc">DgroupId</span><span class="o">=</span><span class="n">com</span><span class="o">.</span><span class="mi">9</span><span class="n">leg</span><span class="o">.</span><span class="na">app</span> <span class="o">-</span><span class="nc">DartifactId</span><span class="o">=</span><span class="n">my</span><span class="o">-</span><span class="n">app</span> <span class="o">-</span><span class="nc">DarchetypeArtifactId</span><span class="o">=</span><span class="n">maven</span><span class="o">-</span><span class="n">archetype</span><span class="o">-</span><span class="n">quickstart</span> <span class="o">-</span><span class="nc">DinteractiveMode</span><span class="o">=</span><span class="kc">false</span></code></pre></figure>
+
+<p>还是在<strong><em>Generating project in Batch mode</em></strong>等了很久，但排除了Idea的问题。接着加上 <strong><em>-X</em></strong> 命令，用于显示debugInfo.</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">mvn</span> <span class="o">-</span><span class="no">X</span> <span class="nl">archetype:</span><span class="n">generate</span> <span class="o">-</span><span class="nc">DgroupId</span><span class="o">=</span><span class="n">com</span><span class="o">.</span><span class="mi">9</span><span class="n">leg</span><span class="o">.</span><span class="na">app</span> <span class="o">-</span><span class="nc">DartifactId</span><span class="o">=</span><span class="n">my</span><span class="o">-</span><span class="n">app</span> <span class="o">-</span><span class="nc">DarchetypeArtifactId</span><span class="o">=</span><span class="n">maven</span><span class="o">-</span><span class="n">archetype</span><span class="o">-</span><span class="n">quickstart</span> <span class="o">-</span><span class="nc">DinteractiveMode</span><span class="o">=</span><span class="kc">false</span></code></pre></figure>
+
+<p>输出信息如下：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="o">[</span><span class="no">INFO</span><span class="o">]</span> <span class="nc">Generating</span> <span class="n">project</span> <span class="n">in</span> <span class="nc">Batch</span> <span class="n">mode</span>
+<span class="o">[</span><span class="no">DEBUG</span><span class="o">]</span> <span class="nc">Searching</span> <span class="k">for</span> <span class="n">remote</span> <span class="nl">catalog:</span> <span class="nl">http:</span><span class="c1">//repo1.maven.org/maven2/archetype-catalog.xml</span></code></pre></figure>
+
+<p>看来是请求网络上的catalog.xml文件，才导致速度很慢。直接复制了url用浏览器打开，速度也是超级慢，等了很久才打开。
+看来问题就是出现在这里。</p>
+
+<h3 id="问题解决">问题解决</h3>
+<ol>
+  <li>直接下载archetype-catalog.xml文件，放到本地的apache-maven目录中。</li>
+  <li>在使用mvn archetype:generate命令时，加上-DarchetypeCatalog=local,以替换网络上的catalog.xml。</li>
+</ol>
+
+<h3 id="题外话">题外话</h3>
+<p>我切换到eclipse，生成maven项目并且选用了骨架archetype，没有任何问题。在eclipse中可以设置maven的archetype catalog，不管是本地的，还是远程的catalog，都可以设置。
+切换到Idea中，找了半天，搜索了半天，似乎没有这个设置。只是可以在创建项目时，单独的设置自定义的archetype，而不能设置整个archetype列表。有谁知道请告知，谢谢。</p>
+
+<p>参考:<a href="http://jira.codehaus.org/browse/ARCHETYPE-202" target="_blank">ARCHETYPE-202</a></p>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low" target="_blank">用maven骨架生成项目速度慢的问题</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2015-02/why-is-mvn-archetype-generate-so-low" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="如何加载Class文件ClassLoader加载一个class文件到JVM是需要经过的步骤。      找到.class文件并把这个文件包含的字节码加载到内存中。        字节码验证。        Class类数据结构分析及相应的内存分配。        符号表的链接。        初始化,类中静态属性...">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="分析ClassLoader工作机制-2 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="分析ClassLoader工作机制-2 | zhujiajun">
+  <meta name="twitter:description" content="如何加载Class文件ClassLoader加载一个class文件到JVM是需要经过的步骤。      找到.class文件并把这个文件包含的字节码加载到内存中。        字节码验证。        Class类数据结构分析及相应的内存分配。        符号表的链接。        初始化,类中静态属性...">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="分析ClassLoader工作机制-2 | zhujiajun">
+  <meta property="og:description" content="如何加载Class文件ClassLoader加载一个class文件到JVM是需要经过的步骤。      找到.class文件并把这个文件包含的字节码加载到内存中。        字节码验证。        Class类数据结构分析及相应的内存分配。        符号表的链接。        初始化,类中静态属性...">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>分析ClassLoader工作机制-2 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2017-11/classloader-2">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="分析ClassLoader工作机制-2">分析ClassLoader工作机制-2</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        29 NOV 2017
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h5 id="如何加载class文件">如何加载Class文件</h5>
+
+<p>ClassLoader加载一个class文件到JVM是需要经过的步骤。</p>
+
+<ul>
+  <li>
+    <p>找到.class文件并把这个文件包含的字节码加载到内存中。</p>
+  </li>
+  <li>
+    <p>字节码验证。</p>
+  </li>
+  <li>
+    <p>Class类数据结构分析及相应的内存分配。</p>
+  </li>
+  <li>
+    <p>符号表的链接。</p>
+  </li>
+  <li>
+    <p>初始化,类中静态属性和初始化赋值，以及静态代码块的执行。
+<!--more--></p>
+  </li>
+</ul>
+
+<h5 id="加载字节码到内存">加载字节码到内存</h5>
+<p>在抽象类ClassLoader中并没有定义如何去加载，如何去找到指定类并把它的字节码加载到内存需要子类去实现，也就是要实现findClass()方法。看下常用的URLClassLoader是如何实现findClass()的，在URLClassLoader中通过一个URLClassPath类帮助取得要加载的class文件字节流，而这个URLClassPath定义了到哪里去找这个class文件，如果找到这个class文件，再读取它的byte字节流，通过调用defineClass()方法来创建类对象。
+来看下URLClassLoader的构造函数，如下</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java">    <span class="kd">public</span> <span class="nf">URLClassLoader</span><span class="o">(</span><span class="no">URL</span><span class="o">[]</span> <span class="n">urls</span><span class="o">)</span> <span class="o">{</span> 
+        <span class="kd">super</span><span class="o">();</span>
+        <span class="c1">// this is to make the stack depth consistent with 1.1</span>
+        <span class="nc">SecurityManager</span> <span class="n">security</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">getSecurityManager</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">security</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">security</span><span class="o">.</span><span class="na">checkCreateClassLoader</span><span class="o">();</span>
+        <span class="o">}</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">acc</span> <span class="o">=</span> <span class="nc">AccessController</span><span class="o">.</span><span class="na">getContext</span><span class="o">();</span>
+        <span class="n">ucp</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">URLClassPath</span><span class="o">(</span><span class="n">urls</span><span class="o">,</span> <span class="n">acc</span><span class="o">);</span>        
+<span class="o">}</span></code></pre></figure>
+
+<p>发现必须要指定一个URL数组才能够创建URLCLassLoader对象，也就是必须要指定这个ClassLoader默认到哪个目录下去查找class文件。
+这个URL数组也是创建URLClassPath对象的必要条件，它是以URL的形式来表示ClassPath路径的。
+在创建URLClassPath对象是会根据传过来的URL数组中的路径来判断是文件还是jar包，根据路径的不同分别创建FileLoader或者JarLoader，或者使用默认的加载器。当JVM调用findClass时由这几个加载器来将class文件的字节码加载到内存中。</p>
+
+<p>下表是每个ClassLoader的搜索路径参数：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ClassLoader类型</th>
+      <th>参数选项</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BootstrapClassLoader</td>
+      <td>-Xbootclasspath: <br />-Xbootclasspath/a:<br />-Xbootclasspath/p:</td>
+      <td>设置BootstrapClassLoader的搜索路径<br />把路径添加到已存在BootstrapClassLoader搜索路径的后面<br />把路径添加到已存在BootstrapClassLoader搜索路径的前面</td>
+    </tr>
+    <tr>
+      <td>ExtClassLoader</td>
+      <td>-Djava.ext.dirs=</td>
+      <td>设置ExtClassLoader的搜索路径</td>
+    </tr>
+    <tr>
+      <td>AppClassLoader</td>
+      <td>-Djava.class.path= <br /> -classpath 或 -cp</td>
+      <td>设置AppClassLoader的搜索路径</td>
+    </tr>
+  </tbody>
+</table>
+
+<h5 id="验证与解析">验证与解析</h5>
+<ul>
+  <li>
+    <p>字节码验证，类装入器对于类的字节码要做许多检测，以确保格式正确，行为正确。</p>
+  </li>
+  <li>
+    <p>类准备，在这个阶段准备代表每个类中定义的字段、方法和实现接口所必需的数据结构。</p>
+  </li>
+  <li>
+    <p>解析，在这个阶段类装入器装入类所引用的其他所有类，如超类，接口，字段，方法签名，方法中使用的本地变量。</p>
+  </li>
+</ul>
+
+<h5 id="初始化class对象">初始化Class对象</h5>
+<p>在类中包含的静态初始化器都被执行，在这一阶段末尾静态字段被初始化为默认值。</p>
+
+<h5 id="classloader能够完成的事情">ClassLoader能够完成的事情</h5>
+
+<ul>
+  <li>
+    <p>在自定义路径下查找自定义的class类文件。也许需要的class文件并不总是在设置好的classpath下面，那么就要想办法找到这个类，在这种情况下需要自己实现一个ClassLoader。</p>
+  </li>
+  <li>
+    <p>对要加载的类做特殊出来。如保证通过网络传输类的安全性，可以将类加密后再进行传输，在加载到JVM之前对类的字节码再解密，这个过程就可以放在自定义的ClassLoader中实现。</p>
+  </li>
+  <li>
+    <p>可以定义类的实现机制，如果可以检查已加载的class文件是否被修改，如果修改了，可以重新加载这个类，从而实现热部署。</p>
+  </li>
+</ul>
+
+<p>JVM在加载类之前会检查请求的类是否已经被加载过，也就是调用findLoadedClass()方法查看是否能够返回类的实例。如果类已经加载了，再调用loadClass()方法会导致类冲突，如下异常：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Exception in thread "main" java.lang.LinkageError: loader (instance of  com/github/zjiajun/java/core/classloader/PathClassLoader): attempted  duplicate class definition for name: "com/github/zjiajun/java/core/classloader/ClassLoaderInheritance"
+</code></pre></div></div>
+<p>JVM表示一个类是否是同一个类会有两个条件。一是看这个类的完整类名是否一样，这个类名包括类所在的包名。二是看加载这个类的ClassLoader是否是同一个，这个说的同一个是指ClassLoader的实例是否是同一个实例。即便是同一个ClassLoader类的两个实例，加载同一个类也会不一样。要实现类的热部署可以创建不同的ClassLoader的实例对象，通过不同的实例来加载相同的类。
+使用不同的ClassLoader实例加载同一个类，会不会导致JVM的PermGen区无限增大呢？其实并不会，因为ClassLoader对象也会和其他对象一样，当没有对象再引用它以后，会被JVM回收。但需要注意的是，被这个ClassLoader加载的字节码会被保存在PermGen区，这个数据一般只是在执行FullGC时才会被回收的，所以应用在如果大量的动态加载，FullGC又不是太频繁，要注意PermGen区的大小，防止内存溢出。
+个人觉得FullGC的次数不应该很频繁，都知道FullGC会导致STW的，对于某些场景下的应用是接收不了的，应该适当的调整MaxPermSize。</p>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2017-11/classloader-2" target="_blank">分析ClassLoader工作机制-2</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2017-11/classloader-2" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2017-11/classloader-2" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2017-11/classloader-2" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2017-11/classloader-2" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2017-11/classloader-2" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

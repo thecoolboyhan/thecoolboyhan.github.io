@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="第六篇,类">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="快学scala笔记——类 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="快学scala笔记——类 | zhujiajun">
+  <meta name="twitter:description" content="第六篇,类">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="快学scala笔记——类 | zhujiajun">
+  <meta property="og:description" content="第六篇,类">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>快学scala笔记——类 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2016-07/scala-for-the-impatient-06">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="快学scala笔记——类">快学scala笔记——类</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        25 JUL 2016
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    2 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>第六篇,类
+<!--more--></p>
+
+<ul>
+  <li>
+    <p>类的方法默认是公有的</p>
+  </li>
+  <li>
+    <p>类并不声明为public,一个scala源文件可以包含多个类,所有这些类都具有公有可见性</p>
+  </li>
+  <li>
+    <p>和java一样,方法可以访问该类的所有对象的私有字段</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Counter</span> <span class="o">{</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">value</span> <span class="k">=</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="nf">increment</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">value</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="o">}</span>
+    <span class="k">def</span> <span class="nf">isLess</span><span class="o">(</span><span class="n">other</span><span class="k">:</span> <span class="kt">Counter</span><span class="o">)</span> <span class="k">=</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="nv">other</span><span class="o">.</span><span class="py">value</span>
+    <span class="c1">//可以访问另一个对象的私有字段</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>因为other同样也是Counter对象,所以访问other.value是合法的</p>
+  </li>
+  <li>
+    <p>可以定义更加严格的访问限制,这样other.value将不被允许</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">private</span><span class="o">[</span><span class="kt">this</span><span class="o">]</span> <span class="k">var</span> <span class="n">value</span> <span class="k">=</span> <span class="mi">0</span>
+<span class="c1">//这样,Counter类的方法只能访问到当前对象的value字段,而不能访问同样是Counter类型的其他对象的该字段</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>使用@BeanProperty注解自动生成java属性的getXXX/setXXX方法。个人认为在反射的时候有用,约定(javaBean规范)</p>
+  </li>
+  <li>
+    <p>可以有任意多的构造器</p>
+  </li>
+  <li>
+    <p>除了主构造器之外,类可以有任意多的辅助构造器</p>
+  </li>
+  <li>
+    <p>辅助构造器的名称为this,每一个辅助构造器都必须以一个对先前已定义的其他辅助构造器或主构造器的调用开始</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Person</span> <span class="o">{</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">name</span> <span class="k">=</span> <span class="s">""</span>
+    <span class="k">private</span> <span class="k">var</span> <span class="n">age</span> <span class="k">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">this</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="o">{</span> <span class="c1">//一个辅助构造器</span>
+        <span class="nf">this</span><span class="o">()</span> <span class="c1">//调用主构造器</span>
+        <span class="k">this</span><span class="o">.</span><span class="py">name</span> <span class="k">=</span> <span class="n">name</span>
+    <span class="o">}</span>
+
+    <span class="k">def</span> <span class="nf">this</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span><span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">{</span> <span class="c1">//另一个辅助构造器</span>
+        <span class="nf">this</span><span class="o">(</span><span class="n">name</span><span class="o">)</span> <span class="c1">//调用前一个辅助构造器</span>
+        <span class="k">this</span><span class="o">.</span><span class="py">age</span> <span class="k">=</span> <span class="n">age</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>没有显式定义主构造器则自动拥有一个无参的主构造器</p>
+  </li>
+  <li>
+    <p>在scala中,每个类都有主构造器。主构造器并不以this方法定义,而是与类定义交织在一起</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="k">val</span> <span class="nv">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="k">val</span> <span class="nv">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>主构造器的参数被编译成字段,值为初始化成构造器时传入的参数</p>
+  </li>
+  <li>
+    <p>主构造器会执行类定义中的所有语句</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="k">val</span> <span class="nv">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="k">val</span> <span class="nv">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nf">println</span><span class="o">(</span><span class="s">"Just constructed another person"</span><span class="o">)</span>
+    <span class="k">def</span> <span class="nf">description</span> <span class="k">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s">" is "</span> <span class="o">+</span> <span class="n">age</span> <span class="o">+</span> <span class="s">" years old"</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>
+    <p>类名之后没有参数,该类具有一个无参主构造器,这样一个构造器仅仅是简单的执行类中的所有语句而已</p>
+  </li>
+  <li>
+    <p>在主构造器中使用默认参数避免过多地使用辅助构造器</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="k">val</span> <span class="nv">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">""</span><span class="o">,</span> <span class="k">val</span> <span class="nv">age</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>私有主构造器</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">Person</span> <span class="nf">private</span><span class="o">(</span><span class="k">val</span> <span class="nv">id</span> <span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">//这样一来就必须通过辅助构造器来构造Person对象</span>
+<span class="o">}</span></code></pre></figure>
+
+<ul>
+  <li>可以在函数中定义函数,类中定义类</li>
+</ul>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2016-07/scala-for-the-impatient-06" target="_blank">快学scala笔记——类</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2016-07/scala-for-the-impatient-06" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2016-07/scala-for-the-impatient-06" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2016-07/scala-for-the-impatient-06" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2016-07/scala-for-the-impatient-06" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2016-07/scala-for-the-impatient-06" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

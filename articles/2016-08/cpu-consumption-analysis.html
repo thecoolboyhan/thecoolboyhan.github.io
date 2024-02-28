@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="通常性能瓶颈的表现是资源消耗过多、外部处理系统的性能不足，或者资源消耗不多，但程序的响应速度却达不到要求。资源主要消耗在cpu，io（又分文件io和网络io），内存方面，机器的资源是有限的，当某资源消耗过多时，通常会造成系统的响应速度变慢。对于java应用而言，寻找性能瓶颈的方法通常为首先分析资源的消耗，然后结合...">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="性能调优－cpu消耗分析 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="性能调优－cpu消耗分析 | zhujiajun">
+  <meta name="twitter:description" content="通常性能瓶颈的表现是资源消耗过多、外部处理系统的性能不足，或者资源消耗不多，但程序的响应速度却达不到要求。资源主要消耗在cpu，io（又分文件io和网络io），内存方面，机器的资源是有限的，当某资源消耗过多时，通常会造成系统的响应速度变慢。对于java应用而言，寻找性能瓶颈的方法通常为首先分析资源的消耗，然后结合...">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="性能调优－cpu消耗分析 | zhujiajun">
+  <meta property="og:description" content="通常性能瓶颈的表现是资源消耗过多、外部处理系统的性能不足，或者资源消耗不多，但程序的响应速度却达不到要求。资源主要消耗在cpu，io（又分文件io和网络io），内存方面，机器的资源是有限的，当某资源消耗过多时，通常会造成系统的响应速度变慢。对于java应用而言，寻找性能瓶颈的方法通常为首先分析资源的消耗，然后结合...">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>性能调优－cpu消耗分析 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2016-08/cpu-consumption-analysis">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="性能调优－cpu消耗分析">性能调优－cpu消耗分析</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        9 AUG 2016
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>通常性能瓶颈的表现是资源消耗过多、外部处理系统的性能不足，或者资源消耗不多，但程序的响应速度却达不到要求。</p>
+
+<p>资源主要消耗在cpu，io（又分文件io和网络io），内存方面，机器的资源是有限的，当某资源消耗过多时，通常会造成系统的响应速度变慢。</p>
+
+<p>对于java应用而言，寻找性能瓶颈的方法通常为首先分析资源的消耗，然后结合java的一些工具来查找程序中造成资源消耗过多的代码。</p>
+
+<p>今天先谈一谈cpu消耗如何分析，系统为linux，jdk为sun jdk。
+<!--more--></p>
+
+<p>在linux中，cpu主要用于中断、内核和用户进程的任务处理，优先级为中断&gt;内核&gt;用户进程，下面先讲述三个重要的概念。</p>
+
+<h3 id="上下文切换">上下文切换</h3>
+
+<p>每个cpu（多核cpu中的每个cpu）在同一时间只能执行一个线程，linux采用的是抢占式调度。为每个线程分配一定的执行时间，
+当到达执行时间、线程中有io阻塞或高优先级的线程要执行时，linux将切换执行的线程，在切换时要存储目前的线程的执行状态，
+并恢复要执行的线程的状态，这个过程就是上下文切换。对于java应用而言，典型的是在进行文件io操作、网络io操作、锁等待或者线程sleep时，
+当前线程会进入阻塞或休眠状态，从而触发上下文切换，上下文切换过多会造成内核占据较多的cpu使用，从而使应用响应速度变慢。</p>
+
+<h3 id="运行队列">运行队列</h3>
+
+<p>每个cpu核都会维护一个可运行的线程队列，例如一个4核的cpu，java应用里启动了8个线程，且这8个线程都处于可运行状态，
+那么在分配平均的情况下每个cpu中的运行队列就会有2个线程。通常而言，系统的load主要由cpu运行队列来决定。</p>
+
+<h3 id="利用率">利用率</h3>
+
+<p>cpu利用率为cpu在用户进程、内核、中断处理、io等待以及空闲5个部分使用的百分比，这5个值是用来分析cpu消耗的关键指标。
+在linux中，可通过top或pidstat方式来查看进程中线程的cpu的消耗状况。</p>
+
+<ul>
+  <li>top</li>
+</ul>
+
+<p>输入top命令后既可查看cpu的消耗情况，cpu的信息在top视图的上面几行中，如图</p>
+
+<p><img src="/img/posts/cpu-top.png" alt="cpu-top" /></p>
+
+<p>在这里需要关注第三行信息，下面来逐个介绍。</p>
+
+<ul>
+  <li>
+    <p>us 表示用户进程处理所占的百分比</p>
+  </li>
+  <li>
+    <p>sy 表示为内核线程处理所占的百分比</p>
+  </li>
+  <li>
+    <p>ni 表示被nice命令改变优先级的任务所占的百分比</p>
+  </li>
+  <li>
+    <p>id 表示cpu的空闲时间所占的百分比</p>
+  </li>
+  <li>
+    <p>wa 表示为在执行过程中等待io所占的百分比</p>
+  </li>
+  <li>
+    <p>hi 表示为硬件中断所占的百分比</p>
+  </li>
+  <li>
+    <p>si 表示为软件中断所占的百分比</p>
+  </li>
+  <li>
+    <p>st 表示虚拟cpu等待实际cpu的时间的百分比</p>
+  </li>
+</ul>
+
+<p>对于多个或多核cpu，上面的显示则会是多个cpu所占用的百分比总合。如需查看每个核的消耗情况，可在进入top视图后按1，就会按核来显示消耗情况。</p>
+
+<p><img src="/img/posts/cpu-top2.png" alt="cpu-top" /></p>
+
+<p>默认情况下，top视图中显示的为进程的cpu消耗状况，在top视图中按shift + h后，可按线程查看cpu的消耗状况，此时的pid既为线程id。</p>
+
+<ul>
+  <li>pidstat</li>
+</ul>
+
+<p>pidstat是sysstat中的工具，如需使用pidstat，要先安装sysstat，在这里就不说明了。</p>
+
+<h4 id="us过高">us过高</h4>
+
+<p>当us值过高时，表示运行的应用消耗了大部分的cpu。在这种情况下，对于java应用而言，最重要的是找到具体消耗cpu的线程所执行的代码，可以采用如下方法。</p>
+
+<ul>
+  <li>
+    <p>首先通过linux命令top命令查看us过高的pid值</p>
+  </li>
+  <li>
+    <p>通过top -Hp pid查看该pid进程下的线程的cpu消耗状况，得到具体pid值</p>
+  </li>
+  <li>
+    <p>将pid值转化为16进制，这个转化后的值对应nid值的线程</p>
+  </li>
+  <li>
+    <p>通过jstack pid grep -C 20  “16进制的值” 命令查看运行程序的线程信息</p>
+  </li>
+</ul>
+
+<p>该线程就是消耗cpu的线程，在采样时须多执行几次上述的过程，以确保找到真实的消耗cpu的线程。</p>
+
+<p>java应用造成us过高的原因主要是线程一直处于可运行的状态Runnable，通常是这些线程在执行无阻塞、循环、正则或纯粹的计算等动作造成。
+另外一个可能会造成us过高的原因是频繁的gc。如每次请求都需要分配较多内存，当访问量高时就导致不断的进行gc，系统响应速度下降，
+进而造成堆积的请求更多，消耗的内存严重不足，最严重的时候会导致系统不断进行FullGC，对于频繁的gc需要通过分析jvm内存的消耗来查找原因。</p>
+
+<h4 id="sy过高">sy过高</h4>
+
+<p>当sy值过高时，表示linux花费了更多的时间在进行线程切换。java应用造成这种现象的主要原因是启动的线程比较多，
+且这些线程多处于不断的阻塞（例如锁等待，io等待）和执行状态的变化过程中，这就导致了操作系统要不断的切换执行的线程，
+产生大量的上下文切换。在这种情况下，对java应用而言，最重要的是找出不断切换状态的原因，
+可采用的方法为通过kill -3 pid 或jstack -l pid的方法dump出java应用程序的线程信息，查看线程的状态信息以及锁信息，
+找出等待状态或锁竞争过多的线程。</p>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2016-08/cpu-consumption-analysis" target="_blank">性能调优－cpu消耗分析</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2016-08/cpu-consumption-analysis" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2016-08/cpu-consumption-analysis" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2016-08/cpu-consumption-analysis" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2016-08/cpu-consumption-analysis" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2016-08/cpu-consumption-analysis" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

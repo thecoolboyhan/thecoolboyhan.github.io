@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="业余时间瞎学Android有段时间了,至今还没写过文章,可能是我懒吧(其实就是懒- -),今天在练习项目的时候，被IDEA一个warning弄懵了,看下图:">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="SharedPreference.Editor中commit和apply区别 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SharedPreference.Editor中commit和apply区别 | zhujiajun">
+  <meta name="twitter:description" content="业余时间瞎学Android有段时间了,至今还没写过文章,可能是我懒吧(其实就是懒- -),今天在练习项目的时候，被IDEA一个warning弄懵了,看下图:">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="SharedPreference.Editor中commit和apply区别 | zhujiajun">
+  <meta property="og:description" content="业余时间瞎学Android有段时间了,至今还没写过文章,可能是我懒吧(其实就是懒- -),今天在练习项目的时候，被IDEA一个warning弄懵了,看下图:">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>SharedPreference.Editor中commit和apply区别 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="SharedPreference.Editor中commit和apply区别">SharedPreference.Editor中commit和apply区别</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        12 JUL 2015
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>业余时间瞎学Android有段时间了,至今还没写过文章,可能是我懒吧(其实就是懒- -),今天在练习项目的时候，被IDEA一个warning弄懵了,看下图:</p>
+
+<p><img src="/img/posts/SharedPreference-Editor-commit-warning.jpg" alt="commit-warning" /></p>
+
+<!--more-->
+
+<p>首先<em>commit()</em>方法是为SharedPreference保存数据用的,IDEA警告意思是说,建议用<em>apply()</em>方法代替。<em>commit()</em>方法保存数据是马上执行的,而<em>apply()</em>方法会在后台执行。</p>
+
+<p>这是毛意思呢? 反正我先注释了<em>commit()</em>方法,添加了<em>apply()</em>方法,警告信息就没有了,why? why? why?，这是为什么?</p>
+
+<p>然后google大法搜索了下,这两个方法区别是这样的:</p>
+
+<ul>
+  <li>commit方法有boolean返回值,表示保存是否成功的.</li>
+  <li>apply方法是void的.</li>
+  <li>commit方法是同步执行保存.</li>
+  <li>apply方法是异步执行保存(这就是IDEA的警告意思吧).</li>
+</ul>
+
+<p><strong>应该到底用哪个方法呢? 我的结论是视实际情况而定,如不关心是否保存成功,就可以用异步的apply方法,相反,在乎保存返回值的,则用commit方法.如果出现并发情况,那么肯定是用异步的apply方法,这是如果用了commit方法的话，就有可能会导致阻塞.
+apply方法是现将数据立马存到内存中,然后会异步的去保存到目录文件去.</strong></p>
+
+<p>抄一段API文档中的说明:</p>
+
+<p>Unlike commit(), which writes its preferences out to persistent storage synchronously, apply() commits its changes to the in-memory SharedPreferences immediately but starts an asynchronous commit to disk and you won’t be notified of any failures. If another editor on this SharedPreferences does a regular commit() while a apply() is still outstanding, the commit() will block until all async commits are completed as well as the commit itself.</p>
+
+<p>As SharedPreferences instances are singletons within a process, it’s safe to replace any instance of commit() with apply() if you were already ignoring the return value.</p>
+
+<p><a href="http://developer.android.com/intl/zh-cn/reference/android/content/SharedPreferences.Editor.html#apply()" target="_blank">官方API-apply()方法解释(需翻墙)</a></p>
+
+<p>在获取SharedPreferences对象时,大家会用那种方式呢?</p>
+
+<ul>
+  <li>Activity.getPreferences(int mode)</li>
+  <li>PreferenceManager.getDefaultSharedPreferences(Context context);</li>
+  <li>ContextWrapper.getSharedPreferences(String name, int mode)</li>
+</ul>
+
+<p>然并卵,1和2其实还是调用的第三个方法,如下:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="nc">SharedPreferences</span> <span class="nf">getPreferences</span><span class="o">(</span><span class="kt">int</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span>
+       <span class="k">return</span> <span class="nf">getSharedPreferences</span><span class="o">(</span><span class="n">getLocalClassName</span><span class="o">(),</span> <span class="n">mode</span><span class="o">);</span>
+<span class="o">}</span>
+    </code></pre></figure>
+
+<p>Activity的方法,调用的还是父类的<em>getSharedPreferences</em>方法,就是第三个方法，只不过这里保存文件的文件名称,使用默认的类名罢了.</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">static</span> <span class="nc">SharedPreferences</span> <span class="nf">getDefaultSharedPreferences</span><span class="o">(</span><span class="nc">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="na">getSharedPreferences</span><span class="o">(</span><span class="n">getDefaultSharedPreferencesName</span><span class="o">(</span><span class="n">context</span><span class="o">),</span>
+                <span class="n">getDefaultSharedPreferencesMode</span><span class="o">());</span>
+<span class="o">}</span>
+   
+<span class="kd">private</span> <span class="kd">static</span> <span class="nc">String</span> <span class="nf">getDefaultSharedPreferencesName</span><span class="o">(</span><span class="nc">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">()</span> <span class="o">+</span> <span class="s">"_preferences"</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">getDefaultSharedPreferencesMode</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="nc">Context</span><span class="o">.</span><span class="na">MODE_PRIVATE</span><span class="o">;</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>第二种,在明显不过了,tmd还是调用第三个啊,文件名称和操作模式mode都有默认值。</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="nc">SharedPreferences</span> <span class="nf">getSharedPreferences</span><span class="o">(</span><span class="nc">String</span> <span class="n">name</span><span class="o">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">mBase</span><span class="o">.</span><span class="na">getSharedPreferences</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">mode</span><span class="o">);</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>这是祖宗,自定义文件名称,操作模式可选,完美.</p>
+
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference" target="_blank">SharedPreference.Editor中commit和apply区别</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2015-07/whats-the-difference-between-commit-and-apply-in-shared-preference" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

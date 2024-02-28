@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="如下代码有个枚举类，怎样才能将字符串“arin”转成WhoisRIR.ARIN枚举类呢？">
+  <meta name="keywords" content="jekyll, java, scala, and blog">
+  <meta name="author" content="Java字符串转枚举类型 | zhujiajun">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Java字符串转枚举类型 | zhujiajun">
+  <meta name="twitter:description" content="如下代码有个枚举类，怎样才能将字符串“arin”转成WhoisRIR.ARIN枚举类呢？">
+  <meta name="twitter:image" content="http://localhost:4000/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="http://localhost:4000">
+  <meta property="og:title" content="Java字符串转枚举类型 | zhujiajun">
+  <meta property="og:description" content="如下代码有个枚举类，怎样才能将字符串“arin”转成WhoisRIR.ARIN枚举类呢？">
+  <meta property="og:image" content="http://localhost:4000/img/avatar.jpg">
+  <title>Java字符串转枚举类型 | zhujiajun</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="http://localhost:4000/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+
+  <link rel="canonical" href="http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object">
+  <link rel="alternate" type="application/rss+xml" title="zhujiajun" href="http://localhost:4000/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="http://localhost:4000/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="http://localhost:4000/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="http://localhost:4000/" class="author_name">zhujiajun</a>
+  <span class="author_job">Java & Scala Developer</span>
+  <span class="author_bio mbm">A backend developer who loves design awesome things. Working for Dianping at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="http://localhost:4000/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="http://localhost:4000/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="http://localhost:4000/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="http://localhost:4000/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="http://localhost:4000/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('zhujiajun.me@gmail.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/zjiajun" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "http://localhost:4000/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="Java字符串转枚举类型">Java字符串转枚举类型</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        9 JAN 2015
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    2 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>如下代码有个枚举类，怎样才能将字符串“arin”转成WhoisRIR.ARIN枚举类呢？
+<!--more--></p>
+
+<h3 id="问题">问题</h3>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java">	<span class="nc">WhoisRIR</span> <span class="n">rir</span> <span class="o">=</span> <span class="c1">//convert 'arin' to enum WhoisRIR.ARIN?</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java">	<span class="kd">public</span> <span class="kd">enum</span> <span class="nc">WhoisRIR</span> <span class="o">{</span>
+		<span class="no">ARIN</span><span class="o">(</span><span class="s">"whois.arin.net"</span><span class="o">),</span>
+		<span class="no">RIPE</span><span class="o">(</span><span class="s">"whois.ripe.net"</span><span class="o">),</span>
+		<span class="no">APNIC</span><span class="o">(</span><span class="s">"whois.apnic.net"</span><span class="o">);</span>
+	<span class="o">}</span>
+	<span class="kd">private</span> <span class="nc">String</span> <span class="n">url</span><span class="o">;</span>
+	
+	<span class="kd">private</span> <span class="nf">WhoisRIR</span><span class="o">(</span><span class="nc">String</span> <span class="n">url</span><span class="o">)</span> <span class="o">{</span>
+		<span class="k">this</span><span class="o">.</span><span class="na">url</span> <span class="o">=</span> <span class="n">url</span><span class="o">;</span>
+	<span class="o">}</span>
+	
+	<span class="kd">public</span> <span class="nc">String</span> <span class="nf">getUrl</span><span class="o">()</span> <span class="o">{</span>
+		<span class="k">return</span> <span class="n">url</span><span class="o">;</span>
+	<span class="o">}</span></code></pre></figure>
+
+<h3 id="解决">解决</h3>
+
+<p>为了解决这个问题，我们可以使用枚举的<em>valueof()</em>方法将字符串转化大写并设置默认的国际化。</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">java.util.Locale</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">EnumTest</span> <span class="o">{</span>
+
+	<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>	
+	<span class="c1">//Solution: Uses valueOf()</span>
+	<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="nc">WhoisRIR</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="s">"arin"</span><span class="o">.</span><span class="na">toUpperCase</span><span class="o">()));</span>
+	<span class="c1">//Recommended Solution: add locale	</span>
+	<span class="nc">WhoisRIR</span> <span class="n">rir</span> <span class="o">=</span>   <span class="nc">WhoisRIR</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="s">"ripe"</span><span class="o">.</span><span class="na">toUpperCase</span><span class="o">(</span><span class="nc">Locale</span><span class="o">.</span><span class="na">ENGLISH</span><span class="o">));</span>
+		<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">rir</span><span class="o">);</span>
+		<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">rir</span><span class="o">.</span><span class="na">getUrl</span><span class="o">());</span>
+	<span class="o">}</span>
+
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="no">ARIN</span>
+<span class="no">RIPE</span>
+<span class="n">whois</span><span class="o">.</span><span class="na">ripe</span><span class="o">.</span><span class="na">net</span></code></pre></figure>
+
+<p>再做下测试，不将字符串转化为大写：</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">java.util.Locale</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">EnumTest</span> <span class="o">{</span>
+
+	<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>	
+		<span class="c1">//error, need convert the String to uppercase</span>
+		<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="nc">WhoisRIR</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="s">"arin"</span><span class="o">));</span>
+	<span class="o">}</span>
+
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Exception</span> <span class="n">in</span> <span class="n">thread</span> <span class="s">"main"</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">IllegalArgumentException</span><span class="o">:</span> 
+    <span class="nc">No</span> <span class="kd">enum</span> <span class="n">constant</span> <span class="n">com</span><span class="o">.</span><span class="na">mkyong</span><span class="o">.</span><span class="na">whois</span><span class="o">.</span><span class="na">utils</span><span class="o">.</span><span class="na">WhoisRIR</span><span class="o">.</span><span class="na">arin</span>
+	<span class="n">at</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">Enum</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="nc">Unknown</span> <span class="nc">Source</span><span class="o">)</span>
+	<span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">mkyong</span><span class="o">.</span><span class="na">whois</span><span class="o">.</span><span class="na">utils</span><span class="o">.</span><span class="na">WhoisRIR</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="nc">WhoisRIR</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1</span><span class="o">)</span>
+	<span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">mkyong</span><span class="o">.</span><span class="na">whois</span><span class="o">.</span><span class="na">utils</span><span class="o">.</span><span class="na">TestEnum</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="nc">TestEnum</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">17</span><span class="o">)</span></code></pre></figure>
+
+<p><a href="http://www.mkyong.com/java/java-convert-string-to-enum-object/" target="_blank">英文原文链接</a></p>
+
+    原创文章转载请注明出处: <a href="http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object" target="_blank">Java字符串转枚举类型</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=http://localhost:4000/articles/2015-01/java-convert-string-to-enum-object" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 zhujiajun. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://localhost:4000/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="http://localhost:4000/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
