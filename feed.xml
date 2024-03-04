@@ -5,129 +5,224 @@
     <description>hanyongfa&apos;s blog,powered by jekyll.</description>
     <link>https://thecoolboyhan.github.io/</link>
     <atom:link href="https://thecoolboyhan.github.io/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Wed, 28 Feb 2024 17:28:05 +0800</pubDate>
-    <lastBuildDate>Wed, 28 Feb 2024 17:28:05 +0800</lastBuildDate>
+    <pubDate>Mon, 04 Mar 2024 10:47:17 +0800</pubDate>
+    <lastBuildDate>Mon, 04 Mar 2024 10:47:17 +0800</lastBuildDate>
     <generator>Jekyll v3.9.5</generator>
     
       <item>
-        <title>分析ClassLoader工作机制-2</title>
-        <description>&lt;h5 id=&quot;如何加载class文件&quot;&gt;如何加载Class文件&lt;/h5&gt;
-
-&lt;p&gt;ClassLoader加载一个class文件到JVM是需要经过的步骤。&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;找到.class文件并把这个文件包含的字节码加载到内存中。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;字节码验证。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Class类数据结构分析及相应的内存分配。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;符号表的链接。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;初始化,类中静态属性和初始化赋值，以及静态代码块的执行。
-&lt;!--more--&gt;&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h5 id=&quot;加载字节码到内存&quot;&gt;加载字节码到内存&lt;/h5&gt;
-&lt;p&gt;在抽象类ClassLoader中并没有定义如何去加载，如何去找到指定类并把它的字节码加载到内存需要子类去实现，也就是要实现findClass()方法。看下常用的URLClassLoader是如何实现findClass()的，在URLClassLoader中通过一个URLClassPath类帮助取得要加载的class文件字节流，而这个URLClassPath定义了到哪里去找这个class文件，如果找到这个class文件，再读取它的byte字节流，通过调用defineClass()方法来创建类对象。
-来看下URLClassLoader的构造函数，如下&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;URLClassLoader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;URL&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;urls&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; 
-        &lt;span class=&quot;kd&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// this is to make the stack depth consistent with 1.1&lt;/span&gt;
-        &lt;span class=&quot;nc&quot;&gt;SecurityManager&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;security&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getSecurityManager&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;security&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;security&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;checkCreateClassLoader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;acc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AccessController&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;ucp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;URLClassPath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;urls&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;acc&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;        
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;发现必须要指定一个URL数组才能够创建URLCLassLoader对象，也就是必须要指定这个ClassLoader默认到哪个目录下去查找class文件。
-这个URL数组也是创建URLClassPath对象的必要条件，它是以URL的形式来表示ClassPath路径的。
-在创建URLClassPath对象是会根据传过来的URL数组中的路径来判断是文件还是jar包，根据路径的不同分别创建FileLoader或者JarLoader，或者使用默认的加载器。当JVM调用findClass时由这几个加载器来将class文件的字节码加载到内存中。&lt;/p&gt;
-
-&lt;p&gt;下表是每个ClassLoader的搜索路径参数：&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;ClassLoader类型&lt;/th&gt;
-      &lt;th&gt;参数选项&lt;/th&gt;
-      &lt;th&gt;说明&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;BootstrapClassLoader&lt;/td&gt;
-      &lt;td&gt;-Xbootclasspath: &lt;br /&gt;-Xbootclasspath/a:&lt;br /&gt;-Xbootclasspath/p:&lt;/td&gt;
-      &lt;td&gt;设置BootstrapClassLoader的搜索路径&lt;br /&gt;把路径添加到已存在BootstrapClassLoader搜索路径的后面&lt;br /&gt;把路径添加到已存在BootstrapClassLoader搜索路径的前面&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;ExtClassLoader&lt;/td&gt;
-      &lt;td&gt;-Djava.ext.dirs=&lt;/td&gt;
-      &lt;td&gt;设置ExtClassLoader的搜索路径&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;AppClassLoader&lt;/td&gt;
-      &lt;td&gt;-Djava.class.path= &lt;br /&gt; -classpath 或 -cp&lt;/td&gt;
-      &lt;td&gt;设置AppClassLoader的搜索路径&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h5 id=&quot;验证与解析&quot;&gt;验证与解析&lt;/h5&gt;
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;字节码验证，类装入器对于类的字节码要做许多检测，以确保格式正确，行为正确。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;类准备，在这个阶段准备代表每个类中定义的字段、方法和实现接口所必需的数据结构。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;解析，在这个阶段类装入器装入类所引用的其他所有类，如超类，接口，字段，方法签名，方法中使用的本地变量。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h5 id=&quot;初始化class对象&quot;&gt;初始化Class对象&lt;/h5&gt;
-&lt;p&gt;在类中包含的静态初始化器都被执行，在这一阶段末尾静态字段被初始化为默认值。&lt;/p&gt;
-
-&lt;h5 id=&quot;classloader能够完成的事情&quot;&gt;ClassLoader能够完成的事情&lt;/h5&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;在自定义路径下查找自定义的class类文件。也许需要的class文件并不总是在设置好的classpath下面，那么就要想办法找到这个类，在这种情况下需要自己实现一个ClassLoader。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;对要加载的类做特殊出来。如保证通过网络传输类的安全性，可以将类加密后再进行传输，在加载到JVM之前对类的字节码再解密，这个过程就可以放在自定义的ClassLoader中实现。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;可以定义类的实现机制，如果可以检查已加载的class文件是否被修改，如果修改了，可以重新加载这个类，从而实现热部署。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;JVM在加载类之前会检查请求的类是否已经被加载过，也就是调用findLoadedClass()方法查看是否能够返回类的实例。如果类已经加载了，再调用loadClass()方法会导致类冲突，如下异常：&lt;/p&gt;
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Exception in thread &quot;main&quot; java.lang.LinkageError: loader (instance of  com/github/zjiajun/java/core/classloader/PathClassLoader): attempted  duplicate class definition for name: &quot;com/github/zjiajun/java/core/classloader/ClassLoaderInheritance&quot;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;JVM表示一个类是否是同一个类会有两个条件。一是看这个类的完整类名是否一样，这个类名包括类所在的包名。二是看加载这个类的ClassLoader是否是同一个，这个说的同一个是指ClassLoader的实例是否是同一个实例。即便是同一个ClassLoader类的两个实例，加载同一个类也会不一样。要实现类的热部署可以创建不同的ClassLoader的实例对象，通过不同的实例来加载相同的类。
-使用不同的ClassLoader实例加载同一个类，会不会导致JVM的PermGen区无限增大呢？其实并不会，因为ClassLoader对象也会和其他对象一样，当没有对象再引用它以后，会被JVM回收。但需要注意的是，被这个ClassLoader加载的字节码会被保存在PermGen区，这个数据一般只是在执行FullGC时才会被回收的，所以应用在如果大量的动态加载，FullGC又不是太频繁，要注意PermGen区的大小，防止内存溢出。
-个人觉得FullGC的次数不应该很频繁，都知道FullGC会导致STW的，对于某些场景下的应用是接收不了的，应该适当的调整MaxPermSize。&lt;/p&gt;
-
+        <title>力扣125场双周赛</title>
+        <description>
 </description>
-        <pubDate>Wed, 29 Nov 2017 00:00:00 +0800</pubDate>
-        <link>https://thecoolboyhan.github.io/articles/2017-11/classloader-2</link>
-        <guid isPermaLink="true">https://thecoolboyhan.github.io/articles/2017-11/classloader-2</guid>
+        <pubDate>Mon, 04 Mar 2024 00:00:00 +0800</pubDate>
+        <link>https://thecoolboyhan.github.io/articles/2024-03/%E5%8A%9B%E6%89%A3125%E5%9C%BA%E5%8F%8C%E5%91%A8%E8%B5%9B</link>
+        <guid isPermaLink="true">https://thecoolboyhan.github.io/articles/2024-03/%E5%8A%9B%E6%89%A3125%E5%9C%BA%E5%8F%8C%E5%91%A8%E8%B5%9B</guid>
         
-        <category>java</category>
+        <category>周赛</category>
         
         
-        <category>java</category>
+        <category>周赛</category>
+        
+      </item>
+    
+      <item>
+        <title>原码、反码和补码</title>
+        <description>
+&lt;hr /&gt;
+&lt;p&gt;layout: post
+title:  关于计算机的原码，反码和补码
+categories: [java]
+tags: [java]
+—&lt;/p&gt;
+
+&lt;h2 id=&quot;关于计算机的原码反码和补码&quot;&gt;关于计算机的原码，反码和补码&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;h3 id=&quot;这是底层重点下面的各级规定必须背会&quot;&gt;这是底层重点，下面的各级规定必须背会&lt;/h3&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;二进制的最高位是符号位：0表示正数，1表示负数&lt;/li&gt;
+  &lt;li&gt;正数的原码，反码和补码都一样。&lt;/li&gt;
+  &lt;li&gt;负数的反码=它的原码&lt;strong&gt;符号位不变&lt;/strong&gt;，其他位取反（0-&amp;gt;1,1-&amp;gt;0）&lt;/li&gt;
+  &lt;li&gt;负数的补码=它的&lt;strong&gt;反码+1&lt;/strong&gt;，负数的反码=它的&lt;strong&gt;补码-1&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;0的反码，补码都是0&lt;/li&gt;
+  &lt;li&gt;java没有无符号数，换言之java中的数都是有符号的。&lt;/li&gt;
+  &lt;li&gt;在计算机运行时都是以&lt;strong&gt;补码的方式&lt;/strong&gt;运行的。&lt;/li&gt;
+  &lt;li&gt;当我们看它的运行结果时，要看它的原码&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;四个位运算符&quot;&gt;四个位运算符&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;按位与&amp;amp;：两位全为1，结果为1，否则为0&lt;/li&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;按位或&lt;/td&gt;
+          &lt;td&gt;：两位有一位为1，结果为1，否则为0&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+  &lt;li&gt;按位异或^：一个为0，一个为1，结果为1，否则为0&lt;/li&gt;
+  &lt;li&gt;按位取反~：0-&amp;gt;1,1-&amp;gt;0&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;举例&quot;&gt;举例&lt;/h4&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;2&amp;amp;3=?
+2的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0010&lt;/p&gt;
+
+    &lt;p&gt;3的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0011&lt;/p&gt;
+
+    &lt;p&gt;2&amp;amp;3的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0010&lt;/p&gt;
+
+    &lt;p&gt;2&amp;amp;3的原码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0010	(2)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;~-2=？
+-2的反码:&lt;/p&gt;
+
+    &lt;p&gt;1111 1111 1111 1111 1111 1111 1111 1101&lt;/p&gt;
+
+    &lt;p&gt;-2的补码：&lt;/p&gt;
+
+    &lt;p&gt;1111 1111 1111 1111 1111 1111 1111 1110&lt;/p&gt;
+
+    &lt;p&gt;取反：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0001&lt;/p&gt;
+
+    &lt;p&gt;原码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0001（1）&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;~2=?
+2的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0010&lt;/p&gt;
+
+    &lt;p&gt;取反：&lt;/p&gt;
+
+    &lt;p&gt;1111 1111 1111 1111 1111 1111 1111 1101&lt;/p&gt;
+
+    &lt;p&gt;补码转反码：&lt;/p&gt;
+
+    &lt;p&gt;1111 1111 1111 1111 1111 1111 1111 1100&lt;/p&gt;
+
+    &lt;p&gt;反码再变回原码：&lt;/p&gt;
+
+    &lt;p&gt;1000 0000 0000 0000 0000 0000 0000 0011（-3）&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;2&lt;/td&gt;
+          &lt;td&gt;3=？&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+
+    &lt;p&gt;2的补码:&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0010&lt;/p&gt;
+
+    &lt;p&gt;3的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0011&lt;/p&gt;
+
+    &lt;p&gt;或运算：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0011&lt;/p&gt;
+
+    &lt;p&gt;补码变反码变原码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0011（3）&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;2^3=?
+2的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0010&lt;/p&gt;
+
+    &lt;p&gt;3的补码：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0011&lt;/p&gt;
+
+    &lt;p&gt;异或运算：&lt;/p&gt;
+
+    &lt;p&gt;0000 0000 0000 0000 0000 0000 0000 0001（1）&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;位运算的妙用&quot;&gt;位运算的妙用&lt;/h4&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;可直接使用 &lt;em&gt;(m&amp;amp;1)==1?奇数：偶数&lt;/em&gt; 获得结果*，如：&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;kt&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)==&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;              &lt;span class=&quot;c1&quot;&gt;//true&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)==&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;            &lt;span class=&quot;c1&quot;&gt;//false&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;不用临时变量交换两个整数的值:&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;^&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;^&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;        &lt;span class=&quot;c1&quot;&gt;// b = 3&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;^&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;        &lt;span class=&quot;c1&quot;&gt;// a = 4&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;原理：&lt;/p&gt;
+
+  &lt;p&gt;异或0具有保持的特点，即1010^0000 = 1010;&lt;/p&gt;
+
+  &lt;p&gt;异或1具有翻转的特点，即1010^1111 = 0101;&lt;/p&gt;
+
+  &lt;p&gt;由此可推导：&lt;/p&gt;
+
+  &lt;p&gt;b^(a^b) = a&lt;/p&gt;
+
+  &lt;p&gt;a^(b^(a^b)) = b&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;三个位移运算符&quot;&gt;三个位移运算符&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;算数右移»:低位溢出。符号位不变，并用符号位补溢出的高位。&lt;/li&gt;
+  &lt;li&gt;算数左移«：符号位不变，低位左移补0&lt;/li&gt;
+  &lt;li&gt;逻辑右移»&amp;gt;：也叫无符号右移，低位溢出高位补0&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;  	&lt;span class=&quot;c1&quot;&gt;//相当于1/2/2&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;		&lt;span class=&quot;c1&quot;&gt;//相当于1*2*2&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+        <pubDate>Fri, 01 Mar 2024 00:00:00 +0800</pubDate>
+        <link>https://thecoolboyhan.github.io/articles/2024-03/%E5%8E%9F%E7%A0%81-%E5%8F%8D%E7%A0%81%E5%92%8C%E8%A1%A5%E7%A0%81</link>
+        <guid isPermaLink="true">https://thecoolboyhan.github.io/articles/2024-03/%E5%8E%9F%E7%A0%81-%E5%8F%8D%E7%A0%81%E5%92%8C%E8%A1%A5%E7%A0%81</guid>
+        
         
       </item>
     
