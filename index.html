@@ -154,6 +154,524 @@
   <header class="post-header">
     <p class="post-meta">
       <span class="post-date">
+        25 MAR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#java">java</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="post-title" title="关于java文件读写io方式">关于java文件读写io方式</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="java常用的几种io性能对比">Java常用的几种IO性能对比</h1>
+
+<blockquote>
+  <p>最近最常做的工作就是各种文件读写操作，所以来真实的看看，各种Io方式之间的性能对比</p>
+</blockquote>
+
+<h1 id="fileoutputstream与bufferedwriter">FileOutputStream与BufferedWriter</h1>
+
+<blockquote>
+  <p>两种区别不大，且与使用NIO来写文件速度区别也不大</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">writeBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+    <span class="nc">BufferedWriter</span> <span class="n">writer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BufferedWriter</span><span class="o">(</span><span class="k">new</span> <span class="nc">OutputStreamWriter</span><span class="o">(</span><span class="n">fos</span><span class="o">));</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1000000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word2048</span><span class="o">);</span>
+        <span class="n">i</span><span class="o">--;</span>
+    <span class="o">}</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+    <span class="n">fos</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="bytebuffer与直接内存">ByteBuffer与直接内存</h1>
+
+<blockquote>
+  <p>采不采用直接内存几乎没有区别</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">byteBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+    <span class="nc">FileChannel</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">fos</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">datas</span> <span class="o">=</span> <span class="n">word2048</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+    <span class="nc">ByteBuffer</span> <span class="n">bbuf</span> <span class="o">=</span> <span class="nc">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="mi">4800</span> <span class="o">*</span> <span class="mi">100</span><span class="o">);</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">10000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="n">bbuf</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">datas</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">bbuf</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+        <span class="n">fc</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">bbuf</span><span class="o">);</span>
+        <span class="n">bbuf</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+       <span class="n">i</span><span class="o">--;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="filechannel与文件空洞">FileChannel与文件空洞</h1>
+
+<blockquote>
+  <p>NIO中，FileChannel可以决定文件写入的位置，通常用这样来产生文件空洞</p>
+</blockquote>
+
+<h1 id="mappedbytebuffer">MappedByteBuffer</h1>
+
+<blockquote>
+  <p>使用直接内存映射，来提升IO性能</p>
+</blockquote>
+
+<p>这个有一个重大bug，关闭FileChannel后，MappedByteBuffer不会释放所持有的文件。到之后需要如果再对写入的文件进行操作时，会导致没有权限。MappedByteBuffer所持有的内存需要手动来释放。释放方式有几种：</p>
+
+<ol>
+  <li>直接调用System.gc()；</li>
+  <li>利用反射来释放</li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Method</span> <span class="n">m</span> <span class="o">=</span> <span class="nc">FileChannelImpl</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getDeclaredMethod</span><span class="o">(</span><span class="s">"unmap"</span><span class="o">,</span>
+                    <span class="nc">MappedByteBuffer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+            <span class="n">m</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+            <span class="n">m</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="nc">FileChannelImpl</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">buffer</span><span class="o">);</span>
+</code></pre></div></div>
+
+<ol>
+  <li></li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="nc">AccessController</span><span class="o">.</span><span class="na">doPrivileged</span><span class="o">(</span><span class="k">new</span> <span class="nc">PrivilegedAction</span><span class="o">()</span> <span class="o">{</span>
+     <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+       <span class="k">try</span> <span class="o">{</span>
+         <span class="nc">Method</span> <span class="n">getCleanerMethod</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getMethod</span><span class="o">(</span><span class="s">"cleaner"</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Class</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+         <span class="n">getCleanerMethod</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+         <span class="n">sun</span><span class="o">.</span><span class="na">misc</span><span class="o">.</span><span class="na">Cleaner</span> <span class="n">cleaner</span> <span class="o">=</span> <span class="o">(</span><span class="n">sun</span><span class="o">.</span><span class="na">misc</span><span class="o">.</span><span class="na">Cleaner</span><span class="o">)</span> 
+         <span class="n">getCleanerMethod</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">byteBuffer</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Object</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+         <span class="n">cleaner</span><span class="o">.</span><span class="na">clean</span><span class="o">();</span>
+       <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+       <span class="o">}</span>
+       <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+     <span class="o">}</span>
+   <span class="o">});</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>2和3两种释放方式，可能会根据jdk的版本而有所不同。（实测1.8是无法通过反射释放内存的）</p>
+</blockquote>
+
+<ul>
+  <li>与传统Io的区别</li>
+</ul>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-3017:33:26-1711791206165.png" alt="2024-3-3017:33:26-1711791206165.png" /></p>
+
+<p>内存文件映射的方式：</p>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-3017:34:18-1711791258547.png" alt="2024-3-3017:34:18-1711791258547.png" /></p>
+
+<ul>
+  <li>实例代码</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">mappedByteBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">RandomAccessFile</span> <span class="n">acf</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RandomAccessFile</span><span class="o">(</span><span class="n">file</span><span class="o">,</span> <span class="s">"rw"</span><span class="o">);</span>
+    <span class="nc">FileChannel</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">acf</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">bs</span> <span class="o">=</span> <span class="n">word2048</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">bs</span><span class="o">.</span><span class="na">length</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">;</span>
+    <span class="kt">long</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">2000000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="nc">MappedByteBuffer</span> <span class="n">mbuf</span> <span class="o">=</span> <span class="n">fc</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nc">FileChannel</span><span class="o">.</span><span class="na">MapMode</span><span class="o">.</span><span class="na">READ_WRITE</span><span class="o">,</span> <span class="n">offset</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">1000</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="n">mbuf</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">bs</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="o">+</span><span class="n">len</span><span class="o">;</span>
+        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">-</span><span class="mi">1000</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">fc</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="利用apache-common向tar中压缩文件">利用apache-common向tar中压缩文件</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//    打一个tar压缩</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">tar</span><span class="o">(</span><span class="nc">File</span> <span class="n">srcDir</span><span class="o">,</span><span class="nc">String</span> <span class="n">targetFile</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+        <span class="k">try</span><span class="o">(</span><span class="nc">TarArchiveOutputStream</span> <span class="n">tos</span><span class="o">=</span><span class="k">new</span> <span class="nc">TarArchiveOutputStream</span><span class="o">(</span><span class="nc">Files</span><span class="o">.</span><span class="na">newOutputStream</span><span class="o">(</span><span class="nc">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">targetFile</span><span class="o">)))){</span>
+            <span class="n">tarRecursive</span><span class="o">(</span><span class="n">tos</span><span class="o">,</span><span class="n">srcDir</span><span class="o">,</span><span class="s">""</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">tarRecursive</span><span class="o">(</span><span class="nc">TarArchiveOutputStream</span> <span class="n">tos</span><span class="o">,</span><span class="nc">File</span> <span class="n">srcFile</span><span class="o">,</span><span class="nc">String</span> <span class="nc">BasePath</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+<span class="c1">//        递归打包文件夹</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">srcFile</span><span class="o">.</span><span class="na">isDirectory</span><span class="o">()){</span>
+            <span class="nc">File</span><span class="o">[]</span> <span class="n">files</span><span class="o">=</span><span class="n">srcFile</span><span class="o">.</span><span class="na">listFiles</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">nextBasePath</span> <span class="o">=</span> <span class="nc">BasePath</span> <span class="o">+</span> <span class="n">srcFile</span><span class="o">.</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">"/"</span><span class="o">;</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">files</span><span class="o">==</span><span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">TarArchiveEntry</span> <span class="n">entry</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TarArchiveEntry</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span> <span class="n">nextBasePath</span><span class="o">);</span>
+                <span class="n">tos</span><span class="o">.</span><span class="na">putArchiveEntry</span><span class="o">(</span><span class="n">entry</span><span class="o">);</span>
+            <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+                <span class="k">for</span> <span class="o">(</span><span class="nc">File</span> <span class="n">file</span> <span class="o">:</span> <span class="n">files</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">tarRecursive</span><span class="o">(</span><span class="n">tos</span><span class="o">,</span><span class="n">file</span><span class="o">,</span><span class="n">nextBasePath</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            <span class="kt">int</span><span class="o">[][]</span> <span class="n">nums</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">2</span><span class="o">][</span><span class="mi">2</span><span class="o">];</span>
+            <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">nums</span><span class="o">,</span> <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="o">[</span><span class="mi">0</span><span class="o">]-</span><span class="n">b</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+            <span class="nc">TarArchiveEntry</span> <span class="n">entry</span><span class="o">=</span><span class="k">new</span> <span class="nc">TarArchiveEntry</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span><span class="n">srcFile</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+            <span class="n">tos</span><span class="o">.</span><span class="na">putArchiveEntry</span><span class="o">(</span><span class="n">entry</span><span class="o">);</span>
+            <span class="nc">FileUtils</span><span class="o">.</span><span class="na">copyFile</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span><span class="n">tos</span><span class="o">);</span>
+            <span class="n">tos</span><span class="o">.</span><span class="na">closeArchiveEntry</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
+        19 MAR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#周赛">周赛</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-03/%E5%8A%9B%E6%89%A3%E7%AC%AC388%E5%9C%BA%E5%91%A8%E8%B5%9B" class="post-title" title="力扣388场周赛">力扣388场周赛</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="13074-重新分装苹果">1、<a href="https://leetcode.cn/problems/apple-redistribution-into-boxes/">3074. 重新分装苹果</a></h1>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 的数组 <code class="language-plaintext highlighter-rouge">apple</code> 和另一个长度为 <code class="language-plaintext highlighter-rouge">m</code> 的数组 <code class="language-plaintext highlighter-rouge">capacity</code> 。</p>
+
+<p>一共有 <code class="language-plaintext highlighter-rouge">n</code> 个包裹，其中第 <code class="language-plaintext highlighter-rouge">i</code> 个包裹中装着 <code class="language-plaintext highlighter-rouge">apple[i]</code> 个苹果。同时，还有 <code class="language-plaintext highlighter-rouge">m</code> 个箱子，第 <code class="language-plaintext highlighter-rouge">i</code> 个箱子的容量为 <code class="language-plaintext highlighter-rouge">capacity[i]</code> 个苹果。</p>
+
+<p>请你选择一些箱子来将这 <code class="language-plaintext highlighter-rouge">n</code> 个包裹中的苹果重新分装到箱子中，返回你需要选择的箱子的 <strong>最小</strong> 数量。</p>
+
+<p><strong>注意</strong>，同一个包裹中的苹果可以分装到不同的箱子中。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：apple = [1,3,2], capacity = [4,3,1,5,2]
+输出：2
+解释：使用容量为 4 和 5 的箱子。
+总容量大于或等于苹果的总数，所以可以完成重新分装。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：apple = [5,5,5], capacity = [2,4,2,7]
+输出：4
+解释：需要使用所有箱子。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n == apple.length &lt;= 50</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= m == capacity.length &lt;= 50</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= apple[i], capacity[i] &lt;= 50</code></li>
+  <li>输入数据保证可以将包裹中的苹果重新分装到箱子中。</li>
+</ul>
+
+<blockquote>
+  <p>傻瓜题</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">minimumBoxes</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">apple</span><span class="o">,</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">capacity</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">sum</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="nl">num:</span><span class="n">apple</span><span class="o">){</span>
+            <span class="n">sum</span><span class="o">+=</span><span class="n">num</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">capacity</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">capacity</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&gt;=</span><span class="mi">0</span><span class="o">&amp;&amp;</span><span class="n">sum</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">--){</span>
+            <span class="n">sum</span><span class="o">-=</span><span class="n">capacity</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="n">res</span><span class="o">++;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>rust</li>
+</ul>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="n">Solution</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">minimum_boxes</span><span class="p">(</span><span class="n">apple</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">,</span> <span class="k">mut</span> <span class="n">capacity</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">i32</span> <span class="p">{</span>
+        <span class="n">capacity</span><span class="nf">.sort_unstable_by_key</span><span class="p">(|</span><span class="n">x</span><span class="p">|</span> <span class="o">-</span><span class="n">x</span><span class="p">);</span>
+        <span class="n">capacity</span>
+            <span class="nf">.into_iter</span><span class="p">()</span>
+            <span class="nf">.scan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">|</span><span class="n">s</span><span class="p">,</span> <span class="n">x</span><span class="p">|</span> <span class="p">{</span> <span class="o">*</span><span class="n">s</span> <span class="o">+=</span> <span class="n">x</span><span class="p">;</span> <span class="nf">Some</span><span class="p">(</span><span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">})</span>
+            <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
+            <span class="nf">.partition_point</span><span class="p">(|</span><span class="n">x</span><span class="p">|</span> <span class="o">*</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">apple</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.sum</span><span class="p">())</span> <span class="k">as</span> <span class="nb">i32</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">}</span>   
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="23075-幸福值最大化的选择方案">2、<a href="https://leetcode.cn/problems/maximize-happiness-of-selected-children/">3075. 幸福值最大化的选择方案</a></h1>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 的数组 <code class="language-plaintext highlighter-rouge">happiness</code> ，以及一个 <strong>正整数</strong> <code class="language-plaintext highlighter-rouge">k</code> 。</p>
+
+<p><code class="language-plaintext highlighter-rouge">n</code> 个孩子站成一队，其中第 <code class="language-plaintext highlighter-rouge">i</code> 个孩子的 <strong>幸福值</strong> 是 <code class="language-plaintext highlighter-rouge">happiness[i]</code> 。你计划组织 <code class="language-plaintext highlighter-rouge">k</code> 轮筛选从这 <code class="language-plaintext highlighter-rouge">n</code> 个孩子中选出 <code class="language-plaintext highlighter-rouge">k</code> 个孩子。</p>
+
+<p>在每一轮选择一个孩子时，所有 <strong>尚未</strong> 被选中的孩子的 <strong>幸福值</strong> 将减少 <code class="language-plaintext highlighter-rouge">1</code> 。注意，幸福值 <strong>不能</strong> 变成负数，且只有在它是正数的情况下才会减少。</p>
+
+<p>选择 <code class="language-plaintext highlighter-rouge">k</code> 个孩子，并使你选中的孩子幸福值之和最大，返回你能够得到的 <strong>最大值</strong> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：happiness = [1,2,3], k = 2
+输出：4
+解释：按以下方式选择 2 个孩子：
+- 选择幸福值为 3 的孩子。剩余孩子的幸福值变为 [0,1] 。
+- 选择幸福值为 1 的孩子。剩余孩子的幸福值变为 [0] 。注意幸福值不能小于 0 。
+所选孩子的幸福值之和为 3 + 1 = 4 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：happiness = [1,1,1,1], k = 2
+输出：1
+解释：按以下方式选择 2 个孩子：
+- 选择幸福值为 1 的任意一个孩子。剩余孩子的幸福值变为 [0,0,0] 。
+- 选择幸福值为 0 的孩子。剩余孩子的幸福值变为 [0,0] 。
+所选孩子的幸福值之和为 1 + 0 = 1 。
+</code></pre></div></div>
+
+<p><strong>示例 3：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：happiness = [2,3,4,5], k = 1
+输出：5
+解释：按以下方式选择 1 个孩子：
+- 选择幸福值为 5 的孩子。剩余孩子的幸福值变为 [1,2,3] 。
+所选孩子的幸福值之和为 5 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n == happiness.length &lt;= 2 * 105</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= happiness[i] &lt;= 108</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= k &lt;= n</code></li>
+</ul>
+
+<blockquote>
+  <p>也是一个简单题</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">maximumHappinessSum</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">happiness</span><span class="o">,</span> <span class="kt">int</span> <span class="n">k</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">happiness</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">k</span><span class="o">&amp;&amp;</span><span class="n">happiness</span><span class="o">[</span><span class="n">happiness</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="o">]-</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="n">res</span><span class="o">+=</span><span class="n">happiness</span><span class="o">[</span><span class="n">happiness</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="o">]-</span><span class="n">i</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>rust：</li>
+</ul>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="n">Solution</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">maximum_happiness_sum</span><span class="p">(</span><span class="n">happiness</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">i32</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">i64</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">h</span> <span class="o">=</span> <span class="n">happiness</span><span class="p">;</span>
+        <span class="n">h</span><span class="nf">.sort_unstable_by</span><span class="p">(|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">|</span> <span class="n">b</span><span class="nf">.cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">));</span>
+
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">ans</span> <span class="o">=</span> <span class="mi">0i64</span><span class="p">;</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0i64</span><span class="p">;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">k</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">h</span><span class="p">[</span><span class="n">i</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span> <span class="p">{</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            
+            <span class="n">ans</span> <span class="o">+=</span> <span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">i</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span> <span class="k">as</span> <span class="nb">i64</span> <span class="o">-</span> <span class="n">i</span> <span class="k">as</span> <span class="nb">i64</span><span class="p">)</span><span class="nf">.max</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="n">ans</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="33076-数组中的最短非公共子字符串">3、<a href="https://leetcode.cn/problems/shortest-uncommon-substring-in-an-array/">3076. 数组中的最短非公共子字符串</a></h1>
+
+<p>中等</p>
+
+<p>给你一个数组 <code class="language-plaintext highlighter-rouge">arr</code> ，数组中有 <code class="language-plaintext highlighter-rouge">n</code> 个 <strong>非空</strong> 字符串。</p>
+
+<p>请你求出一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 的字符串 <code class="language-plaintext highlighter-rouge">answer</code> ，满足：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">answer[i]</code> 是 <code class="language-plaintext highlighter-rouge">arr[i]</code> <strong>最短</strong> 的子字符串，且它不是 <code class="language-plaintext highlighter-rouge">arr</code> 中其他任何字符串的子字符串。如果有多个这样的子字符串存在，<code class="language-plaintext highlighter-rouge">answer[i]</code> 应该是它们中字典序最小的一个。如果不存在这样的子字符串，<code class="language-plaintext highlighter-rouge">answer[i]</code> 为空字符串。</li>
+</ul>
+
+<p>请你返回数组 <code class="language-plaintext highlighter-rouge">answer</code> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：arr = ["cab","ad","bad","c"]
+输出：["ab","","ba",""]
+解释：求解过程如下：
+- 对于字符串 "cab" ，最短没有在其他字符串中出现过的子字符串是 "ca" 或者 "ab" ，我们选择字典序更小的子字符串，也就是 "ab" 。
+- 对于字符串 "ad" ，不存在没有在其他字符串中出现过的子字符串。
+- 对于字符串 "bad" ，最短没有在其他字符串中出现过的子字符串是 "ba" 。
+- 对于字符串 "c" ，不存在没有在其他字符串中出现过的子字符串。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：arr = ["abc","bcd","abcd"]
+输出：["","","abcd"]
+解释：求解过程如下：
+- 对于字符串 "abc" ，不存在没有在其他字符串中出现过的子字符串。
+- 对于字符串 "bcd" ，不存在没有在其他字符串中出现过的子字符串。
+- 对于字符串 "abcd" ，最短没有在其他字符串中出现过的子字符串是 "abcd" 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">n == arr.length</code></li>
+  <li><code class="language-plaintext highlighter-rouge">2 &lt;= n &lt;= 100</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= arr[i].length &lt;= 20</code></li>
+  <li><code class="language-plaintext highlighter-rouge">arr[i]</code> 只包含小写英文字母。</li>
+</ul>
+
+<blockquote>
+  <p>就是一道单纯的暴力题，虽然题目暴力，但是考验代码功底，初学者很容易写的又臭又长</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nc">String</span><span class="o">[]</span> <span class="nf">shortestSubstrings</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">arr</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 茶神简洁写法</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="nc">String</span><span class="o">[]</span> <span class="n">ans</span><span class="o">=</span><span class="k">new</span> <span class="nc">String</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="kt">int</span> <span class="n">m</span><span class="o">=</span><span class="n">arr</span><span class="o">[</span><span class="n">i</span><span class="o">].</span><span class="na">length</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">res</span><span class="o">=</span><span class="s">""</span><span class="o">;</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">size</span><span class="o">&lt;=</span><span class="n">m</span><span class="o">&amp;&amp;</span><span class="n">res</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">();</span><span class="n">size</span><span class="o">++){</span>
+                <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">size</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;=</span><span class="n">m</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                    <span class="nc">String</span> <span class="n">t</span><span class="o">=</span><span class="n">arr</span><span class="o">[</span><span class="n">i</span><span class="o">].</span><span class="na">substring</span><span class="o">(</span><span class="n">j</span><span class="o">-</span><span class="n">size</span><span class="o">,</span><span class="n">j</span><span class="o">);</span>
+                    <span class="k">if</span><span class="o">((</span><span class="n">res</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()||</span><span class="n">t</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">res</span><span class="o">)&lt;</span><span class="mi">0</span><span class="o">)&amp;&amp;</span><span class="n">check</span><span class="o">(</span><span class="n">arr</span><span class="o">,</span><span class="n">i</span><span class="o">,</span><span class="n">t</span><span class="o">)){</span>
+                        <span class="n">res</span><span class="o">=</span><span class="n">t</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+
+            <span class="n">ans</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">res</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">ans</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">check</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">arr</span><span class="o">,</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span><span class="nc">String</span> <span class="n">sub</span><span class="o">){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">arr</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">j</span><span class="o">!=</span><span class="n">i</span><span class="o">&amp;&amp;</span><span class="n">arr</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">contains</span><span class="o">(</span><span class="n">sub</span><span class="o">)){</span>
+                <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="43077-k-个不相交子数组的最大能量值">4、<a href="https://leetcode.cn/problems/maximum-strength-of-k-disjoint-subarrays/">3077. K 个不相交子数组的最大能量值</a></h1>
+
+<p>困难</p>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 下标从 <strong>0</strong> 开始的整数数组 <code class="language-plaintext highlighter-rouge">nums</code> 和一个 <strong>正奇数</strong> 整数 <code class="language-plaintext highlighter-rouge">k</code> 。</p>
+
+<p><code class="language-plaintext highlighter-rouge">x</code> 个子数组的能量值定义为 <code class="language-plaintext highlighter-rouge">strength = sum[1] * x - sum[2] * (x - 1) + sum[3] * (x - 2) - sum[4] * (x - 3) + ... + sum[x] * 1</code> ，其中 <code class="language-plaintext highlighter-rouge">sum[i]</code> 是第 <code class="language-plaintext highlighter-rouge">i</code> 个子数组的和。更正式的，能量值是满足 <code class="language-plaintext highlighter-rouge">1 &lt;= i &lt;= x</code> 的所有 <code class="language-plaintext highlighter-rouge">i</code> 对应的 <code class="language-plaintext highlighter-rouge">(-1)i+1 * sum[i] * (x - i + 1)</code> 之和。</p>
+
+<p>你需要在 <code class="language-plaintext highlighter-rouge">nums</code> 中选择 <code class="language-plaintext highlighter-rouge">k</code> 个 <strong>不相交</strong><strong>子数组</strong> ，使得 <strong>能量值最大</strong> 。</p>
+
+<p>请你返回可以得到的 <strong>最大</strong><strong>能量值</strong> 。</p>
+
+<p><strong>注意</strong>，选出来的所有子数组 <strong>不</strong> 需要覆盖整个数组。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [1,2,3,-1,2], k = 3
+输出：22
+解释：选择 3 个子数组的最好方式是选择：nums[0..2] ，nums[3..3] 和 nums[4..4] 。能量值为 (1 + 2 + 3) * 3 - (-1) * 2 + 2 * 1 = 22 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [12,-2,-2,-2,-2], k = 5
+输出：64
+解释：唯一一种选 5 个不相交子数组的方案是：nums[0..0] ，nums[1..1] ，nums[2..2] ，nums[3..3] 和 nums[4..4] 。能量值为 12 * 5 - (-2) * 4 + (-2) * 3 - (-2) * 2 + (-2) * 1 = 64 。
+</code></pre></div></div>
+
+<p><strong>示例 3：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [-1,-2,-3], k = 1
+输出：-1
+解释：选择 1 个子数组的最优方案是：nums[0..0] 。能量值为 -1 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n &lt;= 104</code></li>
+  <li><code class="language-plaintext highlighter-rouge">-109 &lt;= nums[i] &lt;= 109</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= k &lt;= n</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n * k &lt;= 106</code></li>
+  <li><code class="language-plaintext highlighter-rouge">k</code> 是奇数。</li>
+</ul>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
         9 MAR 2024
       </span>
       
