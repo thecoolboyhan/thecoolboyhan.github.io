@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Spring概览spring的设计理念  spring框架的指导原则  在每个层面上提供选择。Spring让你尽可能晚的推迟设计决策。例如：你可以通过配置来切换持久化供应商，而不需要改变你的代码。对于许多其他基础设施问题和与第三方API的集成也是如此。  适应不同的观点。Spring拥抱灵活性，对事情应该如何做不...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="spring中文说明文档有感 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="spring中文说明文档有感 | thecoolboyhan">
+  <meta name="twitter:description" content="Spring概览spring的设计理念  spring框架的指导原则  在每个层面上提供选择。Spring让你尽可能晚的推迟设计决策。例如：你可以通过配置来切换持久化供应商，而不需要改变你的代码。对于许多其他基础设施问题和与第三方API的集成也是如此。  适应不同的观点。Spring拥抱灵活性，对事情应该如何做不...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="spring中文说明文档有感 | thecoolboyhan">
+  <meta property="og:description" content="Spring概览spring的设计理念  spring框架的指导原则  在每个层面上提供选择。Spring让你尽可能晚的推迟设计决策。例如：你可以通过配置来切换持久化供应商，而不需要改变你的代码。对于许多其他基础设施问题和与第三方API的集成也是如此。  适应不同的观点。Spring拥抱灵活性，对事情应该如何做不...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>spring中文说明文档有感 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="spring中文说明文档有感">spring中文说明文档有感</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        3 APR 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h1 id="spring概览">Spring概览</h1>
+
+<h2 id="spring的设计理念">spring的设计理念</h2>
+
+<blockquote>
+  <p>spring框架的指导原则</p>
+</blockquote>
+
+<ul>
+  <li>在每个层面上提供选择。Spring让你尽可能晚的推迟设计决策。例如：你可以通过配置来切换持久化供应商，而不需要改变你的代码。对于许多其他基础设施问题和与第三方API的集成也是如此。</li>
+  <li>适应不同的观点。Spring拥抱灵活性，对事情应该如何做不持意见。它支持具有不同视角的广泛的应用需求。</li>
+  <li>保持强大的后向兼容性。Spring的演进是经过精心管理的，在不同的版本之间几乎不存在破坏性的变化。Spring支持一系列精心选择的JDK版本和第三方库，以方便维护依赖Spring的应用程序和库。</li>
+  <li>关心API的设计。Spring团队花了很多心思和时间来制作直观的API，并且在很多版本和很多年中都能保持良好的效果。</li>
+  <li>为代码质量设定高标准。Spring框架非常强调有意义的、最新的和准确的javadoc。它是为数不多的可以宣称代码结构干净、包与包之间没有循环依赖关系的项目之一。</li>
+</ul>
+
+<h1 id="核心技术">核心技术</h1>
+
+<blockquote>
+  <p>IOC、AOP、AOT</p>
+</blockquote>
+
+<h1 id="ioc容器">IOC容器</h1>
+
+<h2 id="简介">简介</h2>
+
+<p>IOC也被称为依赖注入（DI）。它是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义其依赖关系（即它们与之合作的其他对象）。然后容器在创建bean时注入这些依赖关系。这个过程从根本上说是Bean本身通过使用直接构建类或诸如服务定位模式的机制来控制其依赖关系的实例化或位置的逆过程（因此被称为控制翻转）。</p>
+
+<p>org.springframework.beans 和 org.springframework.context 包是Spring Framework的IoC容器的基础。</p>
+
+<p>BeanFactory接口提供了一种高级配置机制，能够管理任何类型的对象。ApplicationContext是BeanFactory的一个子接口。它增加了：</p>
+
+<ul>
+  <li>更容易和Spring的AOP功能集成</li>
+  <li>Message resource处理（用于国际化）</li>
+  <li>事件发布</li>
+  <li>应用层的特定上下文，如WebApplicationContext，用于web应用</li>
+</ul>
+
+<blockquote>
+  <p>在Spring中，构成应用程序的骨干并由Spring IoC容器管理的对象被称为Bean。Bean是一个由Spring IOC容器实例化、组装和管理的对象。Bean以及它们之间的依赖关系都反应在容器使用的配置元数据中。</p>
+</blockquote>
+
+<h2 id="ioc容器概述">IOC容器概述</h2>
+
+<p>org.springframework.context.ApplicationContext接口代表SpringIoC容器，负责实例化、配置和组装Bean。容器通过读取配置元素数据来获取关于要实例化、配置和组装哪些对象的指示。配置元素以XML、Java注解或Java代码表示。</p>
+
+<ul>
+  <li>基于注解的配置</li>
+</ul>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" target="_blank">spring中文说明文档有感</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
