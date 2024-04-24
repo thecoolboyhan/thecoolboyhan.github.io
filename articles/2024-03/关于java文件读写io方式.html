@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Java常用的几种IO性能对比  最近最常做的工作就是各种文件读写操作，所以来真实的看看，各种Io方式之间的性能对比FileOutputStream与BufferedWriter  两种区别不大，且与使用NIO来写文件速度区别也不大private void writeBuffer(File file) throw...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="关于java文件读写io方式 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="关于java文件读写io方式 | thecoolboyhan">
+  <meta name="twitter:description" content="Java常用的几种IO性能对比  最近最常做的工作就是各种文件读写操作，所以来真实的看看，各种Io方式之间的性能对比FileOutputStream与BufferedWriter  两种区别不大，且与使用NIO来写文件速度区别也不大private void writeBuffer(File file) throw...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="关于java文件读写io方式 | thecoolboyhan">
+  <meta property="og:description" content="Java常用的几种IO性能对比  最近最常做的工作就是各种文件读写操作，所以来真实的看看，各种Io方式之间的性能对比FileOutputStream与BufferedWriter  两种区别不大，且与使用NIO来写文件速度区别也不大private void writeBuffer(File file) throw...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>关于java文件读写io方式 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="关于java文件读写io方式">关于java文件读写io方式</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        25 MAR 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    4 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h1 id="java常用的几种io性能对比">Java常用的几种IO性能对比</h1>
+
+<blockquote>
+  <p>最近最常做的工作就是各种文件读写操作，所以来真实的看看，各种Io方式之间的性能对比</p>
+</blockquote>
+
+<h1 id="fileoutputstream与bufferedwriter">FileOutputStream与BufferedWriter</h1>
+
+<blockquote>
+  <p>两种区别不大，且与使用NIO来写文件速度区别也不大</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">writeBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+    <span class="nc">BufferedWriter</span> <span class="n">writer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BufferedWriter</span><span class="o">(</span><span class="k">new</span> <span class="nc">OutputStreamWriter</span><span class="o">(</span><span class="n">fos</span><span class="o">));</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1000000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word2048</span><span class="o">);</span>
+        <span class="n">i</span><span class="o">--;</span>
+    <span class="o">}</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+    <span class="n">fos</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="bytebuffer与直接内存">ByteBuffer与直接内存</h1>
+
+<blockquote>
+  <p>采不采用直接内存几乎没有区别</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">byteBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+    <span class="nc">FileChannel</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">fos</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">datas</span> <span class="o">=</span> <span class="n">word2048</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+    <span class="nc">ByteBuffer</span> <span class="n">bbuf</span> <span class="o">=</span> <span class="nc">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="mi">4800</span> <span class="o">*</span> <span class="mi">100</span><span class="o">);</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">10000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="n">bbuf</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">datas</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">bbuf</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+        <span class="n">fc</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">bbuf</span><span class="o">);</span>
+        <span class="n">bbuf</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+       <span class="n">i</span><span class="o">--;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="filechannel与文件空洞">FileChannel与文件空洞</h1>
+
+<blockquote>
+  <p>NIO中，FileChannel可以决定文件写入的位置，通常用这样来产生文件空洞</p>
+</blockquote>
+
+<h1 id="mappedbytebuffer">MappedByteBuffer</h1>
+
+<blockquote>
+  <p>使用直接内存映射，来提升IO性能</p>
+</blockquote>
+
+<p>这个有一个重大bug，关闭FileChannel后，MappedByteBuffer不会释放所持有的文件。到之后需要如果再对写入的文件进行操作时，会导致没有权限。MappedByteBuffer所持有的内存需要手动来释放。释放方式有几种：</p>
+
+<ol>
+  <li>直接调用System.gc()；</li>
+  <li>利用反射来释放</li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Method</span> <span class="n">m</span> <span class="o">=</span> <span class="nc">FileChannelImpl</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getDeclaredMethod</span><span class="o">(</span><span class="s">"unmap"</span><span class="o">,</span>
+                    <span class="nc">MappedByteBuffer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+            <span class="n">m</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+            <span class="n">m</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="nc">FileChannelImpl</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">buffer</span><span class="o">);</span>
+</code></pre></div></div>
+
+<ol>
+  <li></li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="nc">AccessController</span><span class="o">.</span><span class="na">doPrivileged</span><span class="o">(</span><span class="k">new</span> <span class="nc">PrivilegedAction</span><span class="o">()</span> <span class="o">{</span>
+     <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+       <span class="k">try</span> <span class="o">{</span>
+         <span class="nc">Method</span> <span class="n">getCleanerMethod</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getMethod</span><span class="o">(</span><span class="s">"cleaner"</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Class</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+         <span class="n">getCleanerMethod</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+         <span class="n">sun</span><span class="o">.</span><span class="na">misc</span><span class="o">.</span><span class="na">Cleaner</span> <span class="n">cleaner</span> <span class="o">=</span> <span class="o">(</span><span class="n">sun</span><span class="o">.</span><span class="na">misc</span><span class="o">.</span><span class="na">Cleaner</span><span class="o">)</span> 
+         <span class="n">getCleanerMethod</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">byteBuffer</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Object</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+         <span class="n">cleaner</span><span class="o">.</span><span class="na">clean</span><span class="o">();</span>
+       <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+       <span class="o">}</span>
+       <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+     <span class="o">}</span>
+   <span class="o">});</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>2和3两种释放方式，可能会根据jdk的版本而有所不同。（实测1.8是无法通过反射释放内存的）</p>
+</blockquote>
+
+<ul>
+  <li>与传统Io的区别</li>
+</ul>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-3017:33:26-1711791206165.png" alt="2024-3-3017:33:26-1711791206165.png" /></p>
+
+<p>内存文件映射的方式：</p>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-3017:34:18-1711791258547.png" alt="2024-3-3017:34:18-1711791258547.png" /></p>
+
+<ul>
+  <li>实例代码</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">mappedByteBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">RandomAccessFile</span> <span class="n">acf</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RandomAccessFile</span><span class="o">(</span><span class="n">file</span><span class="o">,</span> <span class="s">"rw"</span><span class="o">);</span>
+    <span class="nc">FileChannel</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">acf</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">bs</span> <span class="o">=</span> <span class="n">word2048</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">bs</span><span class="o">.</span><span class="na">length</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">;</span>
+    <span class="kt">long</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">2000000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="nc">MappedByteBuffer</span> <span class="n">mbuf</span> <span class="o">=</span> <span class="n">fc</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nc">FileChannel</span><span class="o">.</span><span class="na">MapMode</span><span class="o">.</span><span class="na">READ_WRITE</span><span class="o">,</span> <span class="n">offset</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">1000</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="n">mbuf</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">bs</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="o">+</span><span class="n">len</span><span class="o">;</span>
+        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">-</span><span class="mi">1000</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">fc</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="利用apache-common向tar中压缩文件">利用apache-common向tar中压缩文件</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//    打一个tar压缩</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">tar</span><span class="o">(</span><span class="nc">File</span> <span class="n">srcDir</span><span class="o">,</span><span class="nc">String</span> <span class="n">targetFile</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+        <span class="k">try</span><span class="o">(</span><span class="nc">TarArchiveOutputStream</span> <span class="n">tos</span><span class="o">=</span><span class="k">new</span> <span class="nc">TarArchiveOutputStream</span><span class="o">(</span><span class="nc">Files</span><span class="o">.</span><span class="na">newOutputStream</span><span class="o">(</span><span class="nc">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">targetFile</span><span class="o">)))){</span>
+            <span class="n">tarRecursive</span><span class="o">(</span><span class="n">tos</span><span class="o">,</span><span class="n">srcDir</span><span class="o">,</span><span class="s">""</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">tarRecursive</span><span class="o">(</span><span class="nc">TarArchiveOutputStream</span> <span class="n">tos</span><span class="o">,</span><span class="nc">File</span> <span class="n">srcFile</span><span class="o">,</span><span class="nc">String</span> <span class="nc">BasePath</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+<span class="c1">//        递归打包文件夹</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">srcFile</span><span class="o">.</span><span class="na">isDirectory</span><span class="o">()){</span>
+            <span class="nc">File</span><span class="o">[]</span> <span class="n">files</span><span class="o">=</span><span class="n">srcFile</span><span class="o">.</span><span class="na">listFiles</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">nextBasePath</span> <span class="o">=</span> <span class="nc">BasePath</span> <span class="o">+</span> <span class="n">srcFile</span><span class="o">.</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">"/"</span><span class="o">;</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">files</span><span class="o">==</span><span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">TarArchiveEntry</span> <span class="n">entry</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TarArchiveEntry</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span> <span class="n">nextBasePath</span><span class="o">);</span>
+                <span class="n">tos</span><span class="o">.</span><span class="na">putArchiveEntry</span><span class="o">(</span><span class="n">entry</span><span class="o">);</span>
+            <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+                <span class="k">for</span> <span class="o">(</span><span class="nc">File</span> <span class="n">file</span> <span class="o">:</span> <span class="n">files</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">tarRecursive</span><span class="o">(</span><span class="n">tos</span><span class="o">,</span><span class="n">file</span><span class="o">,</span><span class="n">nextBasePath</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            <span class="kt">int</span><span class="o">[][]</span> <span class="n">nums</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">2</span><span class="o">][</span><span class="mi">2</span><span class="o">];</span>
+            <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">nums</span><span class="o">,</span> <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="o">[</span><span class="mi">0</span><span class="o">]-</span><span class="n">b</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+            <span class="nc">TarArchiveEntry</span> <span class="n">entry</span><span class="o">=</span><span class="k">new</span> <span class="nc">TarArchiveEntry</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span><span class="n">srcFile</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+            <span class="n">tos</span><span class="o">.</span><span class="na">putArchiveEntry</span><span class="o">(</span><span class="n">entry</span><span class="o">);</span>
+            <span class="nc">FileUtils</span><span class="o">.</span><span class="na">copyFile</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span><span class="n">tos</span><span class="o">);</span>
+            <span class="n">tos</span><span class="o">.</span><span class="na">closeArchiveEntry</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" target="_blank">关于java文件读写io方式</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

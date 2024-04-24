@@ -154,6 +154,1632 @@
   <header class="post-header">
     <p class="post-meta">
       <span class="post-date">
+        3 APR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#java">java</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-04/%E8%AF%BB-Spring-Framework-%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3v6-%E6%9C%89%E6%84%9F" class="post-title" title="spring中文说明文档有感">spring中文说明文档有感</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="spring概览">Spring概览</h1>
+
+<h2 id="spring的设计理念">spring的设计理念</h2>
+
+<blockquote>
+  <p>spring框架的指导原则</p>
+</blockquote>
+
+<ul>
+  <li>在每个层面上提供选择。Spring让你尽可能晚的推迟设计决策。例如：你可以通过配置来切换持久化供应商，而不需要改变你的代码。对于许多其他基础设施问题和与第三方API的集成也是如此。</li>
+  <li>适应不同的观点。Spring拥抱灵活性，对事情应该如何做不持意见。它支持具有不同视角的广泛的应用需求。</li>
+  <li>保持强大的后向兼容性。Spring的演进是经过精心管理的，在不同的版本之间几乎不存在破坏性的变化。Spring支持一系列精心选择的JDK版本和第三方库，以方便维护依赖Spring的应用程序和库。</li>
+  <li>关心API的设计。Spring团队花了很多心思和时间来制作直观的API，并且在很多版本和很多年中都能保持良好的效果。</li>
+  <li>为代码质量设定高标准。Spring框架非常强调有意义的、最新的和准确的javadoc。它是为数不多的可以宣称代码结构干净、包与包之间没有循环依赖关系的项目之一。</li>
+</ul>
+
+<h1 id="核心技术">核心技术</h1>
+
+<blockquote>
+  <p>IOC、AOP、AOT</p>
+</blockquote>
+
+<h1 id="ioc容器">IOC容器</h1>
+
+<h2 id="简介">简介</h2>
+
+<p>IOC也被称为依赖注入（DI）。它是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义其依赖关系（即它们与之合作的其他对象）。然后容器在创建bean时注入这些依赖关系。这个过程从根本上说是Bean本身通过使用直接构建类或诸如服务定位模式的机制来控制其依赖关系的实例化或位置的逆过程（因此被称为控制翻转）。</p>
+
+<h2 id="使用容器">使用容器</h2>
+
+<p>ApplicationContext是一个高级工厂的接口，能够维护不同bean及其依赖关系的注册表。通过使用方法 T getBean（Stringname,Class<T> requiredType)，可以检索到bean的实例。</T></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 创建和配置bean</span>
+<span class="nc">ApplicationContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">"services.xml"</span><span class="o">,</span> <span class="s">"daos.xml"</span><span class="o">);</span>
+
+<span class="c1">// 检索配置的实例</span>
+<span class="nc">PetStoreService</span> <span class="n">service</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">"petStore"</span><span class="o">,</span> <span class="nc">PetStoreService</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+<span class="c1">// 使用配置的实例</span>
+<span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">userList</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="na">getUsernameList</span><span class="o">();</span>
+
+</code></pre></div></div>
+
+<h2 id="bean的概览">Bean的概览</h2>
+
+<p>一个Spring Ioc容器管理着一个或多个Bean。这些Bean是用开发着提供给容器的配置元数据创建的。</p>
+
+<p>在容器本身中，这些Bean定义被表示为BeanDefinition对象，它包含一下元数据。</p>
+
+<ul>
+  <li>一个Bean全路径类名：通常，被定义的Bean的实际实现类。</li>
+  <li>Bean的行为配置元素，它说明了Bean在容器中的行为方式（Scope、生命周期回调，等等）。</li>
+  <li>对其他Bean的引用，这些Bean需要做它的工作。这些引用也被称为合作者或者依赖。</li>
+  <li>要在新创建的对象中设置的其他配置设置–例如，pool的大小限制或在管理连接池的Bean中使用的连接数。</li>
+</ul>
+
+<h3 id="属性">属性</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>属性</th>
+      <th>解释</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Class</td>
+      <td>实例化Bean</td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>Bean命名</td>
+    </tr>
+    <tr>
+      <td>Scope</td>
+      <td>Bean Scope</td>
+    </tr>
+    <tr>
+      <td>Constructor arguments</td>
+      <td>依赖注入</td>
+    </tr>
+    <tr>
+      <td>Properties</td>
+      <td>依赖注入</td>
+    </tr>
+    <tr>
+      <td>Autowiring mode</td>
+      <td>注入协作者</td>
+    </tr>
+    <tr>
+      <td>Lazy initialization mode</td>
+      <td>懒加载的Bean</td>
+    </tr>
+    <tr>
+      <td>Initialization method</td>
+      <td>初始化回调</td>
+    </tr>
+    <tr>
+      <td>Destruction method</td>
+      <td>销毁回调</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p>Bean元数据和手动提供的单体实例需要尽早注册，以便容器在自动注入和其他内省步骤中正确推导它们。虽然在某种程度上支持覆盖现有的元数据和现有的单体实例，但官方不推荐在运行时注册新的Bean（与对工厂的实时访问同时进行），这可能会导致并发访问异常、bean容器中的不一致状态，或者两者都有。</p>
+</blockquote>
+
+<h2 id="依赖注入">依赖注入</h2>
+
+<p>依赖注入（DI）是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义他们的依赖（即与它们一起工作的其他对象）。然后，容器在创建bean时注入这些依赖。这个过程从根本上说是Bean本身通过使用类的直接构造或服务定位模式来控制其依赖的实例化或位置的逆过程（因此被称为控制反转）。</p>
+
+<h3 id="基于构成器的依赖注入">基于构成器的依赖注入</h3>
+
+<p>通过容器调用带有许多参数的构成函数来完成的，每个参数代表一个依赖。调用带有特定参数的static工厂方法来构造bean几乎是等价的。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleMovieLister</span> <span class="o">{</span>
+
+    <span class="c1">// the SimpleMovieLister has a dependency on a MovieFinder</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">;</span>
+
+    <span class="c1">// a constructor so that the Spring container can inject a MovieFinder</span>
+    <span class="kd">public</span> <span class="nf">SimpleMovieLister</span><span class="o">(</span><span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">movieFinder</span> <span class="o">=</span> <span class="n">movieFinder</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// business logic that actually uses the injected MovieFinder is omitted...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="基于setter的依赖注入">基于Setter的依赖注入</h3>
+
+<p>通过容器在调用无参构造或无参数的static工厂方法来实例化你的bean之后调用Setter方法来实现的。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleMovieLister</span> <span class="o">{</span>
+
+    <span class="c1">// the SimpleMovieLister has a dependency on the MovieFinder</span>
+    <span class="kd">private</span> <span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">;</span>
+
+    <span class="c1">// a setter method so that the Spring container can inject a MovieFinder</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setMovieFinder</span><span class="o">(</span><span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">movieFinder</span> <span class="o">=</span> <span class="n">movieFinder</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// business logic that actually uses the injected MovieFinder is omitted...</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<ul>
+  <li>应该选用哪种DI方式？</li>
+</ul>
+
+<p>由于可以混合使用基于构造函数和基于Setter的DI，一个好的经验法则是对强制依赖使用构造函数，对可选依赖使用setter方法或配置方法。请注意，在setter方法上使用@Autowired注解可以使属性成为必须得依赖；然而，带有参数程序化验证的构造注入是更好的。</p>
+
+<p>Spring团体通常提倡构造函数注入，因为它可以让你将应用组件实现为不可变的对象，并确保所需的依赖不为null。此外，构造函数注入的组件总是以完全初始化的状态返回给客户端（调用）代码。顺便提一下，大量的构造函数参数是一种不好的代码，意味着该类可能有太多的责任，应该重构以更好地解决适当的分离问题。</p>
+
+<p>Settter注入主要应该只用于在类中可以分配合理默认值的可选依赖。否则，必须在代码使用依赖的所有地方进行非null值检查。Setter注入的好处：Setter方法使该类的对象可以在以后重新配置或重新注入。</p>
+
+<h3 id="依赖的解析过程">依赖的解析过程</h3>
+
+<p>Bean解析的过程</p>
+
+<ol>
+  <li>ApplicationContext是用来描述所有bean的配置元数据创建和初始化的。配置元数据可以由XML、Java代码或注解来指定。</li>
+  <li>对于每个Bean来说，它的依赖是以属性、构造函数参数或静态工厂方法的参数（如果你用它代替正常的构造函数）的形式表达。在实际创建Bean时，这些依赖被提供给Bean。</li>
+  <li>每个属性或构造函数参数都是要设置的值的实际定义，或对容器中另一Bean的引用。</li>
+  <li>每个作为值的属性或构造函数参数都会从其指定格式转换为该属性或构造函数参数的实际类型。默认情况下，Spring可以将以字符串格式提供的值转换为所有内置类型，如int、long、String、boolean等。</li>
+</ol>
+
+<ul>
+  <li>循环依赖</li>
+</ul>
+
+<blockquote>
+  <p>如果你使用主要的构造函数注入，就有可能产生一个无法解决的循环依赖情况。</p>
+
+  <p>比如说，类A通过构造函数注入需要类B的一个实例，而类B通过构造函数注入需要类A的实例。如果你将类A和类B的Bean配置为相互注入，Spring IOC容器会在运行时检测到这些循环引用，并抛出一个BeanCurrentlyInCreationException。</p>
+
+  <p>解决方法：在编写类源码时，使其通过Setter而不是构造器进行配置。或者，避免构造器注入，只使用setter注入。</p>
+
+  <p>还有一种方法是在一个Bean被完全初始化之前就被注入到另一个Bean中。</p>
+</blockquote>
+
+<h2 id="注入协作者autowiring-collaborators自动注入">注入协作者（Autowiring Collaborators）自动注入</h2>
+
+<p>Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通过检查ApplicationContext的内容为你的Bean自动解决协作者（其他Bean）。</p>
+
+<ul>
+  <li>自动注入的优点</li>
+</ul>
+
+<p>自动注入可以随着你的对象的发展而更新配置。例如，如果你需要给一个类添加一个依赖，这个依赖可以自动满足，而不需要你修改配置。因此，自动在开发过程中可能特别有用。而不会否定在代码库变得更加稳定时切换到显式注入的选择。</p>
+
+<ul>
+  <li>四种自动注入的方式</li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th>模式</th>
+      <th>解释</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>no</td>
+      <td>（默认）没有自动注入。Bean引用必须由ref元素来定义。对于大型部署来说，不建议改变默认设置，因为明确指定协作者会带来更大的控制力和清晰度。在某种程度上，它记录了一个系统的结构。</td>
+    </tr>
+    <tr>
+      <td>byName</td>
+      <td>通过属性名称自动注入。Spring寻找一个与需要自动注入的属性同名的Bean。例如，如果一个Bean定义被设置为按名称自动注入，并且包含一个master属性（也就是说，它有一个setMaster（..）方法），Spring会寻找一个名为master的Bean定义并使用它来设置该属性。</td>
+    </tr>
+    <tr>
+      <td>byType</td>
+      <td>如果容器中正好有一个property类型的Bean存在，就可以自动注入该属性。如果存在一个以上的bean，就会抛出一个致命的exception，这表明你不能对该bean使用byType自动注入。如果没有匹配的bean，就不会发生任何事情（该属性没有被设置）。</td>
+    </tr>
+    <tr>
+      <td>constructor</td>
+      <td>类似于byType，但适用于构造函数参数。如果容器中没有一个构造函数参数类型的Bean，就会产生一个致命的错误。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="自动注入的限制和缺点">自动注入的限制和缺点</h3>
+
+<ul>
+  <li>property和constructor-arg设置中的明确依赖关系总是覆盖自动注入。你不能自动注入简单的属性，如基本数据、String和Class。</li>
+  <li>自动注入不如显式注入精确。尽管正如前面的表格中所指出的，Spring很小心地避免在模糊不清的情况进行猜测，这可能会产生意想不到的结果。你的Spring管理的对象之间的关系不再被明确地记录下来</li>
+  <li>对于可能从Spring容器中生成文档的工具来说，注入信息可能无法使用。</li>
+  <li>容器中的多个Bean定义可以与setter方法或构造参数指定的类型相匹配，以实现自动注入。对于数组、集合或Map实例，这不一定是个问题。然而，对于期待单一值的依赖关系，这种模糊性不会被任意地解决。如果没有唯一的Bean的定义，就会抛出一个异常。</li>
+</ul>
+
+<p>无法根据类型指定唯一bean的几种解决方案：</p>
+
+<ol>
+  <li>放弃自动注入，改用明确注入。</li>
+  <li>通过将Bean定义的Autowire-condidate属性设置为false来避免bean定义的自动注入。</li>
+  <li>通过将<bean></bean> 元素的primary属性设置为true，将单个bean定义指定为主要候选者。</li>
+  <li>实现基于注解的配置所提供的更精细的控制。</li>
+</ol>
+
+<h3 id="通过方法来注入bean">通过方法来注入Bean</h3>
+
+<blockquote>
+  <p>大多数情况下，Bean都是单例的，当一个单例Bean需要另一个单例Bean协作或一个非单例的Bean需与另一个非单例Bean协作，需要将一个Bean定义为另一个Bean的属性。如果需要Bean，A每次使用Bean，B时，都会重新创建Bean，B，则需要通过方法注入的方式解决。</p>
+</blockquote>
+
+<p>放弃一些控制的反转。可以通过实现ApplicationContextAware接口给bean A注入容器，并在bean A需要时让容器的getBean(“B”)调用询问（一个典型的new）bean B实例。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="nn">com.springboot.demo</span><span class="o">;</span>
+
+
+<span class="kn">import</span> <span class="nn">org.springframework.beans.BeansException</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.beans.PropertyValue</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.context.ApplicationContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.context.ApplicationContextAware</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.Map</span><span class="o">;</span>
+
+<span class="kd">class</span>  <span class="nc">Command</span><span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">Map</span> <span class="n">map</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setMap</span><span class="o">(</span><span class="nc">Map</span> <span class="n">map</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">map</span> <span class="o">=</span> <span class="n">map</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">execute</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">CommandManager</span> <span class="kd">implements</span> <span class="nc">ApplicationContextAware</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">ApplicationContext</span> <span class="n">applicationContext</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">process</span><span class="o">(</span><span class="nc">Map</span> <span class="n">commandState</span><span class="o">){</span>
+        <span class="nc">Command</span> <span class="n">command</span> <span class="o">=</span> <span class="n">createCommand</span><span class="o">();</span>
+        <span class="n">command</span><span class="o">.</span><span class="na">setMap</span><span class="o">(</span><span class="n">commandState</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">command</span><span class="o">.</span><span class="na">execute</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="kd">protected</span> <span class="nc">Command</span> <span class="nf">createCommand</span><span class="o">(){</span>
+<span class="c1">//        每次调用时，用getBean方法，通过BeanFactory来创建新的Bean。</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">applicationContext</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">"command"</span><span class="o">,</span><span class="nc">Command</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="c1">//获取ApplicationContext</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setApplicationContext</span><span class="o">(</span><span class="nc">ApplicationContext</span> <span class="n">applicationContext</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">BeansException</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">applicationContext</span><span class="o">=</span><span class="n">applicationContext</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<h3 id="查找方法依赖注入">查找方法依赖注入</h3>
+
+<p>查找方法注入是指容器能够覆盖容器管理的Bean上的方法并返回容器中另一个命名的bean的查询结果。（动态代理）Spring框架通过使用CGLIB的字节码生成来实现这种方法注入，动态地生成一个覆盖该方法的子类。</p>
+
+<ol>
+  <li>为了实现此动态子类功能，被Spring bean容器子类化的类不能为final。</li>
+  <li>对一个包含abstract方法的类进行单元测试，需要你自己对这个类进行子类化，并提供一个abstract方法的stub实现。</li>
+  <li>有方法体的方法对于组件扫描也是必要的，这需要具体的方法来实现。</li>
+  <li>另一个关键的限制是，查找方法对工厂方法不起作用，特别是对配置类中的@Bean方法不起作用，因为这种情况下，容器不负责创建实例，因此不能即时创建运行时生成的子类。</li>
+</ol>
+
+<h2 id="bean-scope">Bean Scope</h2>
+
+<blockquote>
+  <p>当你创建一个Bean定义时，你创建了一个“构造方法”，用于创建该Bean定义（definition）是所定义的类的实际实例。Bean定义（definitiion）是一个“构造方法”的想法很重要，因为它意味着，就像一个类一样，你可以从一个“构造方法”中创建许多实例。</p>
+</blockquote>
+
+<p>Spring框架支持六个scope</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>scope</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>singleton</td>
+      <td>（默认情况下）为每个Spring IOC容器将单个Bean定义的Scope扩大到单个对象实例。</td>
+    </tr>
+    <tr>
+      <td>prototype</td>
+      <td>将单个Bean定义的Scope扩大到任何数量的对象实例。</td>
+    </tr>
+    <tr>
+      <td>request</td>
+      <td>将单个Bean定义的Scope扩大到单个HTTP请求的生命周期。也就是说，每个HTTP请求都有自己的Bean实例，该实例是在单个Bean定义的基础上创建的。只在Web感知的Spring ApplicationContext的上下文中有效。</td>
+    </tr>
+    <tr>
+      <td>session</td>
+      <td>将单个Bean定义的Scope扩大到一个HTTP Session的生命周期。只在Web感知的Spring ApplicationContext的上下文中有效</td>
+    </tr>
+    <tr>
+      <td>Application</td>
+      <td>将单个Bean定义的Scope扩大到ServletContext的生命周期中。只在Web感知的Spring ApplicationContext的上下文中有效。</td>
+    </tr>
+    <tr>
+      <td>websocket</td>
+      <td>将单个Bean定义的Scope扩大到WebSocket的生命周期。仅在具有Web感知的Spring ApplicationContext的上下文中有效。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="单例">单例</h3>
+
+<p>只有一个单例的Bean的共享实例被管理，所有对符合该bean定义的id的bean的请求都会被Spring容器返回该特定的Bean实例。</p>
+
+<blockquote>
+  <p>当你定义了一个Bean的定义，并且它被定义为singleton（单例），Spring Ioc容器就会为该Bean定义的对象创建一个确切的实例。这个单例的实例被存储在单例Bean的缓存中，所有后续的请求和对该命名Bean的引用都会返回缓存中的对象。</p>
+</blockquote>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:31:42-1713940302216.png" alt="2024-4-2414:31:42-1713940302216.png" /></p>
+
+<p>Spring的单例Bean概念和GOF设计模式书中定义的单例模式不同。Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。</p>
+
+<h3 id="原型">原型</h3>
+
+<p>每次对该特定Bean的请求都会创建一个新的Bean实例。也就是说，该Bean被注入到另一个bean中，或者你通过容器上的getBean（）方法调用来请求它。</p>
+
+<blockquote>
+  <p>应该对所有有状态的Bean使用原型范围，对无状态的bean使用单例范围。</p>
+</blockquote>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:38:30-1713940709879.png" alt="2024-4-2414:38:30-1713940709879.png" /></p>
+
+<p>与其他作用域相比，Spring不会管理原型模式的Bean的生命周期。容器对原型对象进行实例化，配合和其他方面的组装，并将其交给客户端，而对该原型实例没有进一步的记录。后续销毁需要客户端自己来。</p>
+
+<blockquote>
+  <p>一个单例bean中，如果有依赖一个原型的Bean，那么这个原型Bean也只会被创建一次。</p>
+</blockquote>
+
+<h2 id="自定义bean的性质">自定义Bean的性质</h2>
+
+<h3 id="生命周期回调">生命周期回调</h3>
+
+<p>为了与容器对Bean生命周期的管理进行交互，你可以实现Spring InitializingBean和DispobleBean接口。容器为前者调用afterPropertiesSet()，为后者调用destroy（），让Bean在初始化和销毁你的Bean时执行某些动作。</p>
+
+<blockquote>
+  <p>@PostConstruct和@PreDestroy注解通常被认为是在现代Spring应用程序中接收生命周期回调的最佳实践。使用这些注解意味着你的Bean不会被耦合到Spring特定的接口。</p>
+</blockquote>
+
+<ul>
+  <li>在非Web应用中优雅地关闭Spring IoC容器</li>
+</ul>
+
+<p>如果你在非Web应用环境中使用Spring的Ioc容器，请向JVM注册一个shutdown hook。这样做可以确保优雅地关闭，并在你的单例Bean上调用相关的destroy方法，从而释放所有资源。</p>
+
+<blockquote>
+  <p>要注册一个shutdown hook，请调用registerShutdown（）方法，该方法在ConfigurableApplicationContext接口上声明。</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">org.springframework.context.ConfigurableApplicationContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.context.support.ClassPathXmlApplicationContext</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Boot</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="kd">final</span> <span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="nc">ConfigurableApplicationContext</span> <span class="n">ctx</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">"beans.xml"</span><span class="o">);</span>
+
+        <span class="c1">// add a shutdown hook for the above context...</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="na">registerShutdownHook</span><span class="o">();</span>
+
+        <span class="c1">// app runs here...</span>
+
+        <span class="c1">// main method exits, hook is called prior to the app shutting down...</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+
+</code></pre></div></div>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
+        1 APR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#周赛">周赛</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-04/%E5%8A%9B%E6%89%A3%E7%AC%AC126%E5%9C%BA%E5%8F%8C%E5%91%A8%E8%B5%9B" class="post-title" title="力扣125场双周赛">力扣125场双周赛</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="13079-求出加密整数的和">1、<a href="https://leetcode.cn/problems/find-the-sum-of-encrypted-integers/">3079. 求出加密整数的和</a></h1>
+
+<p>简单</p>
+
+<p>给你一个整数数组 <code class="language-plaintext highlighter-rouge">nums</code> ，数组中的元素都是 <strong>正</strong> 整数。定义一个加密函数 <code class="language-plaintext highlighter-rouge">encrypt</code> ，<code class="language-plaintext highlighter-rouge">encrypt(x)</code> 将一个整数 <code class="language-plaintext highlighter-rouge">x</code> 中 <strong>每一个</strong> 数位都用 <code class="language-plaintext highlighter-rouge">x</code> 中的 <strong>最大</strong> 数位替换。比方说 <code class="language-plaintext highlighter-rouge">encrypt(523) = 555</code> 且 <code class="language-plaintext highlighter-rouge">encrypt(213) = 333</code> 。</p>
+
+<p>请你返回数组中所有元素加密后的 <strong>和</strong> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<p><strong>输入：</strong>nums = [1,2,3]</p>
+
+<p><strong>输出：</strong>6</p>
+
+<p><strong>解释：</strong>加密后的元素位 <code class="language-plaintext highlighter-rouge">[1,2,3]</code> 。加密元素的和为 <code class="language-plaintext highlighter-rouge">1 + 2 + 3 == 6</code> 。</p>
+
+<p><strong>示例 2：</strong></p>
+
+<p><strong>输入：</strong>nums = [10,21,31]</p>
+
+<p><strong>输出：</strong>66</p>
+
+<p><strong>解释：</strong>加密后的元素为 <code class="language-plaintext highlighter-rouge">[11,22,33]</code> 。加密元素的和为 <code class="language-plaintext highlighter-rouge">11 + 22 + 33 == 66</code> 。</p>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= nums.length &lt;= 50</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= nums[i] &lt;= 1000</code></li>
+</ul>
+
+<blockquote>
+  <p>简单模拟</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">sumOfEncryptedInt</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">ans</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">:</span> <span class="n">nums</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kt">int</span> <span class="n">mx</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="kt">int</span> <span class="n">base</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(;</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">;</span> <span class="n">x</span> <span class="o">/=</span> <span class="mi">10</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">mx</span> <span class="o">=</span> <span class="nc">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">mx</span><span class="o">,</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">10</span><span class="o">);</span>
+                <span class="n">base</span> <span class="o">=</span> <span class="n">base</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">ans</span> <span class="o">+=</span> <span class="n">mx</span> <span class="o">*</span> <span class="n">base</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">ans</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code></code></pre></div></div>
+
+<h1 id="23080-执行操作标记数组中的元素">2、<a href="https://leetcode.cn/problems/mark-elements-on-array-by-performing-queries/">3080. 执行操作标记数组中的元素</a></h1>
+
+<p>中等</p>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 下标从 <strong>0</strong> 开始的正整数数组 <code class="language-plaintext highlighter-rouge">nums</code> 。</p>
+
+<p>同时给你一个长度为 <code class="language-plaintext highlighter-rouge">m</code> 的二维操作数组 <code class="language-plaintext highlighter-rouge">queries</code> ，其中 <code class="language-plaintext highlighter-rouge">queries[i] = [indexi, ki]</code> 。</p>
+
+<p>一开始，数组中的所有元素都 <strong>未标记</strong> 。</p>
+
+<p>你需要依次对数组执行 <code class="language-plaintext highlighter-rouge">m</code> 次操作，第 <code class="language-plaintext highlighter-rouge">i</code> 次操作中，你需要执行：</p>
+
+<ul>
+  <li>如果下标 <code class="language-plaintext highlighter-rouge">indexi</code> 对应的元素还没标记，那么标记这个元素。</li>
+  <li>然后标记 <code class="language-plaintext highlighter-rouge">ki</code> 个数组中还没有标记的 <strong>最小</strong> 元素。如果有元素的值相等，那么优先标记它们中下标较小的。如果少于 <code class="language-plaintext highlighter-rouge">ki</code> 个未标记元素存在，那么将它们全部标记。</li>
+</ul>
+
+<p>请你返回一个长度为 <code class="language-plaintext highlighter-rouge">m</code> 的数组 <code class="language-plaintext highlighter-rouge">answer</code> ，其中 <code class="language-plaintext highlighter-rouge">answer[i]</code>是第 <code class="language-plaintext highlighter-rouge">i</code> 次操作后数组中还没标记元素的 <strong>和</strong> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<p><strong>输入：</strong>nums = [1,2,2,1,2,3,1], queries = [[1,2],[3,3],[4,2]]</p>
+
+<p><strong>输出：</strong>[8,3,0]</p>
+
+<p><strong>解释：</strong></p>
+
+<p>我们依次对数组做以下操作：</p>
+
+<ul>
+  <li>标记下标为 <code class="language-plaintext highlighter-rouge">1</code> 的元素，同时标记 <code class="language-plaintext highlighter-rouge">2</code> 个未标记的最小元素。标记完后数组为 <code class="language-plaintext highlighter-rouge">nums = [***1***,***2***,2,***1***,2,3,1]</code> 。未标记元素的和为 <code class="language-plaintext highlighter-rouge">2 + 2 + 3 + 1 = 8</code> 。</li>
+  <li>标记下标为 <code class="language-plaintext highlighter-rouge">3</code> 的元素，由于它已经被标记过了，所以我们忽略这次标记，同时标记最靠前的 <code class="language-plaintext highlighter-rouge">3</code> 个未标记的最小元素。标记完后数组为 <code class="language-plaintext highlighter-rouge">nums = [***1***,***2***,***2***,***1***,***2***,3,***1***]</code> 。未标记元素的和为 <code class="language-plaintext highlighter-rouge">3</code> 。</li>
+  <li>标记下标为 <code class="language-plaintext highlighter-rouge">4</code> 的元素，由于它已经被标记过了，所以我们忽略这次标记，同时标记最靠前的 <code class="language-plaintext highlighter-rouge">2</code> 个未标记的最小元素。标记完后数组为 <code class="language-plaintext highlighter-rouge">nums = [***1***,***2***,***2***,***1***,***2***,***3***,***1***]</code> 。未标记元素的和为 <code class="language-plaintext highlighter-rouge">0</code> 。</li>
+</ul>
+
+<p><strong>示例 2：</strong></p>
+
+<p><strong>输入：</strong>nums = [1,4,2,3], queries = [[0,1]]</p>
+
+<p><strong>输出：</strong>[7]</p>
+
+<p><strong>解释：</strong>我们执行一次操作，将下标为 <code class="language-plaintext highlighter-rouge">0</code> 处的元素标记，并且标记最靠前的 <code class="language-plaintext highlighter-rouge">1</code> 个未标记的最小元素。标记完后数组为 <code class="language-plaintext highlighter-rouge">nums = [***1***,4,***2***,3]</code> 。未标记元素的和为 <code class="language-plaintext highlighter-rouge">4 + 3 = 7</code> 。</p>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">n == nums.length</code></li>
+  <li><code class="language-plaintext highlighter-rouge">m == queries.length</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= m &lt;= n &lt;= 105</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= nums[i] &lt;= 105</code></li>
+  <li><code class="language-plaintext highlighter-rouge">queries[i].length == 2</code></li>
+  <li><code class="language-plaintext highlighter-rouge">0 &lt;= indexi, ki &lt;= n - 1</code></li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">long</span><span class="o">[]</span> <span class="nf">unmarkedSumArray</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">,</span> <span class="kt">int</span><span class="o">[][]</span> <span class="n">queries</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 茶神简单写法</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="kt">long</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="nc">Integer</span><span class="o">[]</span> <span class="n">ids</span><span class="o">=</span><span class="k">new</span> <span class="nc">Integer</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="n">s</span><span class="o">+=</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="n">ids</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">i</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">ids</span><span class="o">,(</span><span class="n">i</span><span class="o">,</span><span class="n">j</span><span class="o">)-&gt;</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]-</span><span class="n">nums</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+        <span class="kt">long</span><span class="o">[]</span> <span class="n">res</span><span class="o">=</span><span class="k">new</span> <span class="kt">long</span><span class="o">[</span><span class="n">queries</span><span class="o">.</span><span class="na">length</span><span class="o">];</span>
+        <span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">qi</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">qi</span><span class="o">&lt;</span><span class="n">queries</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">qi</span><span class="o">++){</span>
+            <span class="kt">int</span><span class="o">[]</span> <span class="n">q</span><span class="o">=</span><span class="n">queries</span><span class="o">[</span><span class="n">qi</span><span class="o">];</span>
+            <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">q</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+            <span class="kt">int</span> <span class="n">k</span><span class="o">=</span><span class="n">q</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+            <span class="n">s</span><span class="o">-=</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="mi">0</span><span class="o">;</span>
+            <span class="k">for</span><span class="o">(;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">n</span><span class="o">&amp;&amp;</span><span class="n">k</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="n">i</span><span class="o">=</span><span class="n">ids</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]&gt;</span><span class="mi">0</span><span class="o">){</span>
+                    <span class="n">s</span><span class="o">-=</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+                    <span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="mi">0</span><span class="o">;</span>
+                    <span class="n">k</span><span class="o">--;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            <span class="n">res</span><span class="o">[</span><span class="n">qi</span><span class="o">]=</span><span class="n">s</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
+        25 MAR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#java">java</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-03/%E5%85%B3%E4%BA%8Ejava%E6%96%87%E4%BB%B6%E8%AF%BB%E5%86%99io%E6%96%B9%E5%BC%8F" class="post-title" title="关于java文件读写io方式">关于java文件读写io方式</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="java常用的几种io性能对比">Java常用的几种IO性能对比</h1>
+
+<blockquote>
+  <p>最近最常做的工作就是各种文件读写操作，所以来真实的看看，各种Io方式之间的性能对比</p>
+</blockquote>
+
+<h1 id="fileoutputstream与bufferedwriter">FileOutputStream与BufferedWriter</h1>
+
+<blockquote>
+  <p>两种区别不大，且与使用NIO来写文件速度区别也不大</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">writeBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+    <span class="nc">BufferedWriter</span> <span class="n">writer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BufferedWriter</span><span class="o">(</span><span class="k">new</span> <span class="nc">OutputStreamWriter</span><span class="o">(</span><span class="n">fos</span><span class="o">));</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1000000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word2048</span><span class="o">);</span>
+        <span class="n">i</span><span class="o">--;</span>
+    <span class="o">}</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+    <span class="n">fos</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="bytebuffer与直接内存">ByteBuffer与直接内存</h1>
+
+<blockquote>
+  <p>采不采用直接内存几乎没有区别</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">byteBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+    <span class="nc">FileChannel</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">fos</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">datas</span> <span class="o">=</span> <span class="n">word2048</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+    <span class="nc">ByteBuffer</span> <span class="n">bbuf</span> <span class="o">=</span> <span class="nc">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="mi">4800</span> <span class="o">*</span> <span class="mi">100</span><span class="o">);</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">10000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">100</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="n">bbuf</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">datas</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">bbuf</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+        <span class="n">fc</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">bbuf</span><span class="o">);</span>
+        <span class="n">bbuf</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+       <span class="n">i</span><span class="o">--;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="filechannel与文件空洞">FileChannel与文件空洞</h1>
+
+<blockquote>
+  <p>NIO中，FileChannel可以决定文件写入的位置，通常用这样来产生文件空洞</p>
+</blockquote>
+
+<h1 id="mappedbytebuffer">MappedByteBuffer</h1>
+
+<blockquote>
+  <p>使用直接内存映射，来提升IO性能</p>
+</blockquote>
+
+<p>这个有一个重大bug，关闭FileChannel后，MappedByteBuffer不会释放所持有的文件。到之后需要如果再对写入的文件进行操作时，会导致没有权限。MappedByteBuffer所持有的内存需要手动来释放。释放方式有几种：</p>
+
+<ol>
+  <li>直接调用System.gc()；</li>
+  <li>利用反射来释放</li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Method</span> <span class="n">m</span> <span class="o">=</span> <span class="nc">FileChannelImpl</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getDeclaredMethod</span><span class="o">(</span><span class="s">"unmap"</span><span class="o">,</span>
+                    <span class="nc">MappedByteBuffer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+            <span class="n">m</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+            <span class="n">m</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="nc">FileChannelImpl</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">buffer</span><span class="o">);</span>
+</code></pre></div></div>
+
+<ol>
+  <li></li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="nc">AccessController</span><span class="o">.</span><span class="na">doPrivileged</span><span class="o">(</span><span class="k">new</span> <span class="nc">PrivilegedAction</span><span class="o">()</span> <span class="o">{</span>
+     <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+       <span class="k">try</span> <span class="o">{</span>
+         <span class="nc">Method</span> <span class="n">getCleanerMethod</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getMethod</span><span class="o">(</span><span class="s">"cleaner"</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Class</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+         <span class="n">getCleanerMethod</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+         <span class="n">sun</span><span class="o">.</span><span class="na">misc</span><span class="o">.</span><span class="na">Cleaner</span> <span class="n">cleaner</span> <span class="o">=</span> <span class="o">(</span><span class="n">sun</span><span class="o">.</span><span class="na">misc</span><span class="o">.</span><span class="na">Cleaner</span><span class="o">)</span> 
+         <span class="n">getCleanerMethod</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">byteBuffer</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Object</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+         <span class="n">cleaner</span><span class="o">.</span><span class="na">clean</span><span class="o">();</span>
+       <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+       <span class="o">}</span>
+       <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+     <span class="o">}</span>
+   <span class="o">});</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>2和3两种释放方式，可能会根据jdk的版本而有所不同。（实测1.8是无法通过反射释放内存的）</p>
+</blockquote>
+
+<ul>
+  <li>与传统Io的区别</li>
+</ul>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-3017:33:26-1711791206165.png" alt="2024-3-3017:33:26-1711791206165.png" /></p>
+
+<p>内存文件映射的方式：</p>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-3017:34:18-1711791258547.png" alt="2024-3-3017:34:18-1711791258547.png" /></p>
+
+<ul>
+  <li>实例代码</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">mappedByteBuffer</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">RandomAccessFile</span> <span class="n">acf</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RandomAccessFile</span><span class="o">(</span><span class="n">file</span><span class="o">,</span> <span class="s">"rw"</span><span class="o">);</span>
+    <span class="nc">FileChannel</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">acf</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">bs</span> <span class="o">=</span> <span class="n">word2048</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">bs</span><span class="o">.</span><span class="na">length</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">;</span>
+    <span class="kt">long</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">2000000</span><span class="o">;</span>
+    <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+        <span class="nc">MappedByteBuffer</span> <span class="n">mbuf</span> <span class="o">=</span> <span class="n">fc</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nc">FileChannel</span><span class="o">.</span><span class="na">MapMode</span><span class="o">.</span><span class="na">READ_WRITE</span><span class="o">,</span> <span class="n">offset</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">1000</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="n">mbuf</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">bs</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="o">+</span><span class="n">len</span><span class="o">;</span>
+        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">-</span><span class="mi">1000</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">fc</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="利用apache-common向tar中压缩文件">利用apache-common向tar中压缩文件</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//    打一个tar压缩</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">tar</span><span class="o">(</span><span class="nc">File</span> <span class="n">srcDir</span><span class="o">,</span><span class="nc">String</span> <span class="n">targetFile</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+        <span class="k">try</span><span class="o">(</span><span class="nc">TarArchiveOutputStream</span> <span class="n">tos</span><span class="o">=</span><span class="k">new</span> <span class="nc">TarArchiveOutputStream</span><span class="o">(</span><span class="nc">Files</span><span class="o">.</span><span class="na">newOutputStream</span><span class="o">(</span><span class="nc">Paths</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">targetFile</span><span class="o">)))){</span>
+            <span class="n">tarRecursive</span><span class="o">(</span><span class="n">tos</span><span class="o">,</span><span class="n">srcDir</span><span class="o">,</span><span class="s">""</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">tarRecursive</span><span class="o">(</span><span class="nc">TarArchiveOutputStream</span> <span class="n">tos</span><span class="o">,</span><span class="nc">File</span> <span class="n">srcFile</span><span class="o">,</span><span class="nc">String</span> <span class="nc">BasePath</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+<span class="c1">//        递归打包文件夹</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">srcFile</span><span class="o">.</span><span class="na">isDirectory</span><span class="o">()){</span>
+            <span class="nc">File</span><span class="o">[]</span> <span class="n">files</span><span class="o">=</span><span class="n">srcFile</span><span class="o">.</span><span class="na">listFiles</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">nextBasePath</span> <span class="o">=</span> <span class="nc">BasePath</span> <span class="o">+</span> <span class="n">srcFile</span><span class="o">.</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">"/"</span><span class="o">;</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">files</span><span class="o">==</span><span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">TarArchiveEntry</span> <span class="n">entry</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TarArchiveEntry</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span> <span class="n">nextBasePath</span><span class="o">);</span>
+                <span class="n">tos</span><span class="o">.</span><span class="na">putArchiveEntry</span><span class="o">(</span><span class="n">entry</span><span class="o">);</span>
+            <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+                <span class="k">for</span> <span class="o">(</span><span class="nc">File</span> <span class="n">file</span> <span class="o">:</span> <span class="n">files</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">tarRecursive</span><span class="o">(</span><span class="n">tos</span><span class="o">,</span><span class="n">file</span><span class="o">,</span><span class="n">nextBasePath</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            <span class="kt">int</span><span class="o">[][]</span> <span class="n">nums</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">2</span><span class="o">][</span><span class="mi">2</span><span class="o">];</span>
+            <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">nums</span><span class="o">,</span> <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="o">[</span><span class="mi">0</span><span class="o">]-</span><span class="n">b</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+            <span class="nc">TarArchiveEntry</span> <span class="n">entry</span><span class="o">=</span><span class="k">new</span> <span class="nc">TarArchiveEntry</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span><span class="n">srcFile</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+            <span class="n">tos</span><span class="o">.</span><span class="na">putArchiveEntry</span><span class="o">(</span><span class="n">entry</span><span class="o">);</span>
+            <span class="nc">FileUtils</span><span class="o">.</span><span class="na">copyFile</span><span class="o">(</span><span class="n">srcFile</span><span class="o">,</span><span class="n">tos</span><span class="o">);</span>
+            <span class="n">tos</span><span class="o">.</span><span class="na">closeArchiveEntry</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
+        19 MAR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#周赛">周赛</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-03/%E5%8A%9B%E6%89%A3%E7%AC%AC388%E5%9C%BA%E5%91%A8%E8%B5%9B" class="post-title" title="力扣388场周赛">力扣388场周赛</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="13074-重新分装苹果">1、<a href="https://leetcode.cn/problems/apple-redistribution-into-boxes/">3074. 重新分装苹果</a></h1>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 的数组 <code class="language-plaintext highlighter-rouge">apple</code> 和另一个长度为 <code class="language-plaintext highlighter-rouge">m</code> 的数组 <code class="language-plaintext highlighter-rouge">capacity</code> 。</p>
+
+<p>一共有 <code class="language-plaintext highlighter-rouge">n</code> 个包裹，其中第 <code class="language-plaintext highlighter-rouge">i</code> 个包裹中装着 <code class="language-plaintext highlighter-rouge">apple[i]</code> 个苹果。同时，还有 <code class="language-plaintext highlighter-rouge">m</code> 个箱子，第 <code class="language-plaintext highlighter-rouge">i</code> 个箱子的容量为 <code class="language-plaintext highlighter-rouge">capacity[i]</code> 个苹果。</p>
+
+<p>请你选择一些箱子来将这 <code class="language-plaintext highlighter-rouge">n</code> 个包裹中的苹果重新分装到箱子中，返回你需要选择的箱子的 <strong>最小</strong> 数量。</p>
+
+<p><strong>注意</strong>，同一个包裹中的苹果可以分装到不同的箱子中。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：apple = [1,3,2], capacity = [4,3,1,5,2]
+输出：2
+解释：使用容量为 4 和 5 的箱子。
+总容量大于或等于苹果的总数，所以可以完成重新分装。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：apple = [5,5,5], capacity = [2,4,2,7]
+输出：4
+解释：需要使用所有箱子。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n == apple.length &lt;= 50</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= m == capacity.length &lt;= 50</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= apple[i], capacity[i] &lt;= 50</code></li>
+  <li>输入数据保证可以将包裹中的苹果重新分装到箱子中。</li>
+</ul>
+
+<blockquote>
+  <p>傻瓜题</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">minimumBoxes</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">apple</span><span class="o">,</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">capacity</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">sum</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="nl">num:</span><span class="n">apple</span><span class="o">){</span>
+            <span class="n">sum</span><span class="o">+=</span><span class="n">num</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">capacity</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">capacity</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&gt;=</span><span class="mi">0</span><span class="o">&amp;&amp;</span><span class="n">sum</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">--){</span>
+            <span class="n">sum</span><span class="o">-=</span><span class="n">capacity</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="n">res</span><span class="o">++;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>rust</li>
+</ul>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="n">Solution</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">minimum_boxes</span><span class="p">(</span><span class="n">apple</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">,</span> <span class="k">mut</span> <span class="n">capacity</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">i32</span> <span class="p">{</span>
+        <span class="n">capacity</span><span class="nf">.sort_unstable_by_key</span><span class="p">(|</span><span class="n">x</span><span class="p">|</span> <span class="o">-</span><span class="n">x</span><span class="p">);</span>
+        <span class="n">capacity</span>
+            <span class="nf">.into_iter</span><span class="p">()</span>
+            <span class="nf">.scan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">|</span><span class="n">s</span><span class="p">,</span> <span class="n">x</span><span class="p">|</span> <span class="p">{</span> <span class="o">*</span><span class="n">s</span> <span class="o">+=</span> <span class="n">x</span><span class="p">;</span> <span class="nf">Some</span><span class="p">(</span><span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">})</span>
+            <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
+            <span class="nf">.partition_point</span><span class="p">(|</span><span class="n">x</span><span class="p">|</span> <span class="o">*</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">apple</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.sum</span><span class="p">())</span> <span class="k">as</span> <span class="nb">i32</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">}</span>   
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="23075-幸福值最大化的选择方案">2、<a href="https://leetcode.cn/problems/maximize-happiness-of-selected-children/">3075. 幸福值最大化的选择方案</a></h1>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 的数组 <code class="language-plaintext highlighter-rouge">happiness</code> ，以及一个 <strong>正整数</strong> <code class="language-plaintext highlighter-rouge">k</code> 。</p>
+
+<p><code class="language-plaintext highlighter-rouge">n</code> 个孩子站成一队，其中第 <code class="language-plaintext highlighter-rouge">i</code> 个孩子的 <strong>幸福值</strong> 是 <code class="language-plaintext highlighter-rouge">happiness[i]</code> 。你计划组织 <code class="language-plaintext highlighter-rouge">k</code> 轮筛选从这 <code class="language-plaintext highlighter-rouge">n</code> 个孩子中选出 <code class="language-plaintext highlighter-rouge">k</code> 个孩子。</p>
+
+<p>在每一轮选择一个孩子时，所有 <strong>尚未</strong> 被选中的孩子的 <strong>幸福值</strong> 将减少 <code class="language-plaintext highlighter-rouge">1</code> 。注意，幸福值 <strong>不能</strong> 变成负数，且只有在它是正数的情况下才会减少。</p>
+
+<p>选择 <code class="language-plaintext highlighter-rouge">k</code> 个孩子，并使你选中的孩子幸福值之和最大，返回你能够得到的 <strong>最大值</strong> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：happiness = [1,2,3], k = 2
+输出：4
+解释：按以下方式选择 2 个孩子：
+- 选择幸福值为 3 的孩子。剩余孩子的幸福值变为 [0,1] 。
+- 选择幸福值为 1 的孩子。剩余孩子的幸福值变为 [0] 。注意幸福值不能小于 0 。
+所选孩子的幸福值之和为 3 + 1 = 4 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：happiness = [1,1,1,1], k = 2
+输出：1
+解释：按以下方式选择 2 个孩子：
+- 选择幸福值为 1 的任意一个孩子。剩余孩子的幸福值变为 [0,0,0] 。
+- 选择幸福值为 0 的孩子。剩余孩子的幸福值变为 [0,0] 。
+所选孩子的幸福值之和为 1 + 0 = 1 。
+</code></pre></div></div>
+
+<p><strong>示例 3：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：happiness = [2,3,4,5], k = 1
+输出：5
+解释：按以下方式选择 1 个孩子：
+- 选择幸福值为 5 的孩子。剩余孩子的幸福值变为 [1,2,3] 。
+所选孩子的幸福值之和为 5 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n == happiness.length &lt;= 2 * 105</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= happiness[i] &lt;= 108</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= k &lt;= n</code></li>
+</ul>
+
+<blockquote>
+  <p>也是一个简单题</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">maximumHappinessSum</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">happiness</span><span class="o">,</span> <span class="kt">int</span> <span class="n">k</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">happiness</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">k</span><span class="o">&amp;&amp;</span><span class="n">happiness</span><span class="o">[</span><span class="n">happiness</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="o">]-</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="n">res</span><span class="o">+=</span><span class="n">happiness</span><span class="o">[</span><span class="n">happiness</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="o">]-</span><span class="n">i</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>rust：</li>
+</ul>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="n">Solution</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">maximum_happiness_sum</span><span class="p">(</span><span class="n">happiness</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">i32</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">i64</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">h</span> <span class="o">=</span> <span class="n">happiness</span><span class="p">;</span>
+        <span class="n">h</span><span class="nf">.sort_unstable_by</span><span class="p">(|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">|</span> <span class="n">b</span><span class="nf">.cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">));</span>
+
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">ans</span> <span class="o">=</span> <span class="mi">0i64</span><span class="p">;</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0i64</span><span class="p">;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">k</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">h</span><span class="p">[</span><span class="n">i</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span> <span class="p">{</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            
+            <span class="n">ans</span> <span class="o">+=</span> <span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">i</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span> <span class="k">as</span> <span class="nb">i64</span> <span class="o">-</span> <span class="n">i</span> <span class="k">as</span> <span class="nb">i64</span><span class="p">)</span><span class="nf">.max</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="n">ans</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="33076-数组中的最短非公共子字符串">3、<a href="https://leetcode.cn/problems/shortest-uncommon-substring-in-an-array/">3076. 数组中的最短非公共子字符串</a></h1>
+
+<p>中等</p>
+
+<p>给你一个数组 <code class="language-plaintext highlighter-rouge">arr</code> ，数组中有 <code class="language-plaintext highlighter-rouge">n</code> 个 <strong>非空</strong> 字符串。</p>
+
+<p>请你求出一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 的字符串 <code class="language-plaintext highlighter-rouge">answer</code> ，满足：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">answer[i]</code> 是 <code class="language-plaintext highlighter-rouge">arr[i]</code> <strong>最短</strong> 的子字符串，且它不是 <code class="language-plaintext highlighter-rouge">arr</code> 中其他任何字符串的子字符串。如果有多个这样的子字符串存在，<code class="language-plaintext highlighter-rouge">answer[i]</code> 应该是它们中字典序最小的一个。如果不存在这样的子字符串，<code class="language-plaintext highlighter-rouge">answer[i]</code> 为空字符串。</li>
+</ul>
+
+<p>请你返回数组 <code class="language-plaintext highlighter-rouge">answer</code> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：arr = ["cab","ad","bad","c"]
+输出：["ab","","ba",""]
+解释：求解过程如下：
+- 对于字符串 "cab" ，最短没有在其他字符串中出现过的子字符串是 "ca" 或者 "ab" ，我们选择字典序更小的子字符串，也就是 "ab" 。
+- 对于字符串 "ad" ，不存在没有在其他字符串中出现过的子字符串。
+- 对于字符串 "bad" ，最短没有在其他字符串中出现过的子字符串是 "ba" 。
+- 对于字符串 "c" ，不存在没有在其他字符串中出现过的子字符串。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：arr = ["abc","bcd","abcd"]
+输出：["","","abcd"]
+解释：求解过程如下：
+- 对于字符串 "abc" ，不存在没有在其他字符串中出现过的子字符串。
+- 对于字符串 "bcd" ，不存在没有在其他字符串中出现过的子字符串。
+- 对于字符串 "abcd" ，最短没有在其他字符串中出现过的子字符串是 "abcd" 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">n == arr.length</code></li>
+  <li><code class="language-plaintext highlighter-rouge">2 &lt;= n &lt;= 100</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= arr[i].length &lt;= 20</code></li>
+  <li><code class="language-plaintext highlighter-rouge">arr[i]</code> 只包含小写英文字母。</li>
+</ul>
+
+<blockquote>
+  <p>就是一道单纯的暴力题，虽然题目暴力，但是考验代码功底，初学者很容易写的又臭又长</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nc">String</span><span class="o">[]</span> <span class="nf">shortestSubstrings</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">arr</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 茶神简洁写法</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="nc">String</span><span class="o">[]</span> <span class="n">ans</span><span class="o">=</span><span class="k">new</span> <span class="nc">String</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="kt">int</span> <span class="n">m</span><span class="o">=</span><span class="n">arr</span><span class="o">[</span><span class="n">i</span><span class="o">].</span><span class="na">length</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">res</span><span class="o">=</span><span class="s">""</span><span class="o">;</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">size</span><span class="o">&lt;=</span><span class="n">m</span><span class="o">&amp;&amp;</span><span class="n">res</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">();</span><span class="n">size</span><span class="o">++){</span>
+                <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">size</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;=</span><span class="n">m</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                    <span class="nc">String</span> <span class="n">t</span><span class="o">=</span><span class="n">arr</span><span class="o">[</span><span class="n">i</span><span class="o">].</span><span class="na">substring</span><span class="o">(</span><span class="n">j</span><span class="o">-</span><span class="n">size</span><span class="o">,</span><span class="n">j</span><span class="o">);</span>
+                    <span class="k">if</span><span class="o">((</span><span class="n">res</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()||</span><span class="n">t</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">res</span><span class="o">)&lt;</span><span class="mi">0</span><span class="o">)&amp;&amp;</span><span class="n">check</span><span class="o">(</span><span class="n">arr</span><span class="o">,</span><span class="n">i</span><span class="o">,</span><span class="n">t</span><span class="o">)){</span>
+                        <span class="n">res</span><span class="o">=</span><span class="n">t</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+
+            <span class="n">ans</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">res</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">ans</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">check</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">arr</span><span class="o">,</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span><span class="nc">String</span> <span class="n">sub</span><span class="o">){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">arr</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">j</span><span class="o">!=</span><span class="n">i</span><span class="o">&amp;&amp;</span><span class="n">arr</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">contains</span><span class="o">(</span><span class="n">sub</span><span class="o">)){</span>
+                <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="43077-k-个不相交子数组的最大能量值">4、<a href="https://leetcode.cn/problems/maximum-strength-of-k-disjoint-subarrays/">3077. K 个不相交子数组的最大能量值</a></h1>
+
+<p>困难</p>
+
+<p>给你一个长度为 <code class="language-plaintext highlighter-rouge">n</code> 下标从 <strong>0</strong> 开始的整数数组 <code class="language-plaintext highlighter-rouge">nums</code> 和一个 <strong>正奇数</strong> 整数 <code class="language-plaintext highlighter-rouge">k</code> 。</p>
+
+<p><code class="language-plaintext highlighter-rouge">x</code> 个子数组的能量值定义为 <code class="language-plaintext highlighter-rouge">strength = sum[1] * x - sum[2] * (x - 1) + sum[3] * (x - 2) - sum[4] * (x - 3) + ... + sum[x] * 1</code> ，其中 <code class="language-plaintext highlighter-rouge">sum[i]</code> 是第 <code class="language-plaintext highlighter-rouge">i</code> 个子数组的和。更正式的，能量值是满足 <code class="language-plaintext highlighter-rouge">1 &lt;= i &lt;= x</code> 的所有 <code class="language-plaintext highlighter-rouge">i</code> 对应的 <code class="language-plaintext highlighter-rouge">(-1)i+1 * sum[i] * (x - i + 1)</code> 之和。</p>
+
+<p>你需要在 <code class="language-plaintext highlighter-rouge">nums</code> 中选择 <code class="language-plaintext highlighter-rouge">k</code> 个 <strong>不相交</strong><strong>子数组</strong> ，使得 <strong>能量值最大</strong> 。</p>
+
+<p>请你返回可以得到的 <strong>最大</strong><strong>能量值</strong> 。</p>
+
+<p><strong>注意</strong>，选出来的所有子数组 <strong>不</strong> 需要覆盖整个数组。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [1,2,3,-1,2], k = 3
+输出：22
+解释：选择 3 个子数组的最好方式是选择：nums[0..2] ，nums[3..3] 和 nums[4..4] 。能量值为 (1 + 2 + 3) * 3 - (-1) * 2 + 2 * 1 = 22 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [12,-2,-2,-2,-2], k = 5
+输出：64
+解释：唯一一种选 5 个不相交子数组的方案是：nums[0..0] ，nums[1..1] ，nums[2..2] ，nums[3..3] 和 nums[4..4] 。能量值为 12 * 5 - (-2) * 4 + (-2) * 3 - (-2) * 2 + (-2) * 1 = 64 。
+</code></pre></div></div>
+
+<p><strong>示例 3：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [-1,-2,-3], k = 1
+输出：-1
+解释：选择 1 个子数组的最优方案是：nums[0..0] 。能量值为 -1 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n &lt;= 104</code></li>
+  <li><code class="language-plaintext highlighter-rouge">-109 &lt;= nums[i] &lt;= 109</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= k &lt;= n</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n * k &lt;= 106</code></li>
+  <li><code class="language-plaintext highlighter-rouge">k</code> 是奇数。</li>
+</ul>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
+        9 MAR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#周赛">周赛</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-03/%E5%8A%9B%E6%89%A3%E7%AC%AC387%E5%9C%BA%E5%91%A8%E8%B5%9B" class="post-title" title="力扣387场周赛">力扣387场周赛</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <h1 id="13069-将元素分配到两个数组中-i">1、<a href="https://leetcode.cn/problems/distribute-elements-into-two-arrays-i/">3069. 将元素分配到两个数组中 I</a></h1>
+
+<p>给你一个下标从 <strong>1</strong> 开始、包含 <strong>不同</strong> 整数的数组 <code class="language-plaintext highlighter-rouge">nums</code> ，数组长度为 <code class="language-plaintext highlighter-rouge">n</code> 。</p>
+
+<p>你需要通过 <code class="language-plaintext highlighter-rouge">n</code> 次操作，将 <code class="language-plaintext highlighter-rouge">nums</code> 中的所有元素分配到两个数组 <code class="language-plaintext highlighter-rouge">arr1</code> 和 <code class="language-plaintext highlighter-rouge">arr2</code> 中。在第一次操作中，将 <code class="language-plaintext highlighter-rouge">nums[1]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr1</code> 。在第二次操作中，将 <code class="language-plaintext highlighter-rouge">nums[2]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr2</code> 。之后，在第 <code class="language-plaintext highlighter-rouge">i</code> 次操作中：</p>
+
+<ul>
+  <li>如果 <code class="language-plaintext highlighter-rouge">arr1</code> 的最后一个元素 <strong>大于</strong> <code class="language-plaintext highlighter-rouge">arr2</code> 的最后一个元素，就将 <code class="language-plaintext highlighter-rouge">nums[i]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr1</code> 。否则，将 <code class="language-plaintext highlighter-rouge">nums[i]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr2</code> 。</li>
+</ul>
+
+<p>通过连接数组 <code class="language-plaintext highlighter-rouge">arr1</code> 和 <code class="language-plaintext highlighter-rouge">arr2</code> 形成数组 <code class="language-plaintext highlighter-rouge">result</code> 。例如，如果 <code class="language-plaintext highlighter-rouge">arr1 == [1,2,3]</code> 且 <code class="language-plaintext highlighter-rouge">arr2 == [4,5,6]</code> ，那么 <code class="language-plaintext highlighter-rouge">result = [1,2,3,4,5,6]</code> 。</p>
+
+<p>返回数组 <code class="language-plaintext highlighter-rouge">result</code> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [2,1,3]
+输出：[2,3,1]
+解释：在前两次操作后，arr1 = [2] ，arr2 = [1] 。
+在第 3 次操作中，由于 arr1 的最后一个元素大于 arr2 的最后一个元素（2 &gt; 1），将 nums[3] 追加到 arr1 。
+3 次操作后，arr1 = [2,3] ，arr2 = [1] 。
+因此，连接形成的数组 result 是 [2,3,1] 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [5,4,3,8]
+输出：[5,3,4,8]
+解释：在前两次操作后，arr1 = [5] ，arr2 = [4] 。
+在第 3 次操作中，由于 arr1 的最后一个元素大于 arr2 的最后一个元素（5 &gt; 4），将 nums[3] 追加到 arr1 ，因此 arr1 变为 [5,3] 。
+在第 4 次操作中，由于 arr2 的最后一个元素大于 arr1 的最后一个元素（4 &gt; 3），将 nums[4] 追加到 arr2 ，因此 arr2 变为 [4,8] 。
+4 次操作后，arr1 = [5,3] ，arr2 = [4,8] 。
+因此，连接形成的数组 result 是 [5,3,4,8] 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">3 &lt;= n &lt;= 50</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= nums[i] &lt;= 100</code></li>
+  <li><code class="language-plaintext highlighter-rouge">nums</code>中的所有元素都互不相同。</li>
+</ul>
+
+<blockquote>
+  <p>没什么好说的，傻瓜题</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">resultArray</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">a</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">b</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="n">a</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="n">b</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="mi">1</span><span class="o">]);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">2</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">size</span><span class="o">()-</span><span class="mi">1</span><span class="o">)&gt;</span><span class="n">b</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">b</span><span class="o">.</span><span class="na">size</span><span class="o">()-</span><span class="mi">1</span><span class="o">)){</span>
+                <span class="n">a</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+            <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="n">a</span><span class="o">.</span><span class="na">addAll</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">a</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">nums</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>如果可以，尽量加入rust解法</p>
+</blockquote>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="n">Solution</span><span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">result_array</span><span class="p">(</span><span class="n">nums</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span><span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">arr1</span><span class="o">=</span><span class="nd">vec!</span><span class="p">[];</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">arr2</span><span class="o">=</span><span class="nd">vec!</span><span class="p">[];</span>
+        <span class="n">arr1</span><span class="nf">.push</span><span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="n">arr2</span><span class="nf">.push</span><span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+        <span class="k">let</span> <span class="n">len</span><span class="o">=</span><span class="n">nums</span><span class="nf">.len</span><span class="p">();</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">2</span><span class="o">..</span><span class="n">len</span><span class="p">{</span>
+            <span class="k">if</span> <span class="n">arr1</span><span class="nf">.last</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">arr2</span><span class="nf">.last</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(){</span>
+                <span class="n">arr1</span><span class="nf">.push</span><span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+            <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+                <span class="n">arr2</span><span class="nf">.push</span><span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">arr1</span><span class="nf">.extend_from_slice</span><span class="p">(</span><span class="o">&amp;</span><span class="n">arr2</span><span class="p">);</span>
+        <span class="n">arr1</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="23070-元素和小于等于-k-的子矩阵的数目">2、<a href="https://leetcode.cn/problems/count-submatrices-with-top-left-element-and-sum-less-than-k/">3070. 元素和小于等于 k 的子矩阵的数目</a></h1>
+
+<p>给你一个下标从 <strong>0</strong> 开始的整数矩阵 <code class="language-plaintext highlighter-rouge">grid</code> 和一个整数 <code class="language-plaintext highlighter-rouge">k</code>。</p>
+
+<p>返回包含 <code class="language-plaintext highlighter-rouge">grid</code> 左上角元素、元素和小于或等于 <code class="language-plaintext highlighter-rouge">k</code> 的 <strong>子矩阵</strong>的数目。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<p><img src="https://assets.leetcode.com/uploads/2024/01/01/example1.png" alt="img" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：grid = [[7,6,3],[6,6,1]], k = 18
+输出：4
+解释：如上图所示，只有 4 个子矩阵满足：包含 grid 的左上角元素，并且元素和小于或等于 18 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<p><img src="https://assets.leetcode.com/uploads/2024/01/01/example21.png" alt="img" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：grid = [[7,2,9],[1,5,0],[2,6,6]], k = 20
+输出：6
+解释：如上图所示，只有 6 个子矩阵满足：包含 grid 的左上角元素，并且元素和小于或等于 20 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">m == grid.length </code></li>
+  <li><code class="language-plaintext highlighter-rouge">n == grid[i].length</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n, m &lt;= 1000 </code></li>
+  <li><code class="language-plaintext highlighter-rouge">0 &lt;= grid[i][j] &lt;= 1000</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= k &lt;= 109</code></li>
+</ul>
+
+<blockquote>
+  <p>先是我当时的解法，计算第一列最多有多少满足条件的矩形，后面的每一列满足条件的列只能小于等于第一列，计算一共有多少满足条件的。</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">countSubmatrices</span><span class="o">(</span><span class="kt">int</span><span class="o">[][]</span> <span class="n">grid</span><span class="o">,</span> <span class="kt">int</span> <span class="n">k</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//我的丑陋解法</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">grid</span><span class="o">[</span><span class="mi">0</span><span class="o">][</span><span class="mi">0</span><span class="o">]&gt;</span><span class="n">k</span><span class="o">)</span> <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">n1</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">];</span>
+        <span class="n">n1</span><span class="o">[</span><span class="mi">0</span><span class="o">]=</span><span class="n">grid</span><span class="o">[</span><span class="mi">0</span><span class="o">][</span><span class="mi">0</span><span class="o">];</span>
+        <span class="n">res</span><span class="o">++;</span>
+        <span class="kt">int</span> <span class="n">t</span><span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="n">n1</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">n1</span><span class="o">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">]+</span><span class="n">grid</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="mi">0</span><span class="o">];</span>
+            <span class="n">res</span><span class="o">++;</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">n1</span><span class="o">[</span><span class="n">i</span><span class="o">]&gt;</span><span class="n">k</span><span class="o">){</span>
+                <span class="n">t</span><span class="o">=</span><span class="n">i</span><span class="o">;</span>
+                <span class="n">res</span><span class="o">--;</span>
+                <span class="k">break</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">grid</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="na">length</span><span class="o">&amp;&amp;</span><span class="n">n1</span><span class="o">[</span><span class="mi">0</span><span class="o">]&lt;=</span><span class="n">k</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="kt">int</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;=</span><span class="n">t</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="n">s</span><span class="o">+=</span><span class="n">grid</span><span class="o">[</span><span class="n">j</span><span class="o">][</span><span class="n">i</span><span class="o">];</span>
+                <span class="n">n1</span><span class="o">[</span><span class="n">j</span><span class="o">]+=</span><span class="n">s</span><span class="o">;</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">n1</span><span class="o">[</span><span class="n">j</span><span class="o">]&lt;=</span><span class="n">k</span><span class="o">)</span> <span class="n">res</span><span class="o">++;</span>
+                <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">t</span><span class="o">=</span><span class="n">j</span><span class="o">;</span>
+                    <span class="k">break</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>方法一：前缀和</p>
+</blockquote>
+
+<ul>
+  <li>如何求二维数组的前缀和</li>
+</ul>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-3-1617:04:40-1710579879374.png" alt="2024-3-1617:04:40-1710579879374.png" /></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">countSubmatrices</span><span class="o">(</span><span class="kt">int</span><span class="o">[][]</span> <span class="n">grid</span><span class="o">,</span> <span class="kt">int</span> <span class="n">k</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">m</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">grid</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="na">length</span><span class="o">;</span>
+        <span class="kt">int</span><span class="o">[][]</span> <span class="n">sum</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="o">][</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="o">];</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="c1">// 到当前元素左上的二维数组和=左边为止的和+上边为止的和-左上方为止的和+当前元素的大小</span>
+                <span class="n">sum</span><span class="o">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">]=</span><span class="n">sum</span><span class="o">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">][</span><span class="n">j</span><span class="o">]+</span><span class="n">sum</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">]-</span><span class="n">sum</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]+</span><span class="n">grid</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">sum</span><span class="o">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">]&lt;=</span><span class="n">k</span><span class="o">)</span> <span class="n">res</span><span class="o">++;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>方法二：维护每列的元素和</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">countSubmatrices</span><span class="o">(</span><span class="kt">int</span><span class="o">[][]</span> <span class="n">grid</span><span class="o">,</span> <span class="kt">int</span> <span class="n">k</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">grid</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="na">length</span><span class="o">;</span>
+        <span class="c1">// 记录每一列的大小</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="nl">num:</span><span class="n">grid</span><span class="o">){</span>
+            <span class="c1">// 每一行开始计算时，初始化大小为0</span>
+            <span class="kt">int</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="c1">// 当前行的大小=上一行时的大小+当前元素的大小</span>
+                <span class="n">nums</span><span class="o">[</span><span class="n">j</span><span class="o">]+=</span><span class="n">num</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 目前的和为上一列的大小+当前列的大小</span>
+                <span class="n">s</span><span class="o">+=</span><span class="n">nums</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">s</span><span class="o">&gt;</span><span class="n">k</span><span class="o">)</span> <span class="k">break</span><span class="o">;</span>
+                <span class="n">res</span><span class="o">++;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="33071-在矩阵上写出字母-y-所需的最少操作次数">3、<a href="https://leetcode.cn/problems/minimum-operations-to-write-the-letter-y-on-a-grid/">3071. 在矩阵上写出字母 Y 所需的最少操作次数</a></h1>
+
+<p>给你一个下标从 <strong>0</strong> 开始、大小为 <code class="language-plaintext highlighter-rouge">n x n</code> 的矩阵 <code class="language-plaintext highlighter-rouge">grid</code> ，其中 <code class="language-plaintext highlighter-rouge">n</code> 为奇数，且 <code class="language-plaintext highlighter-rouge">grid[r][c]</code> 的值为 <code class="language-plaintext highlighter-rouge">0</code> 、<code class="language-plaintext highlighter-rouge">1</code> 或 <code class="language-plaintext highlighter-rouge">2</code> 。</p>
+
+<p>如果一个单元格属于以下三条线中的任一一条，我们就认为它是字母 <strong>Y</strong> 的一部分：</p>
+
+<ul>
+  <li>从左上角单元格开始到矩阵中心单元格结束的对角线。</li>
+  <li>从右上角单元格开始到矩阵中心单元格结束的对角线。</li>
+  <li>从中心单元格开始到矩阵底部边界结束的垂直线。</li>
+</ul>
+
+<p>当且仅当满足以下全部条件时，可以判定矩阵上写有字母 <strong>Y</strong> ：</p>
+
+<ul>
+  <li>属于 Y 的所有单元格的值相等。</li>
+  <li>不属于 Y 的所有单元格的值相等。</li>
+  <li>属于 Y 的单元格的值与不属于Y的单元格的值不同。</li>
+</ul>
+
+<p>每次操作你可以将任意单元格的值改变为 <code class="language-plaintext highlighter-rouge">0</code> 、<code class="language-plaintext highlighter-rouge">1</code> 或 <code class="language-plaintext highlighter-rouge">2</code> 。返回在矩阵上写出字母 Y 所需的 <strong>最少</strong> 操作次数。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<p><img src="https://assets.leetcode.com/uploads/2024/01/22/y2.png" alt="img" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：grid = [[1,2,2],[1,1,0],[0,1,0]]
+输出：3
+解释：将在矩阵上写出字母 Y 需要执行的操作用蓝色高亮显示。操作后，所有属于 Y 的单元格（加粗显示）的值都为 1 ，而不属于 Y 的单元格的值都为 0 。
+可以证明，写出 Y 至少需要进行 3 次操作。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<p><img src="https://assets.leetcode.com/uploads/2024/01/22/y3.png" alt="img" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：grid = [[0,1,0,1,0],[2,1,0,1,2],[2,2,2,0,1],[2,2,2,2,2],[2,1,2,2,2]]
+输出：12
+解释：将在矩阵上写出字母 Y 需要执行的操作用蓝色高亮显示。操作后，所有属于 Y 的单元格（加粗显示）的值都为 0 ，而不属于 Y 的单元格的值都为 2 。
+可以证明，写出 Y 至少需要进行 12 次操作。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">3 &lt;= n &lt;= 49</code></li>
+  <li><code class="language-plaintext highlighter-rouge">n == grid.length == grid[i].length</code></li>
+  <li><code class="language-plaintext highlighter-rouge">0 &lt;= grid[i][j] &lt;= 2</code></li>
+  <li><code class="language-plaintext highlighter-rouge">n</code> 为奇数。</li>
+</ul>
+
+<blockquote>
+  <p>统计每种数字出现的次数，计算最多可以保留多少个元素不被修改，然后用元素的总数量减去保留的元素</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">minimumOperationsToWriteY</span><span class="o">(</span><span class="kt">int</span><span class="o">[][]</span> <span class="n">grid</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 和茶神想法一样，但就是菜没做出来</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">t1</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">3</span><span class="o">];</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">t2</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">3</span><span class="o">];</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">/</span><span class="mi">2</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">i</span><span class="o">==</span><span class="n">j</span><span class="o">||</span><span class="n">i</span><span class="o">==</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">j</span><span class="o">){</span>
+                    <span class="n">t1</span><span class="o">[</span><span class="n">grid</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]]++;</span>
+                <span class="o">}</span> <span class="k">else</span><span class="o">{</span>
+                    <span class="n">t2</span><span class="o">[</span><span class="n">grid</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]]++;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">/</span><span class="mi">2</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">j</span><span class="o">==</span><span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">/</span><span class="mi">2</span><span class="o">)</span> <span class="n">t1</span><span class="o">[</span><span class="n">grid</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]]++;</span>
+                <span class="k">else</span> <span class="n">t2</span><span class="o">[</span><span class="n">grid</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]]++;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">;</span><span class="n">j</span><span class="o">++){</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">i</span><span class="o">!=</span><span class="n">j</span><span class="o">){</span>
+                    <span class="n">res</span><span class="o">=</span><span class="nc">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">res</span><span class="o">,</span><span class="n">t1</span><span class="o">[</span><span class="n">i</span><span class="o">]+</span><span class="n">t2</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">grid</span><span class="o">.</span><span class="na">length</span><span class="o">*</span><span class="n">grid</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="na">length</span><span class="o">-</span><span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h1 id="43072-将元素分配到两个数组中-ii">4、<a href="https://leetcode.cn/problems/distribute-elements-into-two-arrays-ii/">3072. 将元素分配到两个数组中 II</a></h1>
+
+<p>困难</p>
+
+<p>给你一个下标从 <strong>1</strong> 开始、长度为 <code class="language-plaintext highlighter-rouge">n</code> 的整数数组 <code class="language-plaintext highlighter-rouge">nums</code> 。</p>
+
+<p>现定义函数 <code class="language-plaintext highlighter-rouge">greaterCount</code> ，使得 <code class="language-plaintext highlighter-rouge">greaterCount(arr, val)</code> 返回数组 <code class="language-plaintext highlighter-rouge">arr</code> 中 <strong>严格大于</strong> <code class="language-plaintext highlighter-rouge">val</code> 的元素数量。</p>
+
+<p>你需要使用 <code class="language-plaintext highlighter-rouge">n</code> 次操作，将 <code class="language-plaintext highlighter-rouge">nums</code> 的所有元素分配到两个数组 <code class="language-plaintext highlighter-rouge">arr1</code> 和 <code class="language-plaintext highlighter-rouge">arr2</code> 中。在第一次操作中，将 <code class="language-plaintext highlighter-rouge">nums[1]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr1</code> 。在第二次操作中，将 <code class="language-plaintext highlighter-rouge">nums[2]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr2</code> 。之后，在第 <code class="language-plaintext highlighter-rouge">i</code> 次操作中：</p>
+
+<ul>
+  <li>如果 <code class="language-plaintext highlighter-rouge">greaterCount(arr1, nums[i]) &gt; greaterCount(arr2, nums[i])</code> ，将 <code class="language-plaintext highlighter-rouge">nums[i]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr1</code> 。</li>
+  <li>如果 <code class="language-plaintext highlighter-rouge">greaterCount(arr1, nums[i]) &lt; greaterCount(arr2, nums[i])</code> ，将 <code class="language-plaintext highlighter-rouge">nums[i]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr2</code> 。</li>
+  <li>如果 <code class="language-plaintext highlighter-rouge">greaterCount(arr1, nums[i]) == greaterCount(arr2, nums[i])</code> ，将 <code class="language-plaintext highlighter-rouge">nums[i]</code> 追加到元素数量较少的数组中。</li>
+  <li>如果仍然相等，那么将 <code class="language-plaintext highlighter-rouge">nums[i]</code> 追加到 <code class="language-plaintext highlighter-rouge">arr1</code> 。</li>
+</ul>
+
+<p>连接数组 <code class="language-plaintext highlighter-rouge">arr1</code> 和 <code class="language-plaintext highlighter-rouge">arr2</code> 形成数组 <code class="language-plaintext highlighter-rouge">result</code> 。例如，如果 <code class="language-plaintext highlighter-rouge">arr1 == [1,2,3]</code> 且 <code class="language-plaintext highlighter-rouge">arr2 == [4,5,6]</code> ，那么 <code class="language-plaintext highlighter-rouge">result = [1,2,3,4,5,6]</code> 。</p>
+
+<p>返回整数数组 <code class="language-plaintext highlighter-rouge">result</code> 。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [2,1,3,3]
+输出：[2,3,1,3]
+解释：在前两次操作后，arr1 = [2] ，arr2 = [1] 。
+在第 3 次操作中，两个数组中大于 3 的元素数量都是零，并且长度相等，因此，将 nums[3] 追加到 arr1 。
+在第 4 次操作中，两个数组中大于 3 的元素数量都是零，但 arr2 的长度较小，因此，将 nums[4] 追加到 arr2 。
+在 4 次操作后，arr1 = [2,3] ，arr2 = [1,3] 。
+因此，连接形成的数组 result 是 [2,3,1,3] 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [5,14,3,1,2]
+输出：[5,3,1,2,14]
+解释：在前两次操作后，arr1 = [5] ，arr2 = [14] 。
+在第 3 次操作中，两个数组中大于 3 的元素数量都是一，并且长度相等，因此，将 nums[3] 追加到 arr1 。
+在第 4 次操作中，arr1 中大于 1 的元素数量大于 arr2 中的数量（2 &gt; 1），因此，将 nums[4] 追加到 arr1 。
+在第 5 次操作中，arr1 中大于 2 的元素数量大于 arr2 中的数量（2 &gt; 1），因此，将 nums[5] 追加到 arr1 。
+在 5 次操作后，arr1 = [5,3,1,2] ，arr2 = [14] 。
+因此，连接形成的数组 result 是 [5,3,1,2,14] 。
+</code></pre></div></div>
+
+<p><strong>示例 3：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：nums = [3,3,3,3]
+输出：[3,3,3,3]
+解释：在 4 次操作后，arr1 = [3,3] ，arr2 = [3,3] 。
+因此，连接形成的数组 result 是 [3,3,3,3] 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">3 &lt;= n &lt;= 105</code></li>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= nums[i] &lt;= 109</code></li>
+</ul>
+
+<blockquote>
+  <p>抄了茶神的树状数组，但是太复杂了，一遍听懂，过后就忘</p>
+</blockquote>
+
+<p>题解地址：（后续专门来学习树状数组）</p>
+
+<p><a href="https://leetcode.cn/problems/range-sum-query-mutable/solutions/2524481/dai-ni-fa-ming-shu-zhuang-shu-zu-fu-shu-lyfll/">307. 区域和检索 - 数组可修改 - 力扣（LeetCode）</a></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Fenwick</span><span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">tree</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Fenwick</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">){</span>
+        <span class="n">tree</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 把下标为i的元素增加v</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">add</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span><span class="kt">int</span> <span class="n">v</span><span class="o">){</span>
+        <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">tree</span><span class="o">.</span><span class="na">length</span><span class="o">){</span>
+            <span class="n">tree</span><span class="o">[</span><span class="n">i</span><span class="o">]+=</span><span class="n">v</span><span class="o">;</span>
+            <span class="c1">// 求lowbit</span>
+            <span class="n">i</span><span class="o">+=</span><span class="n">i</span><span class="o">&amp;-</span><span class="n">i</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+<span class="c1">//  返回下标在【1，i】的元素之和</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">pre</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">){</span>
+        <span class="kt">int</span> <span class="n">res</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+        <span class="k">while</span><span class="o">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">){</span>
+            <span class="n">res</span><span class="o">+=</span><span class="n">tree</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="c1">//          这个有点复杂</span>
+            <span class="n">i</span><span class="o">&amp;=</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">resultArray</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 抄了茶神的树状数组，暂时听懂了，但自己操作还是搞不来</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">sorted</span><span class="o">=</span><span class="n">nums</span><span class="o">.</span><span class="na">clone</span><span class="o">();</span>
+        <span class="nc">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">sorted</span><span class="o">);</span><span class="c1">//没有去重的排序</span>
+        <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">a</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;(</span><span class="n">n</span><span class="o">);</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">b</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="n">a</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="n">b</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="mi">1</span><span class="o">]);</span>
+        <span class="nc">Fenwick</span> <span class="n">t</span><span class="o">=</span><span class="k">new</span> <span class="nc">Fenwick</span><span class="o">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="o">);</span>
+        <span class="n">t</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">n</span><span class="o">-</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">binarySearch</span><span class="o">(</span><span class="n">sorted</span><span class="o">,</span><span class="n">nums</span><span class="o">[</span><span class="mi">0</span><span class="o">]),</span><span class="mi">1</span><span class="o">);</span>
+        <span class="n">t</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">n</span><span class="o">-</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">binarySearch</span><span class="o">(</span><span class="n">sorted</span><span class="o">,</span><span class="n">nums</span><span class="o">[</span><span class="mi">1</span><span class="o">]),-</span><span class="mi">1</span><span class="o">);</span>
+
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">2</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="kt">int</span> <span class="n">x</span><span class="o">=</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="kt">int</span> <span class="n">v</span><span class="o">=</span><span class="n">n</span><span class="o">-</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">binarySearch</span><span class="o">(</span><span class="n">sorted</span><span class="o">,</span><span class="n">x</span><span class="o">);</span>
+            <span class="kt">int</span> <span class="n">d</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="na">pre</span><span class="o">(</span><span class="n">v</span><span class="o">-</span><span class="mi">1</span><span class="o">);</span>  <span class="c1">//转换成&lt;v的元素个数之差</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">d</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">||</span><span class="n">d</span><span class="o">==</span><span class="mi">0</span><span class="o">&amp;&amp;</span><span class="n">a</span><span class="o">.</span><span class="na">size</span><span class="o">()&lt;=</span><span class="n">b</span><span class="o">.</span><span class="na">size</span><span class="o">()){</span>
+                <span class="n">a</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
+                <span class="n">t</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">v</span><span class="o">,</span><span class="mi">1</span><span class="o">);</span>
+            <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
+                <span class="n">t</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">v</span><span class="o">,-</span><span class="mi">1</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="n">a</span><span class="o">.</span><span class="na">addAll</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">a</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">nums</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
         4 MAR 2024
       </span>
       
