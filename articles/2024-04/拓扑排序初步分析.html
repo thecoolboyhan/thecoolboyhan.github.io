@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="  根据今日每日一天，初步关于拓扑排序的理解2192. 有向无环图中一个节点的所有祖先中等给你一个正整数 n ，它表示一个 有向无环图 中节点的数目，节点编号为 0 到 n - 1 （包括两者）。给你一个二维整数数组 edges ，其中 edges[i] = [fromi, toi] 表示图中一条从 fromi ...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="拓扑排序初步分析 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="拓扑排序初步分析 | thecoolboyhan">
+  <meta name="twitter:description" content="  根据今日每日一天，初步关于拓扑排序的理解2192. 有向无环图中一个节点的所有祖先中等给你一个正整数 n ，它表示一个 有向无环图 中节点的数目，节点编号为 0 到 n - 1 （包括两者）。给你一个二维整数数组 edges ，其中 edges[i] = [fromi, toi] 表示图中一条从 fromi ...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="拓扑排序初步分析 | thecoolboyhan">
+  <meta property="og:description" content="  根据今日每日一天，初步关于拓扑排序的理解2192. 有向无环图中一个节点的所有祖先中等给你一个正整数 n ，它表示一个 有向无环图 中节点的数目，节点编号为 0 到 n - 1 （包括两者）。给你一个二维整数数组 edges ，其中 edges[i] = [fromi, toi] 表示图中一条从 fromi ...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>拓扑排序初步分析 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="拓扑排序初步分析">拓扑排序初步分析</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        4 APR 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    6 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <blockquote>
+  <p>根据今日每日一天，初步关于拓扑排序的理解</p>
+</blockquote>
+
+<h1 id="2192-有向无环图中一个节点的所有祖先"><a href="https://leetcode.cn/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/">2192. 有向无环图中一个节点的所有祖先</a></h1>
+
+<p><strong>中等</strong></p>
+
+<p>给你一个正整数 <code class="language-plaintext highlighter-rouge">n</code> ，它表示一个 <strong>有向无环图</strong> 中节点的数目，节点编号为 <code class="language-plaintext highlighter-rouge">0</code> 到 <code class="language-plaintext highlighter-rouge">n - 1</code> （包括两者）。</p>
+
+<p>给你一个二维整数数组 <code class="language-plaintext highlighter-rouge">edges</code> ，其中 <code class="language-plaintext highlighter-rouge">edges[i] = [fromi, toi]</code> 表示图中一条从 <code class="language-plaintext highlighter-rouge">fromi</code> 到 <code class="language-plaintext highlighter-rouge">toi</code> 的单向边。</p>
+
+<p>请你返回一个数组 <code class="language-plaintext highlighter-rouge">answer</code>，其中 <code class="language-plaintext highlighter-rouge">answer[i]</code>是第 <code class="language-plaintext highlighter-rouge">i</code> 个节点的所有 <strong>祖先</strong> ，这些祖先节点 <strong>升序</strong> 排序。</p>
+
+<p>如果 <code class="language-plaintext highlighter-rouge">u</code> 通过一系列边，能够到达 <code class="language-plaintext highlighter-rouge">v</code> ，那么我们称节点 <code class="language-plaintext highlighter-rouge">u</code> 是节点 <code class="language-plaintext highlighter-rouge">v</code> 的 <strong>祖先</strong> 节点。</p>
+
+<p><strong>示例 1：</strong></p>
+
+<p><img src="https://assets.leetcode.com/uploads/2019/12/12/e1.png" alt="img" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：n = 8, edgeList = [[0,3],[0,4],[1,3],[2,4],[2,7],[3,5],[3,6],[3,7],[4,6]]
+输出：[[],[],[],[0,1],[0,2],[0,1,3],[0,1,2,3,4],[0,1,2,3]]
+解释：
+上图为输入所对应的图。
+- 节点 0 ，1 和 2 没有任何祖先。
+- 节点 3 有 2 个祖先 0 和 1 。
+- 节点 4 有 2 个祖先 0 和 2 。
+- 节点 5 有 3 个祖先 0 ，1 和 3 。
+- 节点 6 有 5 个祖先 0 ，1 ，2 ，3 和 4 。
+- 节点 7 有 4 个祖先 0 ，1 ，2 和 3 。
+</code></pre></div></div>
+
+<p><strong>示例 2：</strong></p>
+
+<p><img src="https://assets.leetcode.com/uploads/2019/12/12/e2.png" alt="img" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>输入：n = 5, edgeList = [[0,1],[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]]
+输出：[[],[0],[0,1],[0,1,2],[0,1,2,3]]
+解释：
+上图为输入所对应的图。
+- 节点 0 没有任何祖先。
+- 节点 1 有 1 个祖先 0 。
+- 节点 2 有 2 个祖先 0 和 1 。
+- 节点 3 有 3 个祖先 0 ，1 和 2 。
+- 节点 4 有 4 个祖先 0 ，1 ，2 和 3 。
+</code></pre></div></div>
+
+<p><strong>提示：</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">1 &lt;= n &lt;= 1000</code></li>
+  <li><code class="language-plaintext highlighter-rouge">0 &lt;= edges.length &lt;= min(2000, n * (n - 1) / 2)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">edges[i].length == 2</code></li>
+  <li><code class="language-plaintext highlighter-rouge">0 &lt;= fromi, toi &lt;= n - 1</code></li>
+  <li><code class="language-plaintext highlighter-rouge">fromi != toi</code></li>
+  <li>图中不会有重边。</li>
+  <li>图是 <strong>有向</strong> 且 <strong>无环</strong> 的。</li>
+</ul>
+
+<blockquote>
+  <p>拓扑排序重点需要记录哪些是没有依赖的（可以被搜索的），哪个节点的入度还有没有归零（表示当前节点还有依赖没有被搜索）。可以快速的查出，所有依赖关系和最小代价。</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">getAncestors</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">,</span> <span class="kt">int</span><span class="o">[][]</span> <span class="n">edges</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 用来记录每个表的入度，当入度为0时，表示当前节点没有依赖节点，可以被搜索并返回</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="c1">// 构造当前图</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;[]</span> <span class="n">map</span><span class="o">=</span><span class="k">new</span> <span class="nc">List</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">map</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">map</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="o">}</span>
+        <span class="c1">// 目前已经被搜索的答案</span>
+        <span class="nc">Set</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;[]</span> <span class="n">sets</span><span class="o">=</span><span class="k">new</span> <span class="nc">Set</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">sets</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">sets</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="k">new</span> <span class="nc">HashSet</span><span class="o">&lt;&gt;();</span>
+        <span class="o">}</span>
+        <span class="c1">// 方法一，利用广度优先搜索来实现拓扑排序</span>
+        <span class="c1">// 表示当前可以被搜索的节点有哪些</span>
+        <span class="nc">Deque</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">queue</span><span class="o">=</span><span class="k">new</span> <span class="nc">LinkedList</span><span class="o">&lt;&gt;();</span>
+        <span class="c1">// 现在开始构造图</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="nl">edge:</span><span class="n">edges</span><span class="o">){</span>
+            <span class="c1">// 依赖0的节点有哪些</span>
+            <span class="n">map</span><span class="o">[</span><span class="n">edge</span><span class="o">[</span><span class="mi">0</span><span class="o">]].</span><span class="na">add</span><span class="o">(</span><span class="n">edge</span><span class="o">[</span><span class="mi">1</span><span class="o">]);</span>
+            <span class="c1">// 1需要依赖0所有1的入度+1</span>
+            <span class="n">nums</span><span class="o">[</span><span class="n">edge</span><span class="o">[</span><span class="mi">1</span><span class="o">]]++;</span>
+        <span class="o">}</span>
+        <span class="c1">// 把所有可以被搜索的数入队</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]==</span><span class="mi">0</span><span class="o">)</span> <span class="n">queue</span><span class="o">.</span><span class="na">offer</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="c1">// 没有孤岛，且无环</span>
+        <span class="k">while</span><span class="o">(!</span><span class="n">queue</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">()){</span>
+            <span class="c1">// 当前被搜索的节点</span>
+            <span class="kt">int</span> <span class="n">t</span><span class="o">=</span><span class="n">queue</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
+            <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="nl">a:</span><span class="n">map</span><span class="o">[</span><span class="n">t</span><span class="o">]){</span>
+                <span class="c1">// 当前节点已经搜索了a,依赖t</span>
+                <span class="n">sets</span><span class="o">[</span><span class="n">a</span><span class="o">].</span><span class="na">add</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+                <span class="c1">// 当前节点a依赖t的所有依赖节点</span>
+                <span class="n">sets</span><span class="o">[</span><span class="n">a</span><span class="o">].</span><span class="na">addAll</span><span class="o">(</span><span class="n">sets</span><span class="o">[</span><span class="n">t</span><span class="o">]);</span>
+                <span class="c1">// a的一个依赖已经被理清，如果所有入度-1</span>
+                <span class="n">nums</span><span class="o">[</span><span class="n">a</span><span class="o">]--;</span>
+                <span class="c1">// 如果a所有依赖都已经被搜索过，就可以搜索依赖a的元素</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">a</span><span class="o">]==</span><span class="mi">0</span><span class="o">)</span> <span class="n">queue</span><span class="o">.</span><span class="na">offer</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+
+        <span class="c1">// 开始构造答案，和拓扑排序本身无关</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;&gt;</span> <span class="n">res</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+            <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;(</span><span class="n">sets</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+            <span class="nc">Collections</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">list</span><span class="o">);</span>
+            <span class="n">res</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">list</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>老规矩，能rust尽量rust</p>
+</blockquote>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::{</span><span class="n">HashSet</span><span class="p">,</span><span class="n">VecDeque</span><span class="p">};</span>
+
+<span class="k">impl</span> <span class="n">Solution</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">get_ancestors</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">i32</span><span class="p">,</span> <span class="n">edges</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">;</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">anc</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">HashSet</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">HashSet</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span><span class="n">n</span><span class="p">];</span>
+        <span class="c1">// 初始化List&lt;List&lt;Integer&gt;&gt; </span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">e</span><span class="p">:</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span><span class="n">n</span><span class="p">];</span>
+        <span class="c1">// 初始化数组，默认值0，数组长度n</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">indeg</span> <span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span> <span class="o">=</span><span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="n">n</span><span class="p">];</span>
+
+        <span class="k">for</span> <span class="n">edge</span> <span class="k">in</span> <span class="n">edges</span><span class="p">{</span>
+            <span class="c1">// 向list[0] 中添加元素1</span>
+            <span class="n">e</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span><span class="nf">.push</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+            <span class="n">indeg</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span> <span class="o">+=</span><span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">q</span><span class="p">:</span><span class="n">VecDeque</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;</span> <span class="o">=</span><span class="nn">VecDeque</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+        <span class="c1">// for(int i=0;i&lt;n;i++)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">n</span><span class="p">{</span>
+            <span class="k">if</span> <span class="n">indeg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">{</span>
+                <span class="n">q</span><span class="nf">.push_back</span><span class="p">(</span><span class="n">i</span> <span class="k">as</span> <span class="nb">i32</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">=</span> <span class="n">q</span><span class="nf">.pop_front</span><span class="p">(){</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">e</span><span class="p">[</span><span class="n">u</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]{</span>
+                <span class="c1">// 复制祖先节点集合，避免同时遍历和修改,因为所有权的关系</span>
+                <span class="k">let</span> <span class="k">mut</span> <span class="n">new_ancestors</span><span class="o">=</span> <span class="n">anc</span><span class="p">[</span><span class="o">*</span> <span class="n">v</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span><span class="nf">.clone</span><span class="p">();</span>
+                <span class="n">new_ancestors</span><span class="nf">.insert</span><span class="p">(</span><span class="n">u</span><span class="p">);</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">anc</span><span class="p">[</span><span class="n">u</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]{</span>
+                    <span class="n">new_ancestors</span><span class="nf">.insert</span><span class="p">(</span><span class="o">*</span><span class="n">i</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="n">anc</span><span class="p">[</span><span class="o">*</span><span class="n">v</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span> <span class="o">=</span><span class="n">new_ancestors</span><span class="p">;</span>
+                <span class="n">indeg</span><span class="p">[</span><span class="o">*</span><span class="n">v</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span><span class="o">-=</span><span class="mi">1</span><span class="p">;</span>
+                <span class="k">if</span> <span class="n">indeg</span><span class="p">[</span><span class="o">*</span><span class="n">v</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">{</span>
+                    <span class="n">q</span><span class="nf">.push_back</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">res</span><span class="p">:</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span><span class="n">n</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">n</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">{</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">anc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.cloned</span><span class="p">()</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">i32</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="nf">.sort</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="n">res</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90" target="_blank">拓扑排序初步分析</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-04/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
