@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="  系统安装vim后，在终端输入vimtutor即可进入vim自带教程界面      移动按钮 h（左移）  j（下行）  k（上） l（右）        :q!放弃所有修改退出  :wq保存退出      x删除当前光标所在位置        i光标前插入    a光标后添加              命令 ...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="vim官方帮助文档 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="vim官方帮助文档 | thecoolboyhan">
+  <meta name="twitter:description" content="  系统安装vim后，在终端输入vimtutor即可进入vim自带教程界面      移动按钮 h（左移）  j（下行）  k（上） l（右）        :q!放弃所有修改退出  :wq保存退出      x删除当前光标所在位置        i光标前插入    a光标后添加              命令 ...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="vim官方帮助文档 | thecoolboyhan">
+  <meta property="og:description" content="  系统安装vim后，在终端输入vimtutor即可进入vim自带教程界面      移动按钮 h（左移）  j（下行）  k（上） l（右）        :q!放弃所有修改退出  :wq保存退出      x删除当前光标所在位置        i光标前插入    a光标后添加              命令 ...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>vim官方帮助文档 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="vim官方帮助文档">vim官方帮助文档</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        29 APR 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <blockquote>
+  <p>系统安装vim后，在终端输入vimtutor即可进入vim自带教程界面</p>
+</blockquote>
+
+<ol>
+  <li>
+    <p>移动按钮 h（左移）  j（下行）  k（上） l（右）</p>
+  </li>
+  <li>
+    <p>:q!放弃所有修改退出</p>
+  </li>
+</ol>
+
+<p>:wq保存退出</p>
+
+<ol>
+  <li>
+    <p>x删除当前光标所在位置</p>
+  </li>
+  <li>
+    <p>i光标前插入</p>
+
+    <p>a光标后添加</p>
+  </li>
+</ol>
+
+<table>
+  <thead>
+    <tr>
+      <th>命令</th>
+      <th>解释</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>dw</td>
+      <td>从当前光标删除到下一个单词</td>
+    </tr>
+    <tr>
+      <td>d$</td>
+      <td>从当前光标删除到当前行尾</td>
+    </tr>
+    <tr>
+      <td>dd</td>
+      <td>删除整行</td>
+    </tr>
+    <tr>
+      <td>2w</td>
+      <td>两个单词</td>
+    </tr>
+    <tr>
+      <td>operator  [number]  motion</td>
+      <td>operator：操作符<br />[number]：附加的数字，代表动作重复的次数<br />motion：动作，w代表单词，$代表行末</td>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>移动光标到行首</td>
+    </tr>
+    <tr>
+      <td>u</td>
+      <td>撤销上次的操作</td>
+    </tr>
+    <tr>
+      <td>U</td>
+      <td>撤销一行中的所有改动</td>
+    </tr>
+    <tr>
+      <td>ctrl+R</td>
+      <td>撤销之前的撤销命令</td>
+    </tr>
+    <tr>
+      <td>p</td>
+      <td>粘贴刚刚删除的内容</td>
+    </tr>
+    <tr>
+      <td>r</td>
+      <td>替换当前光标选中的地方</td>
+    </tr>
+    <tr>
+      <td>ce</td>
+      <td>修改当前光标到单词末尾，并进入插入模式</td>
+    </tr>
+    <tr>
+      <td>c$</td>
+      <td>修改当前光标到行尾的内容</td>
+    </tr>
+    <tr>
+      <td>ctrl+g</td>
+      <td>显示当前光标所在的行和文件状态</td>
+    </tr>
+    <tr>
+      <td>G</td>
+      <td>跳转到文件的最后一行</td>
+    </tr>
+    <tr>
+      <td>gg</td>
+      <td>跳转到文件的第一行</td>
+    </tr>
+    <tr>
+      <td>数字+G</td>
+      <td>跳转到数字输入的行</td>
+    </tr>
+    <tr>
+      <td>/</td>
+      <td>向下查找</td>
+    </tr>
+    <tr>
+      <td>?</td>
+      <td>向上查找</td>
+    </tr>
+    <tr>
+      <td>n</td>
+      <td>下一个匹配</td>
+    </tr>
+    <tr>
+      <td>N</td>
+      <td>上一个匹配</td>
+    </tr>
+    <tr>
+      <td>ctrl+o</td>
+      <td>回到上次光标的位置</td>
+    </tr>
+    <tr>
+      <td>ctrl+i</td>
+      <td>前进，下一次光标的位置</td>
+    </tr>
+    <tr>
+      <td>%</td>
+      <td>匹配当前代码块中的括号，快速找到左边括号和右边括号</td>
+    </tr>
+    <tr>
+      <td>:s/old/new</td>
+      <td>替换一行中第一个符合ods的字符串变成new</td>
+    </tr>
+    <tr>
+      <td>:s/ods/new/g</td>
+      <td>一行内所有的old字符串全部替换成new</td>
+    </tr>
+    <tr>
+      <td>:#,#s/old/new/g</td>
+      <td>两行内所有的old字符串全部替换成new</td>
+    </tr>
+    <tr>
+      <td>:%s/old/new/g</td>
+      <td>把整个文件中的old字符串全部替换成new</td>
+    </tr>
+    <tr>
+      <td>:%s/old/new/gc</td>
+      <td>替换整个文件中的old字符串为new，并给出提示来决定是否替换</td>
+    </tr>
+    <tr>
+      <td>:!+外部命令</td>
+      <td>暂时退出vim执行一个外部命令，之后任意键回来</td>
+    </tr>
+    <tr>
+      <td>:w filename</td>
+      <td>把当前vim中的内容保存到filename文件中</td>
+    </tr>
+    <tr>
+      <td>v</td>
+      <td>可视模式，通过移动光标可以选中不同的内容</td>
+    </tr>
+    <tr>
+      <td>v motion :w filename</td>
+      <td>把选中的内容保存到文件中</td>
+    </tr>
+    <tr>
+      <td>:r filename</td>
+      <td>把文件中的内容插入到当前光标位置</td>
+    </tr>
+    <tr>
+      <td>:r !command</td>
+      <td>把一个外部命令显示的内容插入到当前光标位置</td>
+    </tr>
+    <tr>
+      <td>o</td>
+      <td>在当前光标下一行插入一行</td>
+    </tr>
+    <tr>
+      <td>O</td>
+      <td>在光标上面插入一行</td>
+    </tr>
+    <tr>
+      <td>a</td>
+      <td>在光标后面插入</td>
+    </tr>
+    <tr>
+      <td>A</td>
+      <td>在光标行末尾插入</td>
+    </tr>
+    <tr>
+      <td>e</td>
+      <td>移动光标到单词末尾（w移动光标到下一个单词的头）</td>
+    </tr>
+    <tr>
+      <td>y</td>
+      <td>复制</td>
+    </tr>
+    <tr>
+      <td>p</td>
+      <td>粘贴</td>
+    </tr>
+    <tr>
+      <td>R</td>
+      <td>进入替换模式，可以快速替换多个字符（类似于insert）</td>
+    </tr>
+  </tbody>
+</table>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" target="_blank">vim官方帮助文档</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

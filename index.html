@@ -154,6 +154,250 @@
   <header class="post-header">
     <p class="post-meta">
       <span class="post-date">
+        29 APR 2024
+      </span>
+      
+      •
+      
+        <a class="post-cat" href="https://thecoolboyhan.github.io/categories/#通用知识">通用知识</a>
+        
+      
+      
+    </p>
+    <h4>
+      <a href="https://thecoolboyhan.github.io/articles/2024-04/vim%E5%AE%98%E6%96%B9%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3" class="post-title" title="vim官方帮助文档">vim官方帮助文档</a>
+      
+    </h4>
+
+    
+
+    </header>
+
+    
+    <div class="post-description">
+      <p>
+        <blockquote>
+  <p>系统安装vim后，在终端输入vimtutor即可进入vim自带教程界面</p>
+</blockquote>
+
+<ol>
+  <li>
+    <p>移动按钮 h（左移）  j（下行）  k（上） l（右）</p>
+  </li>
+  <li>
+    <p>:q!放弃所有修改退出</p>
+  </li>
+</ol>
+
+<p>:wq保存退出</p>
+
+<ol>
+  <li>
+    <p>x删除当前光标所在位置</p>
+  </li>
+  <li>
+    <p>i光标前插入</p>
+
+    <p>a光标后添加</p>
+  </li>
+</ol>
+
+<table>
+  <thead>
+    <tr>
+      <th>命令</th>
+      <th>解释</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>dw</td>
+      <td>从当前光标删除到下一个单词</td>
+    </tr>
+    <tr>
+      <td>d$</td>
+      <td>从当前光标删除到当前行尾</td>
+    </tr>
+    <tr>
+      <td>dd</td>
+      <td>删除整行</td>
+    </tr>
+    <tr>
+      <td>2w</td>
+      <td>两个单词</td>
+    </tr>
+    <tr>
+      <td>operator  [number]  motion</td>
+      <td>operator：操作符<br />[number]：附加的数字，代表动作重复的次数<br />motion：动作，w代表单词，$代表行末</td>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>移动光标到行首</td>
+    </tr>
+    <tr>
+      <td>u</td>
+      <td>撤销上次的操作</td>
+    </tr>
+    <tr>
+      <td>U</td>
+      <td>撤销一行中的所有改动</td>
+    </tr>
+    <tr>
+      <td>ctrl+R</td>
+      <td>撤销之前的撤销命令</td>
+    </tr>
+    <tr>
+      <td>p</td>
+      <td>粘贴刚刚删除的内容</td>
+    </tr>
+    <tr>
+      <td>r</td>
+      <td>替换当前光标选中的地方</td>
+    </tr>
+    <tr>
+      <td>ce</td>
+      <td>修改当前光标到单词末尾，并进入插入模式</td>
+    </tr>
+    <tr>
+      <td>c$</td>
+      <td>修改当前光标到行尾的内容</td>
+    </tr>
+    <tr>
+      <td>ctrl+g</td>
+      <td>显示当前光标所在的行和文件状态</td>
+    </tr>
+    <tr>
+      <td>G</td>
+      <td>跳转到文件的最后一行</td>
+    </tr>
+    <tr>
+      <td>gg</td>
+      <td>跳转到文件的第一行</td>
+    </tr>
+    <tr>
+      <td>数字+G</td>
+      <td>跳转到数字输入的行</td>
+    </tr>
+    <tr>
+      <td>/</td>
+      <td>向下查找</td>
+    </tr>
+    <tr>
+      <td>?</td>
+      <td>向上查找</td>
+    </tr>
+    <tr>
+      <td>n</td>
+      <td>下一个匹配</td>
+    </tr>
+    <tr>
+      <td>N</td>
+      <td>上一个匹配</td>
+    </tr>
+    <tr>
+      <td>ctrl+o</td>
+      <td>回到上次光标的位置</td>
+    </tr>
+    <tr>
+      <td>ctrl+i</td>
+      <td>前进，下一次光标的位置</td>
+    </tr>
+    <tr>
+      <td>%</td>
+      <td>匹配当前代码块中的括号，快速找到左边括号和右边括号</td>
+    </tr>
+    <tr>
+      <td>:s/old/new</td>
+      <td>替换一行中第一个符合ods的字符串变成new</td>
+    </tr>
+    <tr>
+      <td>:s/ods/new/g</td>
+      <td>一行内所有的old字符串全部替换成new</td>
+    </tr>
+    <tr>
+      <td>:#,#s/old/new/g</td>
+      <td>两行内所有的old字符串全部替换成new</td>
+    </tr>
+    <tr>
+      <td>:%s/old/new/g</td>
+      <td>把整个文件中的old字符串全部替换成new</td>
+    </tr>
+    <tr>
+      <td>:%s/old/new/gc</td>
+      <td>替换整个文件中的old字符串为new，并给出提示来决定是否替换</td>
+    </tr>
+    <tr>
+      <td>:!+外部命令</td>
+      <td>暂时退出vim执行一个外部命令，之后任意键回来</td>
+    </tr>
+    <tr>
+      <td>:w filename</td>
+      <td>把当前vim中的内容保存到filename文件中</td>
+    </tr>
+    <tr>
+      <td>v</td>
+      <td>可视模式，通过移动光标可以选中不同的内容</td>
+    </tr>
+    <tr>
+      <td>v motion :w filename</td>
+      <td>把选中的内容保存到文件中</td>
+    </tr>
+    <tr>
+      <td>:r filename</td>
+      <td>把文件中的内容插入到当前光标位置</td>
+    </tr>
+    <tr>
+      <td>:r !command</td>
+      <td>把一个外部命令显示的内容插入到当前光标位置</td>
+    </tr>
+    <tr>
+      <td>o</td>
+      <td>在当前光标下一行插入一行</td>
+    </tr>
+    <tr>
+      <td>O</td>
+      <td>在光标上面插入一行</td>
+    </tr>
+    <tr>
+      <td>a</td>
+      <td>在光标后面插入</td>
+    </tr>
+    <tr>
+      <td>A</td>
+      <td>在光标行末尾插入</td>
+    </tr>
+    <tr>
+      <td>e</td>
+      <td>移动光标到单词末尾（w移动光标到下一个单词的头）</td>
+    </tr>
+    <tr>
+      <td>y</td>
+      <td>复制</td>
+    </tr>
+    <tr>
+      <td>p</td>
+      <td>粘贴</td>
+    </tr>
+    <tr>
+      <td>R</td>
+      <td>进入替换模式，可以快速替换多个字符（类似于insert）</td>
+    </tr>
+  </tbody>
+</table>
+
+
+      </p>
+    </div>
+    
+
+    
+
+</section>
+
+<section class="post">
+  <header class="post-header">
+    <p class="post-meta">
+      <span class="post-date">
         4 APR 2024
       </span>
       
@@ -412,6 +656,399 @@
 
 <p>IOC也被称为依赖注入（DI）。它是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义其依赖关系（即它们与之合作的其他对象）。然后容器在创建bean时注入这些依赖关系。这个过程从根本上说是Bean本身通过使用直接构建类或诸如服务定位模式的机制来控制其依赖关系的实例化或位置的逆过程（因此被称为控制翻转）。</p>
 
+<h2 id="ioc容器概述">IOC容器概述</h2>
+
+<p>org.springframework.context.ApplicationContext接口代表SpringIoC容器，负责实例化、配置和组装Bean。容器通过读取配置元素数据来获取关于要实例化、配置和组装哪些对象的指示。配置元素以XML、Java注解或Java代码表示。</p>
+
+<h2 id="使用容器">使用容器</h2>
+
+<p>ApplicationContext是一个高级工厂的接口，能够维护不同bean及其依赖关系的注册表。通过使用方法 T getBean（Stringname,Class<T> requiredType)，可以检索到bean的实例。</T></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 创建和配置bean</span>
+<span class="nc">ApplicationContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">"services.xml"</span><span class="o">,</span> <span class="s">"daos.xml"</span><span class="o">);</span>
+
+<span class="c1">// 检索配置的实例</span>
+<span class="nc">PetStoreService</span> <span class="n">service</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">"petStore"</span><span class="o">,</span> <span class="nc">PetStoreService</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+<span class="c1">// 使用配置的实例</span>
+<span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">userList</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="na">getUsernameList</span><span class="o">();</span>
+
+</code></pre></div></div>
+
+<h2 id="bean的概览">Bean的概览</h2>
+
+<p>一个Spring Ioc容器管理着一个或多个Bean。这些Bean是用开发着提供给容器的配置元数据创建的。</p>
+
+<p>在容器本身中，这些Bean定义被表示为BeanDefinition对象，它包含一下元数据。</p>
+
+<ul>
+  <li>一个Bean全路径类名：通常，被定义的Bean的实际实现类。</li>
+  <li>Bean的行为配置元素，它说明了Bean在容器中的行为方式（Scope、生命周期回调，等等）。</li>
+  <li>对其他Bean的引用，这些Bean需要做它的工作。这些引用也被称为合作者或者依赖。</li>
+  <li>要在新创建的对象中设置的其他配置设置–例如，pool的大小限制或在管理连接池的Bean中使用的连接数。</li>
+</ul>
+
+<h3 id="属性">属性</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>属性</th>
+      <th>解释</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Class</td>
+      <td>实例化Bean</td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>Bean命名</td>
+    </tr>
+    <tr>
+      <td>Scope</td>
+      <td>Bean Scope</td>
+    </tr>
+    <tr>
+      <td>Constructor arguments</td>
+      <td>依赖注入</td>
+    </tr>
+    <tr>
+      <td>Properties</td>
+      <td>依赖注入</td>
+    </tr>
+    <tr>
+      <td>Autowiring mode</td>
+      <td>注入协作者</td>
+    </tr>
+    <tr>
+      <td>Lazy initialization mode</td>
+      <td>懒加载的Bean</td>
+    </tr>
+    <tr>
+      <td>Initialization method</td>
+      <td>初始化回调</td>
+    </tr>
+    <tr>
+      <td>Destruction method</td>
+      <td>销毁回调</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p>Bean元数据和手动提供的单体实例需要尽早注册，以便容器在自动注入和其他内省步骤中正确推导它们。虽然在某种程度上支持覆盖现有的元数据和现有的单体实例，但官方不推荐在运行时注册新的Bean（与对工厂的实时访问同时进行），这可能会导致并发访问异常、bean容器中的不一致状态，或者两者都有。</p>
+</blockquote>
+
+<h2 id="依赖注入">依赖注入</h2>
+
+<p>依赖注入（DI）是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义他们的依赖（即与它们一起工作的其他对象）。然后，容器在创建bean时注入这些依赖。这个过程从根本上说是Bean本身通过使用类的直接构造或服务定位模式来控制其依赖的实例化或位置的逆过程（因此被称为控制反转）。</p>
+
+<h3 id="基于构成器的依赖注入">基于构成器的依赖注入</h3>
+
+<p>通过容器调用带有许多参数的构成函数来完成的，每个参数代表一个依赖。调用带有特定参数的static工厂方法来构造bean几乎是等价的。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleMovieLister</span> <span class="o">{</span>
+
+    <span class="c1">// the SimpleMovieLister has a dependency on a MovieFinder</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">;</span>
+
+    <span class="c1">// a constructor so that the Spring container can inject a MovieFinder</span>
+    <span class="kd">public</span> <span class="nf">SimpleMovieLister</span><span class="o">(</span><span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">movieFinder</span> <span class="o">=</span> <span class="n">movieFinder</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// business logic that actually uses the injected MovieFinder is omitted...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="基于setter的依赖注入">基于Setter的依赖注入</h3>
+
+<p>通过容器在调用无参构造或无参数的static工厂方法来实例化你的bean之后调用Setter方法来实现的。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SimpleMovieLister</span> <span class="o">{</span>
+
+    <span class="c1">// the SimpleMovieLister has a dependency on the MovieFinder</span>
+    <span class="kd">private</span> <span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">;</span>
+
+    <span class="c1">// a setter method so that the Spring container can inject a MovieFinder</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setMovieFinder</span><span class="o">(</span><span class="nc">MovieFinder</span> <span class="n">movieFinder</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">movieFinder</span> <span class="o">=</span> <span class="n">movieFinder</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// business logic that actually uses the injected MovieFinder is omitted...</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<ul>
+  <li>应该选用哪种DI方式？</li>
+</ul>
+
+<p>由于可以混合使用基于构造函数和基于Setter的DI，一个好的经验法则是对强制依赖使用构造函数，对可选依赖使用setter方法或配置方法。请注意，在setter方法上使用@Autowired注解可以使属性成为必须得依赖；然而，带有参数程序化验证的构造注入是更好的。</p>
+
+<p>Spring团体通常提倡构造函数注入，因为它可以让你将应用组件实现为不可变的对象，并确保所需的依赖不为null。此外，构造函数注入的组件总是以完全初始化的状态返回给客户端（调用）代码。顺便提一下，大量的构造函数参数是一种不好的代码，意味着该类可能有太多的责任，应该重构以更好地解决适当的分离问题。</p>
+
+<p>Settter注入主要应该只用于在类中可以分配合理默认值的可选依赖。否则，必须在代码使用依赖的所有地方进行非null值检查。Setter注入的好处：Setter方法使该类的对象可以在以后重新配置或重新注入。</p>
+
+<h3 id="依赖的解析过程">依赖的解析过程</h3>
+
+<p>Bean解析的过程</p>
+
+<ol>
+  <li>ApplicationContext是用来描述所有bean的配置元数据创建和初始化的。配置元数据可以由XML、Java代码或注解来指定。</li>
+  <li>对于每个Bean来说，它的依赖是以属性、构造函数参数或静态工厂方法的参数（如果你用它代替正常的构造函数）的形式表达。在实际创建Bean时，这些依赖被提供给Bean。</li>
+  <li>每个属性或构造函数参数都是要设置的值的实际定义，或对容器中另一Bean的引用。</li>
+  <li>每个作为值的属性或构造函数参数都会从其指定格式转换为该属性或构造函数参数的实际类型。默认情况下，Spring可以将以字符串格式提供的值转换为所有内置类型，如int、long、String、boolean等。</li>
+</ol>
+
+<ul>
+  <li>循环依赖</li>
+</ul>
+
+<blockquote>
+  <p>如果你使用主要的构造函数注入，就有可能产生一个无法解决的循环依赖情况。</p>
+
+  <p>比如说，类A通过构造函数注入需要类B的一个实例，而类B通过构造函数注入需要类A的实例。如果你将类A和类B的Bean配置为相互注入，Spring IOC容器会在运行时检测到这些循环引用，并抛出一个BeanCurrentlyInCreationException。</p>
+
+  <p>解决方法：在编写类源码时，使其通过Setter而不是构造器进行配置。或者，避免构造器注入，只使用setter注入。</p>
+
+  <p>还有一种方法是在一个Bean被完全初始化之前就被注入到另一个Bean中。</p>
+</blockquote>
+
+<h2 id="注入协作者autowiring-collaborators自动注入">注入协作者（Autowiring Collaborators）自动注入</h2>
+
+<p>Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通过检查ApplicationContext的内容为你的Bean自动解决协作者（其他Bean）。</p>
+
+<ul>
+  <li>自动注入的优点</li>
+</ul>
+
+<p>自动注入可以随着你的对象的发展而更新配置。例如，如果你需要给一个类添加一个依赖，这个依赖可以自动满足，而不需要你修改配置。因此，自动在开发过程中可能特别有用。而不会否定在代码库变得更加稳定时切换到显式注入的选择。</p>
+
+<ul>
+  <li>四种自动注入的方式</li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th>模式</th>
+      <th>解释</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>no</td>
+      <td>（默认）没有自动注入。Bean引用必须由ref元素来定义。对于大型部署来说，不建议改变默认设置，因为明确指定协作者会带来更大的控制力和清晰度。在某种程度上，它记录了一个系统的结构。</td>
+    </tr>
+    <tr>
+      <td>byName</td>
+      <td>通过属性名称自动注入。Spring寻找一个与需要自动注入的属性同名的Bean。例如，如果一个Bean定义被设置为按名称自动注入，并且包含一个master属性（也就是说，它有一个setMaster（..）方法），Spring会寻找一个名为master的Bean定义并使用它来设置该属性。</td>
+    </tr>
+    <tr>
+      <td>byType</td>
+      <td>如果容器中正好有一个property类型的Bean存在，就可以自动注入该属性。如果存在一个以上的bean，就会抛出一个致命的exception，这表明你不能对该bean使用byType自动注入。如果没有匹配的bean，就不会发生任何事情（该属性没有被设置）。</td>
+    </tr>
+    <tr>
+      <td>constructor</td>
+      <td>类似于byType，但适用于构造函数参数。如果容器中没有一个构造函数参数类型的Bean，就会产生一个致命的错误。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="自动注入的限制和缺点">自动注入的限制和缺点</h3>
+
+<ul>
+  <li>property和constructor-arg设置中的明确依赖关系总是覆盖自动注入。你不能自动注入简单的属性，如基本数据、String和Class。</li>
+  <li>自动注入不如显式注入精确。尽管正如前面的表格中所指出的，Spring很小心地避免在模糊不清的情况进行猜测，这可能会产生意想不到的结果。你的Spring管理的对象之间的关系不再被明确地记录下来</li>
+  <li>对于可能从Spring容器中生成文档的工具来说，注入信息可能无法使用。</li>
+  <li>容器中的多个Bean定义可以与setter方法或构造参数指定的类型相匹配，以实现自动注入。对于数组、集合或Map实例，这不一定是个问题。然而，对于期待单一值的依赖关系，这种模糊性不会被任意地解决。如果没有唯一的Bean的定义，就会抛出一个异常。</li>
+</ul>
+
+<p>无法根据类型指定唯一bean的几种解决方案：</p>
+
+<ol>
+  <li>放弃自动注入，改用明确注入。</li>
+  <li>通过将Bean定义的Autowire-condidate属性设置为false来避免bean定义的自动注入。</li>
+  <li>通过将<bean></bean> 元素的primary属性设置为true，将单个bean定义指定为主要候选者。</li>
+  <li>实现基于注解的配置所提供的更精细的控制。</li>
+</ol>
+
+<h3 id="通过方法来注入bean">通过方法来注入Bean</h3>
+
+<blockquote>
+  <p>大多数情况下，Bean都是单例的，当一个单例Bean需要另一个单例Bean协作或一个非单例的Bean需与另一个非单例Bean协作，需要将一个Bean定义为另一个Bean的属性。如果需要Bean，A每次使用Bean，B时，都会重新创建Bean，B，则需要通过方法注入的方式解决。</p>
+</blockquote>
+
+<p>放弃一些控制的反转。可以通过实现ApplicationContextAware接口给bean A注入容器，并在bean A需要时让容器的getBean(“B”)调用询问（一个典型的new）bean B实例。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="nn">com.springboot.demo</span><span class="o">;</span>
+
+
+<span class="kn">import</span> <span class="nn">org.springframework.beans.BeansException</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.beans.PropertyValue</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.context.ApplicationContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.context.ApplicationContextAware</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.Map</span><span class="o">;</span>
+
+<span class="kd">class</span>  <span class="nc">Command</span><span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">Map</span> <span class="n">map</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setMap</span><span class="o">(</span><span class="nc">Map</span> <span class="n">map</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">map</span> <span class="o">=</span> <span class="n">map</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">execute</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">CommandManager</span> <span class="kd">implements</span> <span class="nc">ApplicationContextAware</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">ApplicationContext</span> <span class="n">applicationContext</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">process</span><span class="o">(</span><span class="nc">Map</span> <span class="n">commandState</span><span class="o">){</span>
+        <span class="nc">Command</span> <span class="n">command</span> <span class="o">=</span> <span class="n">createCommand</span><span class="o">();</span>
+        <span class="n">command</span><span class="o">.</span><span class="na">setMap</span><span class="o">(</span><span class="n">commandState</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">command</span><span class="o">.</span><span class="na">execute</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="kd">protected</span> <span class="nc">Command</span> <span class="nf">createCommand</span><span class="o">(){</span>
+<span class="c1">//        每次调用时，用getBean方法，通过BeanFactory来创建新的Bean。</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">applicationContext</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">"command"</span><span class="o">,</span><span class="nc">Command</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="c1">//获取ApplicationContext</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setApplicationContext</span><span class="o">(</span><span class="nc">ApplicationContext</span> <span class="n">applicationContext</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">BeansException</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">applicationContext</span><span class="o">=</span><span class="n">applicationContext</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<h3 id="查找方法依赖注入">查找方法依赖注入</h3>
+
+<p>查找方法注入是指容器能够覆盖容器管理的Bean上的方法并返回容器中另一个命名的bean的查询结果。（动态代理）Spring框架通过使用CGLIB的字节码生成来实现这种方法注入，动态地生成一个覆盖该方法的子类。</p>
+
+<ol>
+  <li>为了实现此动态子类功能，被Spring bean容器子类化的类不能为final。</li>
+  <li>对一个包含abstract方法的类进行单元测试，需要你自己对这个类进行子类化，并提供一个abstract方法的stub实现。</li>
+  <li>有方法体的方法对于组件扫描也是必要的，这需要具体的方法来实现。</li>
+  <li>另一个关键的限制是，查找方法对工厂方法不起作用，特别是对配置类中的@Bean方法不起作用，因为这种情况下，容器不负责创建实例，因此不能即时创建运行时生成的子类。</li>
+</ol>
+
+<h2 id="bean-scope">Bean Scope</h2>
+
+<blockquote>
+  <p>当你创建一个Bean定义时，你创建了一个“构造方法”，用于创建该Bean定义（definition）是所定义的类的实际实例。Bean定义（definitiion）是一个“构造方法”的想法很重要，因为它意味着，就像一个类一样，你可以从一个“构造方法”中创建许多实例。</p>
+</blockquote>
+
+<p>Spring框架支持六个scope</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>scope</th>
+      <th>说明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>singleton</td>
+      <td>（默认情况下）为每个Spring IOC容器将单个Bean定义的Scope扩大到单个对象实例。</td>
+    </tr>
+    <tr>
+      <td>prototype</td>
+      <td>将单个Bean定义的Scope扩大到任何数量的对象实例。</td>
+    </tr>
+    <tr>
+      <td>request</td>
+      <td>将单个Bean定义的Scope扩大到单个HTTP请求的生命周期。也就是说，每个HTTP请求都有自己的Bean实例，该实例是在单个Bean定义的基础上创建的。只在Web感知的Spring ApplicationContext的上下文中有效。</td>
+    </tr>
+    <tr>
+      <td>session</td>
+      <td>将单个Bean定义的Scope扩大到一个HTTP Session的生命周期。只在Web感知的Spring ApplicationContext的上下文中有效</td>
+    </tr>
+    <tr>
+      <td>Application</td>
+      <td>将单个Bean定义的Scope扩大到ServletContext的生命周期中。只在Web感知的Spring ApplicationContext的上下文中有效。</td>
+    </tr>
+    <tr>
+      <td>websocket</td>
+      <td>将单个Bean定义的Scope扩大到WebSocket的生命周期。仅在具有Web感知的Spring ApplicationContext的上下文中有效。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="单例">单例</h3>
+
+<p>只有一个单例的Bean的共享实例被管理，所有对符合该bean定义的id的bean的请求都会被Spring容器返回该特定的Bean实例。</p>
+
+<blockquote>
+  <p>当你定义了一个Bean的定义，并且它被定义为singleton（单例），Spring Ioc容器就会为该Bean定义的对象创建一个确切的实例。这个单例的实例被存储在单例Bean的缓存中，所有后续的请求和对该命名Bean的引用都会返回缓存中的对象。</p>
+</blockquote>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:31:42-1713940302216.png" alt="2024-4-2414:31:42-1713940302216.png" /></p>
+
+<p>Spring的单例Bean概念和GOF设计模式书中定义的单例模式不同。Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。</p>
+
+<h3 id="原型">原型</h3>
+
+<p>每次对该特定Bean的请求都会创建一个新的Bean实例。也就是说，该Bean被注入到另一个bean中，或者你通过容器上的getBean（）方法调用来请求它。</p>
+
+<blockquote>
+  <p>应该对所有有状态的Bean使用原型范围，对无状态的bean使用单例范围。</p>
+</blockquote>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:38:30-1713940709879.png" alt="2024-4-2414:38:30-1713940709879.png" /></p>
+
+<p>与其他作用域相比，Spring不会管理原型模式的Bean的生命周期。容器对原型对象进行实例化，配合和其他方面的组装，并将其交给客户端，而对该原型实例没有进一步的记录。后续销毁需要客户端自己来。</p>
+
+<blockquote>
+  <p>一个单例bean中，如果有依赖一个原型的Bean，那么这个原型Bean也只会被创建一次。</p>
+</blockquote>
+
+<h2 id="自定义bean的性质">自定义Bean的性质</h2>
+
+<h3 id="生命周期回调">生命周期回调</h3>
+
+<p>为了与容器对Bean生命周期的管理进行交互，你可以实现Spring InitializingBean和DispobleBean接口。容器为前者调用afterPropertiesSet()，为后者调用destroy（），让Bean在初始化和销毁你的Bean时执行某些动作。</p>
+
+<blockquote>
+  <p>@PostConstruct和@PreDestroy注解通常被认为是在现代Spring应用程序中接收生命周期回调的最佳实践。使用这些注解意味着你的Bean不会被耦合到Spring特定的接口。</p>
+</blockquote>
+
+<ul>
+  <li>在非Web应用中优雅地关闭Spring IoC容器</li>
+</ul>
+
+<p>如果你在非Web应用环境中使用Spring的Ioc容器，请向JVM注册一个shutdown hook。这样做可以确保优雅地关闭，并在你的单例Bean上调用相关的destroy方法，从而释放所有资源。</p>
+
+<blockquote>
+  <p>要注册一个shutdown hook，请调用registerShutdown（）方法，该方法在ConfigurableApplicationContext接口上声明。</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">org.springframework.context.ConfigurableApplicationContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.context.support.ClassPathXmlApplicationContext</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Boot</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="kd">final</span> <span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="nc">ConfigurableApplicationContext</span> <span class="n">ctx</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">"beans.xml"</span><span class="o">);</span>
+
+        <span class="c1">// add a shutdown hook for the above context...</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="na">registerShutdownHook</span><span class="o">();</span>
+
+        <span class="c1">// app runs here...</span>
+
+        <span class="c1">// main method exits, hook is called prior to the app shutting down...</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+
+</code></pre></div></div>
+
 <p>org.springframework.beans 和 org.springframework.context 包是Spring Framework的IoC容器的基础。</p>
 
 <p>BeanFactory接口提供了一种高级配置机制，能够管理任何类型的对象。ApplicationContext是BeanFactory的一个子接口。它增加了：</p>
@@ -427,13 +1064,13 @@
   <p>在Spring中，构成应用程序的骨干并由Spring IoC容器管理的对象被称为Bean。Bean是一个由Spring IOC容器实例化、组装和管理的对象。Bean以及它们之间的依赖关系都反应在容器使用的配置元数据中。</p>
 </blockquote>
 
-<h2 id="ioc容器概述">IOC容器概述</h2>
+<h3 id="bean定义definition的继承">Bean定义（Definition）的继承</h3>
 
-<p>org.springframework.context.ApplicationContext接口代表SpringIoC容器，负责实例化、配置和组装Bean。容器通过读取配置元素数据来获取关于要实例化、配置和组装哪些对象的指示。配置元素以XML、Java注解或Java代码表示。</p>
+<p>一个Bean定义可以包含很多配置信息，包括构造函数参数、数据值和容器特有的信息，如初始化方法、静态工厂方法名称等等。一个子Bean定义从父定义继承配置数据。自定义可以覆盖一些值或根据需要添加其他值。使用父Bean定义和子Bean定义可以节省大量的打字工作量。</p>
 
-<ul>
-  <li>基于注解的配置</li>
-</ul>
+<blockquote>
+  <p>ApplicationContext默认设置了所有的Singleton。因此，如果你有一个（父）Bean定义，你打算作为模版使用，并且这个定义指定了一个类，你必须确保将abstract属性设置为true，否则应用上下文将试图预实例化abstract Bean。</p>
+</blockquote>
 
 
       </p>
