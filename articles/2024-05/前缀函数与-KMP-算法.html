@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="前缀函数计算前缀函数的朴素算法  在一个循环中以i=1-&gt;n-1的顺序计算前缀函数π[i]的值（π[0]被赋值为0）。  为了计算当前的前缀函数值π[i]，我们令变量j从最大的真前缀长度i开始尝试。  如果当前长度下真前缀和真后缀相等，则此时长度为π[i]，否则令j自3减1，继续匹配，直到j=0。  如果j...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="KMP算法 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="KMP算法 | thecoolboyhan">
+  <meta name="twitter:description" content="前缀函数计算前缀函数的朴素算法  在一个循环中以i=1-&gt;n-1的顺序计算前缀函数π[i]的值（π[0]被赋值为0）。  为了计算当前的前缀函数值π[i]，我们令变量j从最大的真前缀长度i开始尝试。  如果当前长度下真前缀和真后缀相等，则此时长度为π[i]，否则令j自3减1，继续匹配，直到j=0。  如果j...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="KMP算法 | thecoolboyhan">
+  <meta property="og:description" content="前缀函数计算前缀函数的朴素算法  在一个循环中以i=1-&gt;n-1的顺序计算前缀函数π[i]的值（π[0]被赋值为0）。  为了计算当前的前缀函数值π[i]，我们令变量j从最大的真前缀长度i开始尝试。  如果当前长度下真前缀和真后缀相等，则此时长度为π[i]，否则令j自3减1，继续匹配，直到j=0。  如果j...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>KMP算法 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="KMP算法">KMP算法</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        28 MAY 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    3 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h1 id="前缀函数">前缀函数</h1>
+
+<h2 id="计算前缀函数的朴素算法">计算前缀函数的朴素算法</h2>
+
+<ol>
+  <li>在一个循环中以i=1-&gt;n-1的顺序计算前缀函数π[i]的值（π[0]被赋值为0）。</li>
+  <li>为了计算当前的前缀函数值π[i]，我们令变量j从最大的真前缀长度i开始尝试。</li>
+  <li>如果当前长度下真前缀和真后缀相等，则此时长度为π[i]，否则令j自3减1，继续匹配，直到j=0。</li>
+  <li>如果j=0并且仍没有任何一次匹配，则置π[i]=0并移至下一个下标i+1。</li>
+</ol>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">static</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">prefix_function</span><span class="o">(</span><span class="nc">String</span> <span class="n">s</span><span class="o">){</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+    <span class="kt">int</span><span class="o">[]</span> <span class="n">pi</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">i</span><span class="o">;</span><span class="n">j</span><span class="o">&gt;=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">--){</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span><span class="n">j</span><span class="o">).</span><span class="na">equals</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">))){</span>
+                <span class="n">pi</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">j</span><span class="o">;</span>
+                <span class="k">break</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">pi</span><span class="o">;</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<p>时间复杂度O(N^3)</p>
+
+<h2 id="计算前缀函数的高效算法">计算前缀函数的高效算法</h2>
+
+<ul>
+  <li>第一个优化</li>
+</ul>
+
+<p>有上一段代码可知，相邻的前缀函数值至多增加1.
+当取一个尽可能大的π[i+1]时，必然要求新增的s[i+1}也与之对应的字符匹配，即s[i+1]=s[π[i]]，此时π[i+1]=π[i]+1[i]+1。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">static</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">prefix_function</span><span class="o">(</span><span class="nc">String</span> <span class="n">s</span><span class="o">){</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+    <span class="kt">int</span><span class="o">[[]</span> <span class="n">pi</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">pi</span><span class="o">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">]+</span><span class="mi">1</span><span class="o">;</span><span class="n">j</span><span class="o">&gt;=</span><span class="mi">0</span><span class="o">;</span><span class="n">j</span><span class="o">--){</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span><span class="n">j</span><span class="o">).</span><span class="na">equals</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">))){</span>
+                <span class="n">pi</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">j</span><span class="o">;</span>
+                <span class="k">break</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<p>时间复杂度O(n^2)</p>
+
+<ul>
+  <li>最终算法</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">static</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">prefix_function</span><span class="o">(</span><span class="nc">String</span> <span class="n">s</span><span class="o">){</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+    <span class="kt">int</span><span class="o">[]</span> <span class="n">pi</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+        <span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">pi</span><span class="o">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">];</span>
+        <span class="k">while</span><span class="o">(</span><span class="n">j</span><span class="o">&gt;</span><span class="mi">0</span><span class="o">&amp;&amp;</span><span class="n">s</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">i</span><span class="o">)!=</span><span class="n">s</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">j</span><span class="o">)){</span>
+            <span class="n">j</span><span class="o">=</span><span class="n">pi</span><span class="o">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">i</span><span class="o">)==</span><span class="n">s</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">j</span><span class="o">)){</span>
+            <span class="n">j</span><span class="o">++;</span>
+        <span class="o">}</span>
+        <span class="n">pi</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">j</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">pi</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>时间复杂度 O（n）。</p>
+
+<h1 id="在字符串中查找子串kmp算法">在字符串中查找子串（KMP算法）</h1>
+
+<p>给定一个文本t和一个字符串s，我们尝试找到并展示s在t中的所有出现。</p>
+
+<p>为了简便起见，我们用n表示字符串s的长度，用m表示文本t的长度。</p>
+
+<p>我们构造一个字符串s+#+t，其中#为一个既不出现在s中也不出现在t中的分隔符。接下来计算该字符串的前缀函数。现在考虑该前缀函数除去最开始n+1,个值（属于s和分隔符的函数值）后其余函数值的意义。根据定义，π[i]为右端点在i且同时为一个前缀的最长真子串的长度，具体到我们的这种情况下，其值为与s的前缀相同且右端点位于i的最长子串的长度。由于分隔符的存在，该长度不可能超过n。而如果等式π[i]=n成立，则意味着s完整出现在该位置（即右端点位于位置i）。注意该位置的下标是对字符串s+#+t而言的。</p>
+
+<p>因此如果在某一位置i有π[i]=n成立，则字符串s在字符串t的i-(n-1)-(n+1)=i-2n处出现。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">static</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="nf">find_occurrences</span><span class="o">(</span><span class="nc">String</span> <span class="n">text</span><span class="o">,</span><span class="nc">String</span> <span class="n">pattern</span><span class="o">){</span>
+    <span class="nc">String</span> <span class="n">cur</span><span class="o">=</span><span class="n">pattern</span> <span class="o">+</span> <span class="sc">'#'</span> <span class="o">+</span><span class="n">text</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">sz1</span><span class="o">=</span><span class="n">text</span><span class="o">.</span><span class="na">length</span><span class="o">(),</span><span class="n">sz2</span><span class="o">=</span><span class="n">pattern</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+    <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">v</span><span class="o">=</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+    <span class="kt">int</span><span class="o">[]</span> <span class="n">lps</span><span class="o">=</span><span class="n">prefix_function</span><span class="o">(</span><span class="n">cur</span><span class="o">);</span>
+    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">sz2</span><span class="o">+</span><span class="mi">1</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;=</span><span class="n">sz1</span><span class="o">+</span><span class="n">sz2</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">lps</span><span class="o">[</span><span class="n">i</span><span class="o">]=</span><span class="n">sz2</span><span class="o">){</span>
+            <span class="n">v</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">i</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">sz2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">v</span><span class="o">;</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<p>时间复杂度：O（n+m）
+空间复杂度：O（n）</p>
+
+<h1 id="字符串的周期">字符串的周期</h1>
+
+<table>
+  <tbody>
+    <tr>
+      <td>对于字符串s和0&lt;p&lt;=</td>
+      <td>s</td>
+      <td>,若s[i]=s[i+p]对所有i属于[0,</td>
+      <td>s</td>
+      <td>-p-1]成立，则称p是s的周期。</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>对于字符串s和0&lt;=r&lt;</td>
+      <td>s</td>
+      <td>，若s长度为r的前缀和长度为r的后缀相等，就称s长度wwr的前缀是s的border。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>由s有长度为r的border可以推导出|s|-r是s的周期。
+根据前缀函数的定义，可以得到s所有的border长度，即π[-1],π[π[m-1]-1],…。</p>
+
+<p>所以根据前缀函数可以在O（n）的时间内计算出s所有的周期。其中，由于π[n-1]是s最长border的长度，所以n-π [n-1]是s的最小周期。</p>
+
+<h1 id="统计每个前缀的出现次数">统计每个前缀的出现次数</h1>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95" target="_blank">KMP算法</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-05/%E5%89%8D%E7%BC%80%E5%87%BD%E6%95%B0%E4%B8%8E-KMP-%E7%AE%97%E6%B3%95" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
