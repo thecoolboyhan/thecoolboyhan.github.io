@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="出处来自307. 区域和检索 - 数组可修改 - 力扣（LeetCode）茶神的题解动机场景给你一个数组，如何快速的计算任意一段连续子数组的元素和？对于一个子数组来说，如果遍历子数组的每个数，把它们加起来，时间复杂度是 O(n)，太慢了。下标从left的right的子数组元素和，可以看成是下标从1到right的子...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="树状数组 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="树状数组 | thecoolboyhan">
+  <meta name="twitter:description" content="出处来自307. 区域和检索 - 数组可修改 - 力扣（LeetCode）茶神的题解动机场景给你一个数组，如何快速的计算任意一段连续子数组的元素和？对于一个子数组来说，如果遍历子数组的每个数，把它们加起来，时间复杂度是 O(n)，太慢了。下标从left的right的子数组元素和，可以看成是下标从1到right的子...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="树状数组 | thecoolboyhan">
+  <meta property="og:description" content="出处来自307. 区域和检索 - 数组可修改 - 力扣（LeetCode）茶神的题解动机场景给你一个数组，如何快速的计算任意一段连续子数组的元素和？对于一个子数组来说，如果遍历子数组的每个数，把它们加起来，时间复杂度是 O(n)，太慢了。下标从left的right的子数组元素和，可以看成是下标从1到right的子...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>树状数组 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="树状数组">树状数组</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        18 JUN 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h1 id="出处">出处</h1>
+
+<p>来自<a href="https://leetcode.cn/problems/range-sum-query-mutable/solutions/2524481/dai-ni-fa-ming-shu-zhuang-shu-zu-fu-shu-lyfll/">307. 区域和检索 - 数组可修改 - 力扣（LeetCode）</a>茶神的题解</p>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-6-1814:14:19-1718691258755.png" alt="2024-6-1814:14:19-1718691258755.png" /></p>
+
+<h1 id="动机">动机</h1>
+
+<h2 id="场景">场景</h2>
+
+<p>给你一个数组，如何快速的计算任意一段连续子数组的元素和？</p>
+
+<p>对于一个子数组来说，如果遍历子数组的每个数，把它们加起来，时间复杂度是 O(n)，太慢了。</p>
+
+<p>下标从left的right的子数组元素和，可以看成是下标从1到right的子数组元素和，减去下标从1到left-1的子数组元素和。例如数组[3,1,4,1,5,9]，子数组[4,1,5]的元素和，等于[3,1,4,1,5]的元素和，减去[3,1]的元素和。</p>
+
+<p>按这个方法，算出每个前缀[1,i]（表示下标从1到i的连续子数组）的元素和，就可以O(1)的计算任意连续子数组的元素和了。</p>
+
+<h2 id="更新">更新</h2>
+
+<blockquote>
+  <p>但是，如果还可以修改数组中的元素呢？</p>
+</blockquote>
+
+<p>比如我把下标为1的元素修改了，由于所有前缀都包含下标1，那么就需要更新所有前缀的元素和，更新操作就需要O(n)的时间，太慢了。</p>
+
+<p>能不能把前缀[1,i]拆分成若干段连续子数组呢？</p>
+
+<p>如果拆分的太细，比如拆分成[1,1],[2,2],[3,3]，···，虽然更新是O(1)的，但计算子数组元素和还是得遍历累加，时间复杂度是O(n)，太慢了。</p>
+
+<h2 id="平衡">平衡</h2>
+
+<p>上面的方法，要么询问是O(1)更新是O(n)，要么询问是O(n)更新是O(1)，时间差距悬殊。</p>
+
+<p>如何平衡询问和更新的时间复杂度？</p>
+
+<p>关键在于如何拆分子数组（区间）。</p>
+
+<p>能否把任意前缀拆分成若干个关键区间，使得更新操作也只会更新若干个关键区间？</p>
+
+<p>这样回答询问时，只需要遍历并累加若干个关键区间的元素和。更新元素时，也只需要遍历并更新若干个关键区间的元素和。</p>
+
+<h1 id="如何拆分">如何拆分？</h1>
+
+<blockquote>
+  <p>启示：如果把一个正整数i拆分成若干个不同的2的幂（从大到小），那么只会拆分出O(logi)个数。前缀能否也这样拆分？</p>
+</blockquote>
+
+<p>举个例子，13=8+4+1，那么前缀[1,13]可以拆分成三个长度分别为8,4,1的关键区间：[1,8],[9,12],[13,13]。</p>
+
+<p>按照这个规则，来看看从[1,1]到[1,8]是如何拆分的：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>[1,1]=[1,1]</th>
+      <th>(1=1)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>[1,2]=[1,2]</td>
+      <td>(2=2)</td>
+    </tr>
+    <tr>
+      <td>[1,3]=[1,2]+[3,3]</td>
+      <td>(3=2+1)</td>
+    </tr>
+    <tr>
+      <td>[1,4]=[1,4]</td>
+      <td>4=4</td>
+    </tr>
+    <tr>
+      <td>[1,5]=[1,4]+[5,5]</td>
+      <td>5=4+1</td>
+    </tr>
+    <tr>
+      <td>[1,6]=[1,4]+[5,6]</td>
+      <td>6=4+2</td>
+    </tr>
+    <tr>
+      <td>[1,7]=[1,4]+[5,6]+[7,7]</td>
+      <td>7=4+2+1</td>
+    </tr>
+    <tr>
+      <td>[1,8]=[1,8]</td>
+      <td>8=8</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>数一数，按照这种拆分方式，一共有多少个不同的关键区间？</p>
+
+<p>有8个：[1,1],[1,2],[3,3],[1,4],[5,5],[5,6],[7,7],[1,8]。</p>
+
+<ul>
+  <li>如果i是2的幂，那么[1,i]无需拆分。</li>
+  <li>如果i不是2的幂，先拆分出一个最小的2的幂，记作lowbit(i)（例如6拆分出2），得到长为lowbit(i)的关键区间[i-lowbit(i)+1,i]，问题就转换成剩下的[1,i-lowbit(i)]如何拆分，这是一个规模更小的子问题。</li>
+</ul>
+
+<p>总共有n个不同的关键区间。</p>
+
+<h2 id="证明">证明</h2>
+
+<p>按顺序拆分前缀[1,1],[1,2],[1,3],···,[1,n]，每个只会恰好拆出一个新的关键区间[i-lowbit(i)+1,i]（注意[1,i-lowbit(i)]之前拆分过了，不会产生新的关键区间），所以一共有n个不同的关键区间。</p>
+
+<h2 id="算法">算法</h2>
+
+<p>由于关键区间的右端点互不相同，我们可以把右端点为i的关键区间的元素和保存在tree[i]中。</p>
+
+<p>按照如下的方法计算前缀[1,i]的元素和：</p>
+
+<ol>
+  <li>初始化元素和s=0.</li>
+  <li>每次循环，把tree[i]加到s中，对应关键区间[i-lowbit(i)+1,i]的元素和。</li>
+  <li>然后更新i为i-lowbit(i)，表示接下来要拆分[1,i-lowbit(i)]，获取其中关键区间的元素和。</li>
+  <li>循环直到i=0为止。</li>
+  <li>返回s。</li>
+</ol>
+
+<p>由于正整数i的二进制长度是 [log2i]+1，所以任意前缀至多拆分出O(logN)个关键区间，所以上述算法的时间复杂度为O(logN)。</p>
+
+<p>关于lowbit(i)的计算方法，请看<a href="https://leetcode.cn/circle/discuss/CaOJ45/">从集合论到位运算，常见位运算技巧分类总结！</a>。</p>
+
+<p>要计算sumRange(left,right)，可以分别计算[1,right+1]的元素和（改成下标从1开始），以及[1,left]的元素和，两者相减即为答案。</p>
+
+<h1 id="如何更新">如何更新</h1>
+
+<p>假如下标x发生了更新，那么所有包含x的关键区间都会被更新。</p>
+
+<p>例如下标5更新了，那么关键区间[5,5],[5,6],[1,8],[1,16]都需要更新，这三个关键区间的右端点依次为5,6,8,16。</p>
+
+<p>如果在5-6,6-8,8-16之间连边(其它位置也同理)，我们可以得到一个什么样的结构？</p>
+
+<p>如下图，这些关键区间可以形成如下树形结构（区间元素好保存在区间右端点处）。</p>
+
+<p><img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-6-1815:40:49-1718696448431.png" alt="2024-6-1815:40:49-1718696448431.png" /></p>
+
+<p>注意到：</p>
+
+<p>5+lowbit(5)=5+1=6</p>
+
+<p>6+lowbit(6)=6+2=8</p>
+
+<p>8+lowbit(8)=8+8=16</p>
+
+<h2 id="猜想">猜想：</h2>
+
+<p>如果x是一个被更新的关键区间的右端点，那么下一个被更新的关键区间的右端点为x+lowbit(x)。</p>
+
+<p>我们需要证明两点：</p>
+
+<ol>
+  <li>右端点为x的关键区间，被右端点为x+lowbit(x)的关键区间包含。</li>
+  <li>右端点在[x+1,x+lowbit(x)-1]内的关键区间，与右端点为x的关键区间没有任何交集。</li>
+</ol>
+
+<h3 id="1的证明">1的证明</h3>
+
+<p>设y=x+lowbit(x)，由于y&gt;x，我们只需要证明这两个关键区间的左端点满足</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y-lowbit(y)+1&lt;=x-lowbit(x)+1
+</code></pre></div></div>
+
+<p>即
+    y-lowbit(y)&lt;=x-lowbit(x)
+就能证明包含关系。
+设lowbit(x)=2^k，那么x=m*2^(k+1)+2^k，这里m是一个非负整数。
+所以不等式右边为</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>x−lowbit(x)=m⋅2  k+1
+</code></pre></div></div>
+
+<p>由于 y=x+lowbit(x)=(m+1)⋅2k+1y=x+\text{lowbit}(x)=(m+1)\cdot 2^{k+1}y=x+lowbit(x)=(m+1)⋅2 
+k+1
+ ，得到 lowbit(y)≥2k+1\text{lowbit}(y)\ge 2^{k+1}lowbit(y)≥2 
+k+1
+ ，</p>
+
+<p>所以不等式左边为</p>
+
+<p>y−lowbit(y)≤m⋅2k+1y-\text{lowbit}(y) \le m\cdot 2^{k+1}
+y−lowbit(y)≤m⋅2 
+k+1</p>
+
+<p>综上所述</p>
+
+<p>y−lowbit(y)≤m⋅2k+1=x−lowbit(x)y-\text{lowbit}(y)\le m\cdot 2^{k+1} = x-\text{lowbit}(x)
+y−lowbit(y)≤m⋅2 
+k+1
+ =x−lowbit(x)
+这说明包含关系是成立的。</p>
+
+<h3 id="2的证明">2的证明</h3>
+<p>设y=x+b，其中1&lt;=b&lt;2^k（k的定义同上）。
+右端点为y的关键区间，左端点为y-lowbit(y)+1。我们只需要证明
+    y-lowbit(y)+1&gt;x
+就能证明右端点为y的关键区间，一定在右端点为x的关键区间的右侧，他们没有任何任何交集的。</p>
+
+<h2 id="算法-1">算法</h2>
+
+<p>对于update(index,val)，算法如下：</p>
+<ol>
+  <li>设delta=val-nums[index],相当于把index的元素增加了这么多。然后把nums[index]更新成val。</li>
+  <li>初始化i=index+1（注意下标从1开始），这是第一个被更新的关键区间右端点。</li>
+  <li>不断的循环直到i&gt;n，这里n是nums的长度。</li>
+  <li>每次循环，把tree[i]增加delta。</li>
+  <li>然后更新i为i+lowbit(i),</li>
+</ol>
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" target="_blank">树状数组</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-06/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
