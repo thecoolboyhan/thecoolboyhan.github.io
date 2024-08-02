@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="PowerjobRemoteEngine用来控制整个Powerjob的网络层在work启动时创建的一个空对象，后续操作时会用到里面的方法EngineConfig/** * 服务类型 */private ServerType serverType;/** * 需要启动的引擎类型 */private String t...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="ActorSystem | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ActorSystem | thecoolboyhan">
+  <meta name="twitter:description" content="PowerjobRemoteEngine用来控制整个Powerjob的网络层在work启动时创建的一个空对象，后续操作时会用到里面的方法EngineConfig/** * 服务类型 */private ServerType serverType;/** * 需要启动的引擎类型 */private String t...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="ActorSystem | thecoolboyhan">
+  <meta property="og:description" content="PowerjobRemoteEngine用来控制整个Powerjob的网络层在work启动时创建的一个空对象，后续操作时会用到里面的方法EngineConfig/** * 服务类型 */private ServerType serverType;/** * 需要启动的引擎类型 */private String t...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>ActorSystem | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-08/ActorSystem">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="ActorSystem">ActorSystem</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        1 AUG 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    2 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h2 id="powerjobremoteengine">PowerjobRemoteEngine</h2>
+
+<p>用来控制整个Powerjob的网络层</p>
+
+<p>在work启动时创建的一个空对象，后续操作时会用到里面的方法</p>
+
+<h2 id="engineconfig">EngineConfig</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * 服务类型
+ */</span>
+<span class="kd">private</span> <span class="nc">ServerType</span> <span class="n">serverType</span><span class="o">;</span>
+<span class="cm">/**
+ * 需要启动的引擎类型
+ */</span>
+<span class="kd">private</span> <span class="nc">String</span> <span class="n">type</span><span class="o">;</span>
+<span class="cm">/**
+ * 绑定的本地地址
+ */</span>
+<span class="kd">private</span> <span class="nc">Address</span> <span class="n">bindAddress</span><span class="o">;</span>
+<span class="cm">/**
+ * actor实例，交由使用侧自己实例化以便自行注入各种 bean
+ */</span>
+<span class="kd">private</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">&gt;</span> <span class="n">actorList</span><span class="o">;</span>
+</code></pre></div></div>
+
+<p>重点是其中的actorList对象，其中包含三个Actor对象：TaskTrackerActor、ProcessorTrackerActor、WorkerActor。</p>
+
+<h2 id="actorinfo对象">ActorInfo对象</h2>
+
+<p>所有的actor对象拆解后的对象。其中包含所有actor对象，和它下面所有的Handler方法</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//   actor对象本身</span>
+    <span class="kd">private</span> <span class="nc">Object</span> <span class="n">actor</span><span class="o">;</span>
+<span class="c1">//    当前这个actor对象类上的@Actor注解信息（主要包含path信息）</span>
+    <span class="kd">private</span> <span class="nc">Actor</span> <span class="n">anno</span><span class="o">;</span>
+<span class="c1">//当前actor类中所有的HandlerInfo对象</span>
+    <span class="kd">private</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">HandlerInfo</span><span class="o">&gt;</span> <span class="n">handlerInfos</span><span class="o">;</span>
+</code></pre></div></div>
+
+<h2 id="handlerinfo对象">HandlerInfo对象</h2>
+
+<p>ActorInfo中的属性，包含不同ActorInfo下的Handler修饰的注解，和Handler注解的属性</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="nc">HandlerLocation</span> <span class="n">location</span><span class="o">;</span>
+<span class="cm">/**
+ * handler 对应的方法
+ */</span>
+<span class="kd">private</span> <span class="nc">Method</span> <span class="n">method</span><span class="o">;</span>
+
+<span class="cm">/**
+ * Handler 注解携带的信息
+ */</span>
+<span class="kd">private</span> <span class="nc">Handler</span> <span class="n">anno</span><span class="o">;</span>
+</code></pre></div></div>
+
+<h2 id="lighttasktrackermanager">LightTaskTrackerManager</h2>
+
+<blockquote>
+  <p>轻量级任务管理器</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//    用来存放所有轻量级任务，key为实例ID，value是任务对象</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">LightTaskTracker</span><span class="o">&gt;</span> <span class="no">INSTANCE_ID_2_TASK_TRACKER</span> <span class="o">=</span> <span class="nc">Maps</span><span class="o">.</span><span class="na">newConcurrentMap</span><span class="o">();</span>
+</code></pre></div></div>
+
+<h2 id="heavytasktrackermanager">HeavyTaskTrackerManager</h2>
+
+<blockquote>
+  <p>重量级任务管理器</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//    用来存放所有的重量级任务</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">HeavyTaskTracker</span><span class="o">&gt;</span> <span class="no">INSTANCE_ID_2_TASK_TRACKER</span> <span class="o">=</span> <span class="nc">Maps</span><span class="o">.</span><span class="na">newConcurrentMap</span><span class="o">();</span>
+</code></pre></div></div>
+
+<h2 id="初始化">初始化</h2>
+
+<p><img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/1722501205010actorSystem%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96.png" alt="1722501205010actorSystem的初始化.png" /></p>
+
+<p>以TaskTrackerActor为例</p>
+
+<ol>
+  <li>从EngineConfig中取出TaskTrackerActor</li>
+  <li>创建一个ActorInfo对象和HandlerInfo对象</li>
+  <li>将所有的ActorInfo和对应的HandlerInfo交给PowerjobRemoteEngine来实现响应式编程（分为阻塞和非阻塞）两种处理方式。利用事件来触发</li>
+  <li>后续所有的操作，均通过PowerjobRemoteEngine来触发worker和给server发消息。</li>
+</ol>
+
+<h2 id="tasktrackeractor">TaskTrackerActor</h2>
+
+<h3 id="服务器任务调度处理器onreceiveserverschedulejobreq">服务器任务调度处理器（onReceiveServerScheduleJobReq）</h3>
+
+<blockquote>
+  <p>服务器触发”runJob“path的命令，worker检测到开始执行。</p>
+</blockquote>
+
+<pre><code class="language-mermaid">graph TD
+    A[服务器任务调度处理器] --&gt; B{是否是轻量级任务}
+    B --&gt; |Yes| C[创建轻量级任务]
+    C --&gt; D{判断是否存在重复的任务}
+    D --&gt; |No| G{判断轻量级任务是否超载\n是否超过了1024*1.3}
+    G --&gt; |No| I{判断轻量级任务是否超过了1024个}
+    I --&gt; |Yes| J[告警提示轻量级任务超载]
+    J --&gt; K[原子性创建一个轻量级任务]
+    B --&gt; |No| M[创建重量级任务]
+    M --&gt; N{不存在重复实例id的重量级任务}
+    N --&gt; |No| P{判断重量级任务是否抄负荷是否超过64个}
+    P --&gt; |No| R[原子性创建重量级任务]
+
+</code></pre>
+
+<blockquote>
+  <p>轻量级任务，重量级任务这里分析完全可以单独再做一次研究报告，暂时就不展开了。</p>
+</blockquote>
+
+<h3 id="processortracker-心跳处理器">ProcessorTracker 心跳处理器</h3>
+
+<p>由”reportProcessorTrackerStatus”命令触发，请求参数中包含实例id</p>
+
+<blockquote>
+  <p>由代码推断，只有重量级任务需要上报心跳</p>
+</blockquote>
+
+<pre><code class="language-mermaid">graph TD
+	A[从重量级任务管理器中取出被检查的任务]--&gt;B[处理心跳]
+	B--&gt;C[根据请求参数更新当前任务的任务状态]
+	C--&gt;D{检测当前任务是否长期处于空闲状态}
+	D--&gt;|yes|E[销毁目标地址的任务\n销毁方式在状态管理器中将目标机器重置为初始状态]
+	E--&gt;F[通过数据库查询长期处于空间机器上所有执行中的任务]
+	F--&gt;G[将空闲机器上的所有任务全部改成失败状态]
+</code></pre>
+
+<ul>
+  <li>任务状态参数</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="no">DISPATCH_THRESHOLD</span> <span class="o">=</span> <span class="mi">20</span><span class="o">;</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="no">HEARTBEAT_TIMEOUT_MS</span> <span class="o">=</span> <span class="mi">60000</span><span class="o">;</span>
+
+<span class="c1">// 冗余存储一份 address 地址</span>
+<span class="kd">private</span> <span class="nc">String</span> <span class="n">address</span><span class="o">;</span>
+<span class="c1">// 上次活跃时间</span>
+<span class="kd">private</span> <span class="kt">long</span> <span class="n">lastActiveTime</span><span class="o">;</span>
+<span class="c1">// 等待执行任务数</span>
+<span class="kd">private</span> <span class="kt">long</span> <span class="n">remainTaskNum</span><span class="o">;</span>
+<span class="c1">// 是否被派发过任务</span>
+<span class="kd">private</span> <span class="kt">boolean</span> <span class="n">dispatched</span><span class="o">;</span>
+<span class="c1">// 是否接收到过来自 ProcessorTracker 的心跳</span>
+<span class="kd">private</span> <span class="kt">boolean</span> <span class="n">connected</span><span class="o">;</span>
+</code></pre></div></div>
+
+<h3 id="停止任务实例">停止任务实例</h3>
+
+<p>由“stopInstance”命令触发，请求参数中包含实例id</p>
+
+<pre><code class="language-mermaid">graph TD
+	a[从请求中找出实例id]--&gt;b{判断当前实例是什么实例?}
+	b--&gt;|重量级|c[关闭重量级任务]
+	b--&gt;|轻量级|d[关闭轻量级任务]
+	c--&gt;c1[将结束标识改为true]
+	c1--&gt;c2[0. 开始关闭线程池\n 1. 通知 ProcessorTracker 释放资源\n 2. 删除所有数据库数\n 3.移除顶层引,送去GC\n 4.强制关闭线程池]
+	d--&gt;d1{判断任务是否已经结束}
+	d1--&gt;|no|d2{判断结束标识是否为true}
+	d2--&gt;|no|d21[修改标识为true]
+	d2--&gt;|yes|d22{判断是否仍有未执行的任务}
+	d22--&gt;|yes|e1[执行销毁方法]
+	d22--&gt;|no|e{判断是否有在执行的任务}
+	e--&gt;e2[尝试打断任务]
+</code></pre>
+
+<h3 id="查询任务的运行状态">查询任务的运行状态</h3>
+
+<p>由“queryInstanceStatus”命令触发，请求参数中包含实例id</p>
+
+<p>查询任务状态的方法，方法设计2中重量级任务和一种轻量级任务的不同查询方式。</p>
+
+<h3 id="子任务状态上报处理器">子任务状态上报处理器</h3>
+
+<p>由”reportTaskStatus”命令触发，请求参数中包含实例id</p>
+
+<blockquote>
+  <p>只有重量级任务存在子任务状态上报机制</p>
+</blockquote>
+
+<pre><code class="language-mermaid">graph TD
+	a{判断当前子任务是否需要广播}--&gt;|yes|b[批量告诉所有节点当前节点任务处于'等待调度器调'状态]
+	a--&gt;|no|c
+	b--&gt;c[更新子任务的任务状态]
+	c--&gt;d[更新工作流上下文]
+</code></pre>
+
+<h3 id="子任务-map-处理器">子任务 map 处理器</h3>
+
+<p>由”mapTask”命令触发，请求参数中包含实例id，和所有的子任务：List<SubTask> subTasks</SubTask></p>
+
+<blockquote>
+  <p>只有重量级任务存在子任务map</p>
+</blockquote>
+
+<pre><code class="language-mermaid">graph TD
+	a[新建一个subTaskList用来存放所有子任务]--&gt;b[从参数中取出所有分给当前节点的子任务]
+	b--&gt;c[把所有分给当前worker的子任务实例id设置为当前实例id\n把所有的任务状态设置为'等待调度器调度']
+	c--&gt;d[将所有任务全部持久化到当前worker的数据库or内存]
+</code></pre>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-08/ActorSystem" target="_blank">ActorSystem</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-08/ActorSystem" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-08/ActorSystem" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-08/ActorSystem" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-08/ActorSystem" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-08/ActorSystem" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

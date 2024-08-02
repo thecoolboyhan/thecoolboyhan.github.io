@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="1. 新建ohmyworker对象读取配置文件中的属性。根据配置文件中的属性，新建一个ohmyworker的对象。2.通过配置信息，尝试连接server并设置值      通过配置文件中的server，ip和端口，生成一个真实的服务地址。        利用OKHttpClient给服务器发送get请求，请求调用...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="worker的启动流程（第一阶段） | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="worker的启动流程（第一阶段） | thecoolboyhan">
+  <meta name="twitter:description" content="1. 新建ohmyworker对象读取配置文件中的属性。根据配置文件中的属性，新建一个ohmyworker的对象。2.通过配置信息，尝试连接server并设置值      通过配置文件中的server，ip和端口，生成一个真实的服务地址。        利用OKHttpClient给服务器发送get请求，请求调用...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="worker的启动流程（第一阶段） | thecoolboyhan">
+  <meta property="og:description" content="1. 新建ohmyworker对象读取配置文件中的属性。根据配置文件中的属性，新建一个ohmyworker的对象。2.通过配置信息，尝试连接server并设置值      通过配置文件中的server，ip和端口，生成一个真实的服务地址。        利用OKHttpClient给服务器发送get请求，请求调用...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>worker的启动流程（第一阶段） | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="worker的启动流程（第一阶段）">worker的启动流程（第一阶段）</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        22 JUL 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h2 id="1-新建ohmyworker对象">1. 新建ohmyworker对象</h2>
+
+<p>读取配置文件中的属性。</p>
+
+<p>根据配置文件中的属性，新建一个ohmyworker的对象。</p>
+
+<h2 id="2通过配置信息尝试连接server并设置值">2.通过配置信息，尝试连接server并设置值</h2>
+
+<ol>
+  <li>
+    <p>通过配置文件中的server，ip和端口，生成一个真实的服务地址。</p>
+  </li>
+  <li>
+    <p>利用OKHttpClient给服务器发送get请求，请求调用的server接口为（/server/assert?appName=%s），appName指当前worker配置的appName</p>
+  </li>
+</ol>
+
+<p>server端应当返回</p>
+
+<p><img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17216337682811721633768246.png" alt="17216337682811721633768246.png" /></p>
+
+<p>success：成功标识</p>
+
+<p>data：一个Long类型的appid（此appId是否是之前传的appName？）</p>
+
+<blockquote>
+  <p>看到后面操作后，感觉此appId为服务端返回的负责处理此worker的appId</p>
+</blockquote>
+
+<p>将以上得到的所有信息放入workerRuntime对象中。</p>
+
+<blockquote>
+  <p>这里大胆猜测，workerRuntime是worker端用来存放所有运行时配置的类。此类的生命周期等同于worker应用。如果想要在运行中修改worker的某些配置，可以直接修改此类。（是否就可实现不需要重启服务，修改服务配置？）</p>
+</blockquote>
+
+<ol>
+  <li>获取本机的连接信息，也放入WR中。</li>
+  <li>创建一个定时线程池（核心线程数3）</li>
+</ol>
+
+<p>初始化连接server相关的配置。</p>
+
+<p>通过AppId和WR中的配置创建ServerDiscoveryService对象。</p>
+
+<p>利用ServerDiscoveryService对象连接sever。</p>
+
+<h2 id="3discovery方法">3.discovery方法</h2>
+
+<blockquote>
+  <p>用来测试worker和server的连接，并选择出当前worker归哪个server的方法</p>
+</blockquote>
+
+<ol>
+  <li>
+    <p>连接前，先将所有的配置文件中的服务器，设置到ip2Address中。</p>
+  </li>
+  <li>
+    <p>ServerDiscoveryService对象中有currentServerAddress属性</p>
+  </li>
+</ol>
+
+<p>此属性表示worker当前指定的server</p>
+
+<p>如果有指定的server，就返回当前server</p>
+
+<p>否则通过调用“/server/acquire?appId=%d&amp;currentServer=%s&amp;protocol=AKKA”接口</p>
+
+<p>确认当前机器或server服务器是否失活</p>
+
+<p>检测失活过程中服务器会重试3次。（如果判断服务器失活，worker会自动关闭当前机器上所有的秒级任务，原因：认为server已将秒级任务分配给了其他worker应用）。</p>
+
+<p>之后，通过之前创建的定时线程池每十秒不断递归discovery方法。</p>
+
+<h2 id="4初始化-actorsystem">4.初始化 ActorSystem</h2>
+
+<blockquote>
+  <p>akka用来传递消息，server与worker</p>
+</blockquote>
+
+<p>通过读取提前准备号的akka配置文件，创建一个ActorSystem，将此ActorSystem交给WR。</p>
+
+<blockquote>
+  <p>初始化ActorSystem过程中，会将多个参数交给WR。同时给ActorSystem设置了多个指标？？（看不懂）</p>
+</blockquote>
+
+<p>只知道如果ActorSystem可以用来交互，同时上面设置的某些指标可以用来主动给server告警。</p>
+
+<p>初始化日志系统，创建一个OmsLogHandler交给WR</p>
+
+<h2 id="5-初始化存储">5. 初始化存储</h2>
+
+<ol>
+  <li>
+    <p>从WR中取出之前的配置文件中的存储方式（磁盘or内存），来初始化一个taskPersistenceService对象</p>
+  </li>
+  <li>初始化一个数据库连接，（两种方式磁盘or内存）。初始化连接后，会尝试删除上一次H2_PATH配置的文件。</li>
+  <li>创建一个taskDAO对象，通过taskDAO对象初始化任务表（task_info表）每次重启时，此表都会删除并重新创建</li>
+  <li>初始化结束，把taskPersistenceService对象交给WR</li>
+</ol>
+
+<h2 id="6初始化定时任务">6.初始化定时任务</h2>
+
+<ul>
+  <li>初始化Worker健康度定时上报Runnable，每15秒执行一次</li>
+</ul>
+
+<p>通过CPU核心数，JVM内存空间，硬盘空间使用率，和用户自定义的指标来给当前机器打分</p>
+
+<p>不断地把当前机器的分数提交给sever</p>
+
+<ul>
+  <li>向定时线程池中添加日志上传任务，每5秒上传一次</li>
+</ul>
+
+<p>不断地将logQueue中的日志取出，交给ActorSystem中给server</p>
+
+<p>logQueue的消费过程中全程上锁。</p>
+
+<p>logqueue.poll()</p>
+
+<h2 id="流程图">流程图</h2>
+
+<pre><code class="language-mermaid">graph TD
+    A[PowerJobWorker 类] --&gt; B[setApplicationContext]
+    B --&gt; C[SpringUtils.inject applicationContext]
+    A --&gt; D[afterPropertiesSet]
+    D --&gt; E[init]
+    
+    E --&gt; F{initialized 是否为 false?}
+    F --&gt;|否| G[log.warn 不重复初始化]
+    F --&gt;|是| H[Stopwatch.createStarted]
+    H --&gt; I[log.info 初始化开始]
+    
+    I --&gt; J[获取 config]
+    J --&gt; K{config 是否为 null?}
+    K --&gt;|是| L[抛出异常]
+    K --&gt;|否| M[PowerBannerPrinter.print]
+    
+    M --&gt; N{config.isEnableTestMode?}
+    N --&gt;|否| O[assertAppName]
+    N --&gt;|是| P[log.warn TestMode]
+    
+    P --&gt; Q[获取 workerAddress]
+    Q --&gt; R[workerRuntime.setWorkerAddress]
+    
+    R --&gt; S[创建定时线程池]
+    S --&gt; T[创建 ServerDiscoveryService]
+    T --&gt; U[serverDiscoveryService.start]
+    U --&gt; V[workerRuntime.setServerDiscoveryService]
+    
+    V --&gt; W[初始化 ActorSystem]
+    W --&gt; X[overrideConfig.put]
+    X --&gt; Y[ConfigFactory.load]
+    Y --&gt; Z[ActorSystem.create]
+    Z --&gt; AA[workerRuntime.setActorSystem]
+    
+    AA --&gt; AB[创建 TaskTrackerActor]
+    AB --&gt; AC[创建 ProcessorTrackerActor]
+    AC --&gt; AD[创建 WorkerActor]
+    
+    AD --&gt; AE[创建 TroubleshootingActor]
+    AE --&gt; AF[actorSystem.eventStream.subscribe]
+    
+    AF --&gt; AG[log.info akka 地址]
+    AG --&gt; AH[log.info ActorSystem 初始化]
+    
+    AH --&gt; AI[初始化日志系统]
+    AI --&gt; AJ[workerRuntime.setOmsLogHandler]
+    
+    AJ --&gt; AK[初始化存储]
+    AK --&gt; AL[taskPersistenceService.init]
+    AL --&gt; AM[workerRuntime.setTaskPersistenceService]
+    AM --&gt; AN[log.info 存储初始化]
+    
+    AN --&gt; AO[初始化定时任务]
+    AO --&gt; AP[timingPool.scheduleAtFixedRate]
+    AP --&gt; AQ[timingPool.scheduleWithFixedDelay]
+    
+    AQ --&gt; AR[log.info 初始化完成]
+    
+    A --&gt; AS[destroy]
+    AS --&gt; AT[timingPool.shutdownNow]
+    AT --&gt; AU[workerRuntime.getActorSystem.terminate]
+
+
+</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<ul>
+  <li>ohMyWorker</li>
+</ul>
+
+<p>worker的启动类，此类初始化时，会将各种配置信息（config）</p>
+
+<blockquote>
+  <p>主要会初始化下面几个对象</p>
+</blockquote>
+
+<ul>
+  <li>WorkerRuntime</li>
+</ul>
+
+<blockquote>
+  <p>类似于spring的ApplicationContext，用来存放所有运行时的配置和信息</p>
+</blockquote>
+
+<ul>
+  <li>oms，ActorSystem</li>
+</ul>
+
+<p>创建一个ActorSystem，通过oms-worker.akka实现server和worker利用消息来通讯。ActorSystem会创建以下几种消息处理actor</p>
+
+<ol>
+  <li>任务跟踪器</li>
+  <li>处理器跟踪器</li>
+  <li>worker程序调度器</li>
+  <li>异常处理器</li>
+</ol>
+
+<ul>
+  <li>定时线程池</li>
+</ul>
+
+<p>用来存放worker的一些预设定时任务</p>
+
+<ol>
+  <li>探活任务ServerDiscoveryService.discovery();（用来做服务注册和发现）</li>
+  <li>Worker健康度定时上报（通过CPU核心数，JVM内存空间，硬盘空间使用率，和用户自定义的指标来给当前机器打分）</li>
+  <li>异步上传日志（不断地将logQueue中的日志取出，交给ActorSystem中给server）</li>
+</ol>
+
+<p><img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/1721887350228Powerjob-worker%E5%88%9D%E5%A7%8B%E5%8C%96%E5%AF%B9%E8%B1%A1.png" alt="1721887350228Powerjob-worker初始化对象.png" /></p>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5" target="_blank">worker的启动流程（第一阶段）</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-07/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
