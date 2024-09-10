@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="server的actor（2024-08-21）FriendActor(处理其他服务器的请求)探活（非阻塞的）直接返回当前服务器注册在hashmap中的所有其他sever服务器处理其他服务器的请求（阻塞）服务器之间交互直接通过class文件+方法的方式，直接通过反射创建对应实体类和方法来执行WorkerReque...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="MapReduce | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="MapReduce | thecoolboyhan">
+  <meta name="twitter:description" content="server的actor（2024-08-21）FriendActor(处理其他服务器的请求)探活（非阻塞的）直接返回当前服务器注册在hashmap中的所有其他sever服务器处理其他服务器的请求（阻塞）服务器之间交互直接通过class文件+方法的方式，直接通过反射创建对应实体类和方法来执行WorkerReque...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="MapReduce | thecoolboyhan">
+  <meta property="og:description" content="server的actor（2024-08-21）FriendActor(处理其他服务器的请求)探活（非阻塞的）直接返回当前服务器注册在hashmap中的所有其他sever服务器处理其他服务器的请求（阻塞）服务器之间交互直接通过class文件+方法的方式，直接通过反射创建对应实体类和方法来执行WorkerReque...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>MapReduce | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-09/MapReduce">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="MapReduce">MapReduce</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        10 SEP 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h1 id="server的actor2024-08-21">server的actor（2024-08-21）</h1>
+
+<h2 id="friendactor处理其他服务器的请求">FriendActor(处理其他服务器的请求)</h2>
+
+<h3 id="探活非阻塞的">探活（非阻塞的）</h3>
+
+<p>直接返回当前服务器注册在hashmap中的所有其他sever服务器</p>
+
+<h3 id="处理其他服务器的请求阻塞">处理其他服务器的请求（阻塞）</h3>
+
+<p>服务器之间交互直接通过class文件+方法的方式，直接通过反射创建对应实体类和方法来执行</p>
+
+<h2 id="workerrequesthandlerimpl处理worker请求">WorkerRequestHandlerImpl（处理worker请求）</h2>
+
+<h3 id="workerheartbeat接收worker的心跳非阻塞">workerHeartbeat（接收worker的心跳）非阻塞</h3>
+
+<p>内部维护着一个worker集群状态的map，如果对应appid集群状态有修改，则更新map。</p>
+
+<p>处理完后，写入日志监控器</p>
+
+<h3 id="reportinstancestatus处理tasktracker上报的任务实例状态阻塞的">reportInstanceStatus(处理tasktracker上报的任务实例状态)阻塞的</h3>
+
+<ol>
+  <li>创建一个已经完成任务的事件。</li>
+  <li>更新工作流中对应的任务</li>
+  <li>更新任务日志</li>
+</ol>
+
+<blockquote>
+  <p>丢弃掉晚上报的请求</p>
+
+  <p>丢弃掉不是server任务管理器中执行机器上报的任务</p>
+</blockquote>
+
+<h3 id="reportlog处理日志非阻塞">reportLog(处理日志)非阻塞</h3>
+
+<p>构造好接收的任务信息，把信息入库</p>
+
+<h3 id="queryjobcluster查询任务的可执行集群阻塞的">queryJobCluster（查询任务的可执行集群）阻塞的</h3>
+
+<h1 id="关于mapreduce的调研2024-08-26">关于MapReduce的调研(2024-08-26)</h1>
+
+<h2 id="任务拆分">任务拆分</h2>
+
+<blockquote>
+  <p>拆分任务和任务实际的执行逻辑（业务代码），用户只需要自定义任务如何拆分和业务代码。</p>
+</blockquote>
+
+<pre><code class="language-mermaid">graph TD
+	a1[新建一个重量级任务]--&gt;a
+	a{判断当前任务是否为根任务}--&gt;|yes|b[开始分发任务]
+	b--&gt;c[构造子任务]
+	c--&gt;d[拆分任务,从任务的参数中取出总数和每个子任务的大小]
+	d--&gt;d1[按拆分后的任务新建一个子task,将构造的子任务,\n模拟器一个请求,发送给当前机器]
+	d1--&gt;d2[当前机器接收到请求,把所有分段的任务,\n保存到数据库中]
+	a--&gt;|no|b1[开始执行当前任务,根据任务的状态返回执行结果]
+	
+</code></pre>
+
+<p><img src="https://vip.helloimg.com/i/2024/08/29/66d0506da6ff4.png" alt="66d0506da6ff4.png" /></p>
+
+<h2 id="通过tasktracker来处理子任务">通过TaskTracker来处理子任务</h2>
+
+<p>上回书说到map会将大任务拆分成子任务保存到自己机器的数据库中</p>
+
+<blockquote>
+  <p>拆分后每个任务分片的调度原理，使用者无感</p>
+</blockquote>
+
+<pre><code class="language-mermaid">graph TD
+	a[初始化tasktracker]--&gt;b[初始化定时任务线程池]
+	b--&gt;bb[向线程池中提交三种任务]
+	bb--&gt;b1[定时检查当前任务的执行状态,3秒一次]
+	bb--&gt;bb2{是否为MAP_REDUCE任务}
+	bb--&gt;b3[定时扫描数据库中的task,\n出于内存占用量考虑,每次最多获取100个,\n并将需要执行的任务派发出去]
+	bb2--&gt;|yes|b2[执行器动态上线,1分钟一次:\n检测是否需要更多的worker节点执行任务]
+	b1--&gt;b11[从数据库中统计出子任务的运行状态\n主要是个状态的数量]
+	b11--&gt;b12{未完成的任务数量是否为0\n用来判断任务是否真的执行结束}
+	b12--&gt;|yes|b13[根据任务的类型做不同的处理\n单机执行:再查一遍数据库,直接认为任务完成\nMAP:如果没有失败的任务就认为任务完成]
+	b13--&gt;b14{other:根据终极任务名称和任务id查询数据库中是否存在终极任务}
+	b14--&gt;|yes|b15[无论终极任务执行失败还是成功,都会任务当前任务执行成功]
+	b14--&gt;|no|b16[根据当前任务id新建一条终极任务提交给当前机器,\n必须让当前机器执行一遍终极任务]
+	b12--&gt;|no|b17[检测任务是否超时,把任务执行状态上报给server服务器]
+	b15--&gt;b17
+	b16--&gt;b17
+	b17--&gt;b18[判断是否存在之前未确认的任务,重新发送未确认任务]
+	b18--&gt;b19[检查有多少已宕机的ProcessorTracke,上面的任务重新派发\n删除掉宕机的机器]
+	b2--&gt;b21[判断是否需要动态加载新的执行器\n没有执行器或者可用的执行器小于配置的最大执行器数量]
+	b21--&gt;b22[向server端发送请求查询当前任务所有的可执行worker]
+	b22--&gt;b23[把所有可执行worker注册到ProcessTracker状态管理]
+	b3--&gt;b31[从任务管理器中取出所有可以执行的worker地址]
+	b31--&gt;b32[从数据库中查出当前根任务下所有等待调度的子任务]
+	b32--&gt;b33[通过取模算出当前任务需要执行的机器,给固定机器派发任务]
+	b33--&gt;b34[把当前任务更新为已调度,给目标机器发送任务开始命令]
+</code></pre>
+
+<p><img src="https://vip.helloimg.com/i/2024/08/27/66cd6506a2f47.png" alt="66cd6506a2f47.png" /></p>
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-09/MapReduce" target="_blank">MapReduce</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-09/MapReduce" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-09/MapReduce" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-09/MapReduce" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-09/MapReduce" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-09/MapReduce" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="java8(2014)interface为接口新加入了两种可以有方法体的写法。      default:    实现此接口的类，可以实现此方法，如果没有实现此方法，默认使用接口中的方法。          如果一个类实现了多个接口，而且多个接口存在相同的默认方法，则此类必须重写接口的默认方法。         ...">
+  <meta name="keywords" content="jekyll, java, scala, blog, 周赛, and 算法">
+  <meta name="author" content="java各版本区别 | thecoolboyhan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="java各版本区别 | thecoolboyhan">
+  <meta name="twitter:description" content="java8(2014)interface为接口新加入了两种可以有方法体的写法。      default:    实现此接口的类，可以实现此方法，如果没有实现此方法，默认使用接口中的方法。          如果一个类实现了多个接口，而且多个接口存在相同的默认方法，则此类必须重写接口的默认方法。         ...">
+  <meta name="twitter:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  -->
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="https://thecoolboyhan.github.io">
+  <meta property="og:title" content="java各版本区别 | thecoolboyhan">
+  <meta property="og:description" content="java8(2014)interface为接口新加入了两种可以有方法体的写法。      default:    实现此接口的类，可以实现此方法，如果没有实现此方法，默认使用接口中的方法。          如果一个类实现了多个接口，而且多个接口存在相同的默认方法，则此类必须重写接口的默认方法。         ...">
+  <meta property="og:image" content="https://thecoolboyhan.github.io/img/avatar.jpg">
+  <title>java各版本区别 | thecoolboyhan</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://thecoolboyhan.github.io/css/main.css">
+
+  <link rel="canonical" href="https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB">
+  <link rel="alternate" type="application/rss+xml" title="thecoolboyhan" href="https://thecoolboyhan.github.io/feed.xml"/>
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="https://thecoolboyhan.github.io/favicon.png">
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <img src="https://thecoolboyhan.github.io/img/avatar.jpg" alt="" class="avatar">
+  
+  <a href="https://thecoolboyhan.github.io/" class="author_name">hanyongfa</a>
+  <span class="author_job">Java Developer</span>
+  <span class="author_bio mbm">A backend developer at in Shanghai, China.</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/">home</a>
+        <span>/</span>
+      </li>
+       
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/archive/">Archive</a>
+        
+          <span>/</span>
+        
+      </li>
+            
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/categories/">Categories</a>
+        
+          <span>/</span>
+        
+      </li>
+          
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/resume/">Resume</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/tags/">Tags</a>
+        
+          <span>/</span>
+        
+      </li>
+        
+      <li class="nav-item">
+        <a href="https://thecoolboyhan.github.io/updates/">Updates</a>
+        
+          <span>/</span>
+        
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+      <li>
+      <script>gen_mail_to_link('hanyongfa2013@163.com', 'Hello from website');</script>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li><a href="http://github.com/thecoolboyhan" class="social-link-item" target="_blank"><i class="fa fa-fw fa-github"></i></a></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "https://thecoolboyhan.github.io/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="java各版本区别">java各版本区别</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        10 SEP 2024
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <h1 id="java82014">java8(2014)</h1>
+
+<h2 id="interface">interface</h2>
+
+<p>为接口新加入了两种可以有方法体的写法。</p>
+
+<ul>
+  <li>
+    <p>default:</p>
+
+    <p>实现此接口的类，可以实现此方法，如果没有实现此方法，默认使用接口中的方法。</p>
+
+    <blockquote>
+      <p>如果一个类实现了多个接口，而且多个接口存在相同的默认方法，则此类必须重写接口的默认方法。</p>
+    </blockquote>
+  </li>
+  <li>
+    <p>static</p>
+
+    <p>接口中允许写静态方法，调用时直接通过class文件调用。</p>
+  </li>
+</ul>
+
+<h2 id="函数式接口">函数式接口</h2>
+
+<p>@FunctionalInterface</p>
+
+<p>有且只有一个抽象方法，但可以有多个非抽象方法的接口。</p>
+
+<h2 id="lambda表达式">Lambda表达式</h2>
+
+<p>一种语法糖写法，可以配合上面的函数式接口使用。</p>
+
+<h2 id="stream">Stream</h2>
+
+<blockquote>
+  <p>通过流，把文件从一个地方输入到另一个地方，只负责内容的搬运，对文件内容不做任何CRUD。</p>
+</blockquote>
+
+<h2 id="optional">Optional</h2>
+
+<p>java对于空指针问题更优雅的处理方案。</p>
+
+<h2 id="date-time-api">Date-Time API</h2>
+
+<ul>
+  <li>过去java.util.Date类存在的问题</li>
+</ul>
+
+<ol>
+  <li>非线程安全</li>
+  <li>时区处理麻烦</li>
+  <li>各种格式化、和时间计算繁琐。</li>
+  <li>设计有缺陷，Date类通输出包含日期和时间。</li>
+</ol>
+
+<h1 id="java9201709">java9（2017.09）</h1>
+
+<h2 id="jshell">JShell</h2>
+
+<p>可以在命令窗口直接输入表达式并查看执行结果。</p>
+
+<h2 id="模块化系统">模块化系统</h2>
+
+<p>把jdk封装成不同的模块，然后自由组合。</p>
+
+<h2 id="g1成为默认回收器">G1成为默认回收器</h2>
+
+<p>G1从jdk7被引入，从现在开始变成默认回收器。</p>
+
+<h2 id="快速创建不可变集合">快速创建不可变集合</h2>
+
+<p>增加了<code class="language-plaintext highlighter-rouge">List.of()</code>、<code class="language-plaintext highlighter-rouge">Set.of()</code>、<code class="language-plaintext highlighter-rouge">Map.of()</code> 和 <code class="language-plaintext highlighter-rouge">Map.ofEntries()</code>等工厂方法来创建不可变集合。</p>
+
+<p>使用.of()创建的集合为不可变集合，不能增加，修改，排序，删除，不然会报异常。</p>
+
+<h2 id="string存储结构优化">String存储结构优化</h2>
+
+<p>java8的string类是用char[]存储，在9之后改用byte[]数组存储字符串，节省了空间。</p>
+
+<h2 id="接口的私有方法">接口的私有方法</h2>
+
+<p>java9运行接口中存在私有方法。</p>
+
+<h2 id="try-with-resources增强">try-with-resources增强</h2>
+
+<h2 id="进程api">进程API</h2>
+
+<p>增加了一套新的API来管理原生线程</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 获取当前正在运行的 JVM 的进程ProcessHandle currentProcess =ProcessHandle.current();// 输出进程的 idSystem.out.println(currentProcess.pid());// 输出进程的信息System.out.println(currentProcess.info());</span>
+
+<span class="c1">///------</span>
+
+<span class="c1">//著作权归所有 原文链接：https://javaguide.cn/java/new-features/java9.html</span>
+</code></pre></div></div>
+
+<h2 id="响应式流重点">响应式流（重点）</h2>
+
+<p>TODO: 后面看明白了再来记这部分的笔记</p>
+
+<p><a href="https://www.cnblogs.com/IcanFixIt/p/7245377.html">Java 9 揭秘（17. Reactive Streams） - 林本托 - 博客园 (cnblogs.com)</a></p>
+
+<h1 id="java10201803">java10（2018.03）</h1>
+
+<h2 id="局部变量类型推断var">局部变量类型推断（var）</h2>
+
+<p>可以直接使用var来声明局部变量</p>
+
+<p>var关键字只能用在带有构造器的局部变量和for循环中。</p>
+
+<p>var并不会改变java是一门静态语言的事实，编译器负责推断出类型。</p>
+
+<h2 id="g1并行fullgc">G1并行FULLGC</h2>
+
+<p>G1的FULLGC改成并行的标记清除算法，同时会使用和年轻代回收和混合回收相同的并行工作线程数，从而减少FULLGC的时间，以带来更好的性能和更大的吞吐量。</p>
+
+<h2 id="集合增强">集合增强</h2>
+
+<p><code class="language-plaintext highlighter-rouge">List</code>，<code class="language-plaintext highlighter-rouge">Set</code>，<code class="language-plaintext highlighter-rouge">Map</code> 提供了静态方法<code class="language-plaintext highlighter-rouge">copyOf()</code>返回入参集合的一个不可变拷贝。</p>
+
+<h1 id="java11201809">java11（2018.09）</h1>
+
+<h2 id="http-client标准化">HTTP Client标准化</h2>
+
+<p>可以直接使用HttpClient来直接发送异步非阻塞的请求。</p>
+
+<h2 id="string增强">String增强</h2>
+
+<p>对string增加了判空和统计的API</p>
+
+<h2 id="zgc可伸缩低延迟垃圾回收器">ZGC（可伸缩低延迟垃圾回收器）</h2>
+
+<p>引入了ZGC，详细的可以看《读深入理解java虚拟机有感》.</p>
+
+<h1 id="java12">java12</h1>
+
+<h2 id="shenandoah-gc">Shenandoah GC</h2>
+
+<p>引入了谢南多厄垃圾回收器。（谢南多厄垃圾回收器有java8版本sdk）</p>
+
+<h2 id="g1优化">G1优化</h2>
+
+<ul>
+  <li>
+    <p>可终止收集：可以终止回收的过程。</p>
+  </li>
+  <li>
+    <p>及时返回未使用的已分配内存</p>
+
+    <p>可以把空间的java堆返回给操作系统。</p>
+  </li>
+</ul>
+
+<h1 id="java13">java13</h1>
+
+<h2 id="增强zgc释放未使用的内存">增强ZGC（释放未使用的内存）</h2>
+
+<p>之前的ZGC存在未能主动的把堆内存空间释放给操作系统的问题。</p>
+
+<p>ZGC回收过程中的为每块内存分配的ZPageCache，现在使用LRU排序，并按照大小进行组织。</p>
+
+<p>ZGC会向操作系统释放长时间未使用的页面。</p>
+
+<h2 id="socketapi重构">SocketAPI重构</h2>
+
+<p>对 SocketAPI进行了重写，使用了JUC包下的锁，而不是使用sync方法。</p>
+
+<h1 id="java-14">java 14</h1>
+
+<h2 id="空指针异常精准提示">空指针异常精准提示</h2>
+
+<p>可以精准的提示出空指针异常到底在哪个方法调用的时候报出的。</p>
+
+<h2 id="移除了cms垃圾回收器">移除了CMS垃圾回收器</h2>
+
+<h1 id="java15">java15</h1>
+
+<h2 id="zgc转正">ZGC转正</h2>
+
+<p>ZGC可以正式使用了，不过默认的回收器还是G1。</p>
+
+<p>ZGC可以支持mac和windows了。</p>
+
+<h2 id="提出了密封类概念">提出了密封类概念</h2>
+
+<p>一个类，不能随便被继承和修改。</p>
+
+<h2 id="禁用和废弃偏向锁">禁用和废弃偏向锁</h2>
+
+<p>偏向锁的引入增加了JVM的复杂性大于其带来的性能提升。</p>
+
+<h1 id="java16202103">java16（2021.03）</h1>
+
+<h2 id="启用c14语言特性">启用C++14语言特性</h2>
+
+<h2 id="zgc并发线程堆栈处理">ZGC并发线程堆栈处理</h2>
+
+<p>java16将ZGC线程处理从安全点转移到一个并发阶段，可以极大的提高应用程序的性能和效率。</p>
+
+<h1 id="java17202109">java17（2021.09）</h1>
+
+<h2 id="新的随机数生成方法">新的随机数生成方法</h2>
+
+<p>增加了新的接口类型和实现。可以让开发者更好的修改随机数。</p>
+
+<h2 id="switch类型匹配">switch类型匹配</h2>
+
+<p>类似于switch的instanceof</p>
+
+<h2 id="删除rmi远程调用激活机制">删除RMI远程调用激活机制</h2>
+
+<p>删除了RMI远程调用的激活机制，但是保留了RMI的其余部分。</p>
+
+<h2 id="密封类转正">密封类（转正）</h2>
+
+<p>密封类正式可以使用。</p>
+
+
+    原创文章转载请注明出处: <a href="https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB" target="_blank">java各版本区别</a>
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=https://thecoolboyhan.github.io/articles/2024-09/java%E5%90%84%E7%89%88%E6%9C%AC%E5%8C%BA%E5%88%AB" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2024 hanyongfa. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://thecoolboyhan.github.io/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://thecoolboyhan.github.io/js/main.js"></script>
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-62251910-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
