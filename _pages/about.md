@@ -1,6 +1,6 @@
 ---
 permalink: /
-title: "Academic Pages is a ready-to-fork GitHub Pages template for academic personal websites"
+title: "韩永发的个人网站"
 author_profile: true
 redirect_from: 
   - /about/
@@ -9,12 +9,18 @@ redirect_from:
 
 # thecoolboyhan的博客
 一些个人网址：
-- 个人网站：https://thecoolboy.000.pe/
-- 可以评论的博客：https://thecoolboy-blog.vercel.app/
-- 当然还有我的github：https://github.com/thecoolboyhan/
+- 个人网站：<a href="https://thecoolboy.000.pe/" rel="permalink">个人网站</a>
+- 可以评论的博客：<a href="https://thecoolboy-blog.vercel.app/" rel="permalink">可评论的博客</a>
+- 当然还有我的github：<a href="https://github.com/thecoolboyhan/" rel="permalink">github</a>
+- 力扣主页：<a href="https://leetcode.cn/thecoolboy/" rel="permalink">leetcode</a>
 
 
+# 最近更新的文章
 
+<h1>Posts</h1>
+{% for post in site.posts %}
+{% include archive-single.html %}
+{% endfor %}
 
 
 This is the front page of a website that is powered by the [Academic Pages template](https://github.com/academicpages/academicpages.github.io) and hosted on GitHub pages. [GitHub pages](https://pages.github.com) is a free service in which websites are built and hosted from code and data stored in a GitHub repository, automatically updating when a new commit is made to the respository. This template was forked from the [Minimal Mistakes Jekyll Theme](https://mmistakes.github.io/minimal-mistakes/) created by Michael Rose, and then extended to support the kinds of content that academics have: publications, talks, teaching, a portfolio, blog posts, and a dynamically-generated CV. You can fork [this repository](https://github.com/academicpages/academicpages.github.io) right now, modify the configuration and markdown files, add your own PDFs and other content, and have your own site for free, with no ads! An older version of this template powers my own personal website at [stuartgeiger.com](http://stuartgeiger.com), which uses [this Github repository](https://github.com/staeiou/staeiou.github.io).

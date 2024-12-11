@@ -7,8 +7,8 @@
 # server process.
 
 # Basic Site Settings
-locale                   : "en-US"
-title                    : "yongfa han/ Site Title"
+locale                   : "zh-CN"
+title                    : "hanyongfa"
 title_separator          : "-"
 name                     : &name "thecoolboy han"
 description              : &description "personal description"
@@ -23,10 +23,10 @@ author:
   # Biographic information
   avatar           : "profile.png"
   name             : "thecoolboyhan"
-  pronouns         : # example: "she/her"  
-  bio              : "Short biography for the left-hand sidebar"
-  location         : "Earth"
-  employer         : "Red Brick University"
+  pronouns         : # example: "she/her"
+  bio              : "我们生命中会遇到很多人，有的黯淡无光，有的色彩艳丽，有的光彩照人。"
+  location         : "shanghai"
+  employer         : "成都新希望金融科技有限公司"
   uri              : # URL
   email            : "hanyongfa2013@163.com" 
 
@@ -48,7 +48,7 @@ author:
   stackoverflow    : # User number or user number and name (i.e., use "1" or "1/jeff-atwood")    
 
   # Social media
-  bluesky          : "bsky.app" # Replace this with you Bluesky username
+  bluesky          : "thecoolboyhan.bsky.social" # Replace this with you Bluesky username
   facebook         : # Username
   flickr           : # Username
   foursquare       : # Username
