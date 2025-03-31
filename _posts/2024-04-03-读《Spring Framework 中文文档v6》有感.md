@@ -2,7 +2,7 @@
 layout: post
 title:  spring中文说明文档有感
 categories: [java]
-tags: [java,spring,框架]
+tags: [java,spring,框架,读后感]
 ---
 
 
