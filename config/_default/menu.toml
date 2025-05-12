@@ -21,4 +21,4 @@ name = "力扣"
 url = "https://leetcode.cn/u/thecoolboy/"
 
 [social.params]
-icon = "brand-leetcode"
+icon = "outline/brand-leetcode"
