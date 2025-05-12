@@ -1,9 +1,9 @@
 ---
 title:  关于Online DDL
 description: 介绍各版本的Online DDL，及其发展
-slug: mysql 
+slug: onlineDDL
 date: 2024-05-10 00:00:00+0000
-image: onlineddl.jpg
+image: onlineddl.png
 categories:
   - mysql
   - 运维
