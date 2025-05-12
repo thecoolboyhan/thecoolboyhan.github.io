@@ -47,12 +47,11 @@ DDL操作支持了原子特性。另外，Online DDL的ALGORITHM参数增加了�
 5. 释放原表的写锁
 6. 将原表删除，并将临时表重命名为原表
 
-![2024-5-1111:11:39-1715397098637.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1111:11:39-1715397098637.png)
-![1744792681344.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744792681344_1744792681377.png)
+![2024-5-1111_11_39-1715397098637.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1111_11_39-1715397098637_1747037696873.png)
 
 ## Inplace算法
 
-![2024-5-1111:12:50-1715397170155.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1111:12:50-1715397170155.png)
+![2024-5-1111_12_50-1715397170155.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1111_12_50-1715397170155_1747037762761.png)
 
 
 
@@ -143,8 +142,7 @@ select * from information_schema.processlist;//数据库连接信息
 
 
 # Online DDL的执行过程
-
-![2024-5-1113:15:50-1715404549579.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1113:15:50-1715404549579.png)
+![2024-5-1113_15_50-1715404549579.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1113_15_50-1715404549579_1747037825251.png)
 
 
 
@@ -218,8 +216,7 @@ Online DDL操作的性能取决于是否发生了表的重建。在对大表执�
 - s4（public):新二级索引对外可见（可读）
 
 F1论文详细论述了经过这4个状态的转变，如何保证一致性，过程较为复杂。
-
-![2024-5-1317:29:15-1715592555187.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1317:29:15-1715592555187.png)
+![2024-5-1317_29_15-1715592555187.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1317_29_15-1715592555187_1747037878748.png)
 
 ## copy算法
 
@@ -308,32 +305,12 @@ mysql8.0对表metadata结构做出了变更。8.0除了在表的metadata信息�
 
 # 各版本支持的 Online DDL语句
 
-
-![2024-5-1113:49:16-1715406556009.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1113:49:16-1715406556009.png)
+![2024-5-1113_49_16-1715406556009.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1113_49_16-1715406556009_1747037918250.png)
 
 
 
 ## 各版本Online DDL支持情况
-
-![2024-5-1113:57:36-1715407056279.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1113:57:36-1715407056279.png)
-
-
-
-
-
-![2024-5-1113:59:40-1715407180203.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1113:59:40-1715407180203.png)
-
-
-
-![2024-5-1114:00:05-1715407204973.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1114:00:05-1715407204973.png)
-
-
-
-![2024-5-1114:00:34-1715407233855.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1114:00:34-1715407233855.png)
-
-
-
-
+![2024-5-1113_57_36-1715407056279.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1113_57_36-1715407056279_1747037944367.png)
 
 
 
