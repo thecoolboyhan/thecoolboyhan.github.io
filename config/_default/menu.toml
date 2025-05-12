@@ -10,15 +10,15 @@
 [[social]]
 identifier = "github"
 name = "GitHub"
-url = "thecoolboyhan"
+url = "https://github.com/thecoolboyhan"
 
 [social.params]
 icon = "brand-github"
 
 [[social]]
-identifier = "twitter"
-name = "Twitter"
-url = "https://twitter.com"
+identifier = "leetcode"
+name = "力扣"
+url = "https://leetcode.cn/u/thecoolboy/"
 
 [social.params]
-icon = "brand-twitter"
+icon = "tableroutline/brand-leetcode"

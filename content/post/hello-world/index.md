@@ -7,7 +7,7 @@ image: welcome.jpg
 categories:
     - 欢迎
 tags:
-    - 随便
+    - 随笔
 weight: 1       # You can add weight to some posts to override the default sorting (date descending)
 ---
 
