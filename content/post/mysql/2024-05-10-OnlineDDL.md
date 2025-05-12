@@ -48,6 +48,7 @@ DDL操作支持了原子特性。另外，Online DDL的ALGORITHM参数增加了�
 6. 将原表删除，并将临时表重命名为原表
 
 ![2024-5-1111:11:39-1715397098637.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-5-1111:11:39-1715397098637.png)
+![1744792681344.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744792681344_1744792681377.png)
 
 ## Inplace算法
 
