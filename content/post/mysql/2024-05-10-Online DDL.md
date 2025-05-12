@@ -3,7 +3,7 @@ title:  关于Online DDL
 description: 介绍各版本的Online DDL，及其发展
 slug: 关于Online DDL 
 date: 2024-05-10 00:00:00+0000
-image: 关于OnlineDDL.png
+image: OnlineDDL.png
 categories:
   - mysql
   - 运维
