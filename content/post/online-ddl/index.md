@@ -6,7 +6,7 @@ date: 2024-05-10 00:00:00+0000
 image: onlineddl.png
 categories:
     - mysql
-    - 运维
+    - 精选
 tags: 
     - mysql
     - 运维
