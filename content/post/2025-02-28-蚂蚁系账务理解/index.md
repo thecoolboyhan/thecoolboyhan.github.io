@@ -2,7 +2,7 @@
 title: '蚂蚁系账务文件理解'
 date: 2025-02-28
 permalink: /posts/28/蚂蚁系账务文件理解/
-image: 
+image: mayi.png
 categories:
   - 精选
 tags:
