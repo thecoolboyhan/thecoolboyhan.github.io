@@ -22,3 +22,11 @@ url = "https://leetcode.cn/u/thecoolboy/"
 
 [social.params]
 icon = "leetcode"
+
+[[social]]
+identifier = "email"
+name = "邮箱"
+url = "hanyongfa2013@163.com"
+
+[social.params]
+icon = "email"

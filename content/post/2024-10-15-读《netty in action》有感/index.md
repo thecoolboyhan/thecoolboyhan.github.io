@@ -3,7 +3,7 @@ title: 读《netty in action》有感
 description: 非常nice的netty书籍
 date: 2024-10-15
 image: nettyinac.png
-categories: [精选]
+categories: [精选,netty]
 tags:
   - netty
   - java
