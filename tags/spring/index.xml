@@ -1,0 +1,848 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Spring on 韩永发的博客</title><link>https://thecoolboyhan.github.io/tags/spring/</link><description>Recent content in Spring on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 03 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/tags/spring/index.xml" rel="self" type="application/rss+xml"/><item><title>spring中文说明文档v6有感</title><link>https://thecoolboyhan.github.io/p/spring%E4%B8%AD%E6%96%87%E8%AF%B4%E6%98%8E%E6%96%87%E6%A1%A3v6%E6%9C%89%E6%84%9F/</link><pubDate>Wed, 03 Apr 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/spring%E4%B8%AD%E6%96%87%E8%AF%B4%E6%98%8E%E6%96%87%E6%A1%A3v6%E6%9C%89%E6%84%9F/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/spring%E4%B8%AD%E6%96%87%E8%AF%B4%E6%98%8E%E6%96%87%E6%A1%A3v6%E6%9C%89%E6%84%9F/springFrameworkV6.png" alt="Featured image of post spring中文说明文档v6有感" />&lt;h2 id="spring概览">Spring概览
+&lt;/h2>&lt;h3 id="spring的设计理念">spring的设计理念
+&lt;/h3>&lt;blockquote>
+&lt;p>spring框架的指导原则&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>在每个层面上提供选择。Spring让你尽可能晚的推迟设计决策。例如：你可以通过配置来切换持久化供应商，而不需要改变你的代码。对于许多其他基础设施问题和与第三方API的集成也是如此。&lt;/li>
+&lt;li>适应不同的观点。Spring拥抱灵活性，对事情应该如何做不持意见。它支持具有不同视角的广泛的应用需求。&lt;/li>
+&lt;li>保持强大的后向兼容性。Spring的演进是经过精心管理的，在不同的版本之间几乎不存在破坏性的变化。Spring支持一系列精心选择的JDK版本和第三方库，以方便维护依赖Spring的应用程序和库。&lt;/li>
+&lt;li>关心API的设计。Spring团队花了很多心思和时间来制作直观的API，并且在很多版本和很多年中都能保持良好的效果。&lt;/li>
+&lt;li>为代码质量设定高标准。Spring框架非常强调有意义的、最新的和准确的javadoc。它是为数不多的可以宣称代码结构干净、包与包之间没有循环依赖关系的项目之一。&lt;/li>
+&lt;/ul>
+&lt;h2 id="核心技术">核心技术
+&lt;/h2>&lt;blockquote>
+&lt;p>IOC、AOP、AOT&lt;/p>&lt;/blockquote>
+&lt;h2 id="ioc容器">IOC容器
+&lt;/h2>&lt;h3 id="简介">简介
+&lt;/h3>&lt;p>IOC也被称为依赖注入（DI）。它是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义其依赖关系（即它们与之合作的其他对象）。然后容器在创建bean时注入这些依赖关系。这个过程从根本上说是Bean本身通过使用直接构建类或诸如服务定位模式的机制来控制其依赖关系的实例化或位置的逆过程（因此被称为控制翻转）。&lt;/p>
+&lt;h3 id="ioc容器概述">IOC容器概述
+&lt;/h3>&lt;p>org.springframework.context.ApplicationContext接口代表SpringIoC容器，负责实例化、配置和组装Bean。容器通过读取配置元素数据来获取关于要实例化、配置和组装哪些对象的指示。配置元素以XML、Java注解或Java代码表示。&lt;/p>
+&lt;h3 id="使用容器">使用容器
+&lt;/h3>&lt;p>ApplicationContext是一个高级工厂的接口，能够维护不同bean及其依赖关系的注册表。通过使用方法 T getBean（Stringname,Class&lt;T> requiredType)，可以检索到bean的实例。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// 创建和配置bean&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="n">ApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">context&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">new&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ClassPathXmlApplicationContext&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;services.xml&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;daos.xml&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="c1">// 检索配置的实例&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="n">PetStoreService&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">service&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">context&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">getBean&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;petStore&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">PetStoreService&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">class&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="c1">// 使用配置的实例&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="n">List&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">userList&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">service&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">getUsernameList&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="bean的概览">Bean的概览
+&lt;/h3>&lt;p>一个Spring Ioc容器管理着一个或多个Bean。这些Bean是用开发着提供给容器的配置元数据创建的。&lt;/p>
+&lt;p>在容器本身中，这些Bean定义被表示为BeanDefinition对象，它包含一下元数据。&lt;/p>
+&lt;ul>
+&lt;li>一个Bean全路径类名：通常，被定义的Bean的实际实现类。&lt;/li>
+&lt;li>Bean的行为配置元素，它说明了Bean在容器中的行为方式（Scope、生命周期回调，等等）。&lt;/li>
+&lt;li>对其他Bean的引用，这些Bean需要做它的工作。这些引用也被称为合作者或者依赖。&lt;/li>
+&lt;li>要在新创建的对象中设置的其他配置设置&amp;ndash;例如，pool的大小限制或在管理连接池的Bean中使用的连接数。&lt;/li>
+&lt;/ul>
+&lt;h4 id="属性">属性
+&lt;/h4>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>属性&lt;/th>
+&lt;th>解释&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>Class&lt;/td>
+&lt;td>实例化Bean&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Name&lt;/td>
+&lt;td>Bean命名&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Scope&lt;/td>
+&lt;td>Bean Scope&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Constructor arguments&lt;/td>
+&lt;td>依赖注入&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Properties&lt;/td>
+&lt;td>依赖注入&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Autowiring mode&lt;/td>
+&lt;td>注入协作者&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Lazy initialization mode&lt;/td>
+&lt;td>懒加载的Bean&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Initialization method&lt;/td>
+&lt;td>初始化回调&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Destruction method&lt;/td>
+&lt;td>销毁回调&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;blockquote>
+&lt;p>Bean元数据和手动提供的单体实例需要尽早注册，以便容器在自动注入和其他内省步骤中正确推导它们。虽然在某种程度上支持覆盖现有的元数据和现有的单体实例，但官方不推荐在运行时注册新的Bean（与对工厂的实时访问同时进行），这可能会导致并发访问异常、bean容器中的不一致状态，或者两者都有。&lt;/p>&lt;/blockquote>
+&lt;h3 id="依赖注入">依赖注入
+&lt;/h3>&lt;p>依赖注入（DI）是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义他们的依赖（即与它们一起工作的其他对象）。然后，容器在创建bean时注入这些依赖。这个过程从根本上说是Bean本身通过使用类的直接构造或服务定位模式来控制其依赖的实例化或位置的逆过程（因此被称为控制反转）。&lt;/p>
+&lt;h4 id="基于构成器的依赖注入">基于构成器的依赖注入
+&lt;/h4>&lt;p>通过容器调用带有许多参数的构成函数来完成的，每个参数代表一个依赖。调用带有特定参数的static工厂方法来构造bean几乎是等价的。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">SimpleMovieLister&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// the SimpleMovieLister has a dependency on a MovieFinder&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">final&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// a constructor so that the Spring container can inject a MovieFinder&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">SimpleMovieLister&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">MovieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">movieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// business logic that actually uses the injected MovieFinder is omitted...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="基于setter的依赖注入">基于Setter的依赖注入
+&lt;/h4>&lt;p>通过容器在调用无参构造或无参数的static工厂方法来实例化你的bean之后调用Setter方法来实现的。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">SimpleMovieLister&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// the SimpleMovieLister has a dependency on the MovieFinder&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// a setter method so that the Spring container can inject a MovieFinder&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">setMovieFinder&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">MovieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">movieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// business logic that actually uses the injected MovieFinder is omitted...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>应该选用哪种DI方式？&lt;/li>
+&lt;/ul>
+&lt;p>由于可以混合使用基于构造函数和基于Setter的DI，一个好的经验法则是对强制依赖使用构造函数，对可选依赖使用setter方法或配置方法。请注意，在setter方法上使用@Autowired注解可以使属性成为必须得依赖；然而，带有参数程序化验证的构造注入是更好的。&lt;/p>
+&lt;p>Spring团体通常提倡构造函数注入，因为它可以让你将应用组件实现为不可变的对象，并确保所需的依赖不为null。此外，构造函数注入的组件总是以完全初始化的状态返回给客户端（调用）代码。顺便提一下，大量的构造函数参数是一种不好的代码，意味着该类可能有太多的责任，应该重构以更好地解决适当的分离问题。&lt;/p>
+&lt;p>Settter注入主要应该只用于在类中可以分配合理默认值的可选依赖。否则，必须在代码使用依赖的所有地方进行非null值检查。Setter注入的好处：Setter方法使该类的对象可以在以后重新配置或重新注入。&lt;/p>
+&lt;h4 id="依赖的解析过程">依赖的解析过程
+&lt;/h4>&lt;p>Bean解析的过程&lt;/p>
+&lt;ol>
+&lt;li>ApplicationContext是用来描述所有bean的配置元数据创建和初始化的。配置元数据可以由XML、Java代码或注解来指定。&lt;/li>
+&lt;li>对于每个Bean来说，它的依赖是以属性、构造函数参数或静态工厂方法的参数（如果你用它代替正常的构造函数）的形式表达。在实际创建Bean时，这些依赖被提供给Bean。&lt;/li>
+&lt;li>每个属性或构造函数参数都是要设置的值的实际定义，或对容器中另一Bean的引用。&lt;/li>
+&lt;li>每个作为值的属性或构造函数参数都会从其指定格式转换为该属性或构造函数参数的实际类型。默认情况下，Spring可以将以字符串格式提供的值转换为所有内置类型，如int、long、String、boolean等。&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>循环依赖&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>如果你使用主要的构造函数注入，就有可能产生一个无法解决的循环依赖情况。&lt;/p>
+&lt;p>比如说，类A通过构造函数注入需要类B的一个实例，而类B通过构造函数注入需要类A的实例。如果你将类A和类B的Bean配置为相互注入，Spring IOC容器会在运行时检测到这些循环引用，并抛出一个BeanCurrentlyInCreationException。&lt;/p>
+&lt;p>解决方法：在编写类源码时，使其通过Setter而不是构造器进行配置。或者，避免构造器注入，只使用setter注入。&lt;/p>
+&lt;p>还有一种方法是在一个Bean被完全初始化之前就被注入到另一个Bean中。&lt;/p>&lt;/blockquote>
+&lt;h3 id="注入协作者autowiring-collaborators自动注入">注入协作者（Autowiring Collaborators）自动注入
+&lt;/h3>&lt;p>Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通过检查ApplicationContext的内容为你的Bean自动解决协作者（其他Bean）。&lt;/p>
+&lt;ul>
+&lt;li>自动注入的优点&lt;/li>
+&lt;/ul>
+&lt;p>自动注入可以随着你的对象的发展而更新配置。例如，如果你需要给一个类添加一个依赖，这个依赖可以自动满足，而不需要你修改配置。因此，自动在开发过程中可能特别有用。而不会否定在代码库变得更加稳定时切换到显式注入的选择。&lt;/p>
+&lt;ul>
+&lt;li>四种自动注入的方式&lt;/li>
+&lt;/ul>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>模式&lt;/th>
+&lt;th>解释&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>no&lt;/td>
+&lt;td>（默认）没有自动注入。Bean引用必须由ref元素来定义。对于大型部署来说，不建议改变默认设置，因为明确指定协作者会带来更大的控制力和清晰度。在某种程度上，它记录了一个系统的结构。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>byName&lt;/td>
+&lt;td>通过属性名称自动注入。Spring寻找一个与需要自动注入的属性同名的Bean。例如，如果一个Bean定义被设置为按名称自动注入，并且包含一个master属性（也就是说，它有一个setMaster（..）方法），Spring会寻找一个名为master的Bean定义并使用它来设置该属性。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>byType&lt;/td>
+&lt;td>如果容器中正好有一个property类型的Bean存在，就可以自动注入该属性。如果存在一个以上的bean，就会抛出一个致命的exception，这表明你不能对该bean使用byType自动注入。如果没有匹配的bean，就不会发生任何事情（该属性没有被设置）。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>constructor&lt;/td>
+&lt;td>类似于byType，但适用于构造函数参数。如果容器中没有一个构造函数参数类型的Bean，就会产生一个致命的错误。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="自动注入的限制和缺点">自动注入的限制和缺点
+&lt;/h4>&lt;ul>
+&lt;li>property和constructor-arg设置中的明确依赖关系总是覆盖自动注入。你不能自动注入简单的属性，如基本数据、String和Class。&lt;/li>
+&lt;li>自动注入不如显式注入精确。尽管正如前面的表格中所指出的，Spring很小心地避免在模糊不清的情况进行猜测，这可能会产生意想不到的结果。你的Spring管理的对象之间的关系不再被明确地记录下来&lt;/li>
+&lt;li>对于可能从Spring容器中生成文档的工具来说，注入信息可能无法使用。&lt;/li>
+&lt;li>容器中的多个Bean定义可以与setter方法或构造参数指定的类型相匹配，以实现自动注入。对于数组、集合或Map实例，这不一定是个问题。然而，对于期待单一值的依赖关系，这种模糊性不会被任意地解决。如果没有唯一的Bean的定义，就会抛出一个异常。&lt;/li>
+&lt;/ul>
+&lt;p>无法根据类型指定唯一bean的几种解决方案：&lt;/p>
+&lt;ol>
+&lt;li>放弃自动注入，改用明确注入。&lt;/li>
+&lt;li>通过将Bean定义的Autowire-condidate属性设置为false来避免bean定义的自动注入。&lt;/li>
+&lt;li>通过将&lt;bean/> 元素的primary属性设置为true，将单个bean定义指定为主要候选者。&lt;/li>
+&lt;li>实现基于注解的配置所提供的更精细的控制。&lt;/li>
+&lt;/ol>
+&lt;h4 id="通过方法来注入bean">通过方法来注入Bean
+&lt;/h4>&lt;blockquote>
+&lt;p>大多数情况下，Bean都是单例的，当一个单例Bean需要另一个单例Bean协作或一个非单例的Bean需与另一个非单例Bean协作，需要将一个Bean定义为另一个Bean的属性。如果需要Bean，A每次使用Bean，B时，都会重新创建Bean，B，则需要通过方法注入的方式解决。&lt;/p>&lt;/blockquote>
+&lt;p>放弃一些控制的反转。可以通过实现ApplicationContextAware接口给bean A注入容器，并在bean A需要时让容器的getBean(&amp;ldquo;B&amp;rdquo;)调用询问（一个典型的new）bean B实例。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kn">package&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">com.springboot.demo&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.beans.BeansException&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.beans.PropertyValue&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.context.ApplicationContext&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.context.ApplicationContextAware&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">java.util.Map&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">Command&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Map&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">map&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">setMap&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Map&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">map&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">map&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">map&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">int&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">execute&lt;/span>&lt;span class="p">(){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">1&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">CommandManager&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">implements&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ApplicationContextAware&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">applicationContext&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Object&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">process&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Map&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">commandState&lt;/span>&lt;span class="p">){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">Command&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">command&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">createCommand&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">command&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">setMap&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">commandState&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">command&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">execute&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">protected&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Command&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">createCommand&lt;/span>&lt;span class="p">(){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="c1">// 每次调用时，用getBean方法，通过BeanFactory来创建新的Bean。&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">applicationContext&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">getBean&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;command&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">Command&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">class&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="c1">//获取ApplicationContext&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Override&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">setApplicationContext&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">ApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">applicationContext&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">throws&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">BeansException&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">applicationContext&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">applicationContext&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="查找方法依赖注入">查找方法依赖注入
+&lt;/h4>&lt;p>查找方法注入是指容器能够覆盖容器管理的Bean上的方法并返回容器中另一个命名的bean的查询结果。（动态代理）Spring框架通过使用CGLIB的字节码生成来实现这种方法注入，动态地生成一个覆盖该方法的子类。&lt;/p>
+&lt;ol>
+&lt;li>为了实现此动态子类功能，被Spring bean容器子类化的类不能为final。&lt;/li>
+&lt;li>对一个包含abstract方法的类进行单元测试，需要你自己对这个类进行子类化，并提供一个abstract方法的stub实现。&lt;/li>
+&lt;li>有方法体的方法对于组件扫描也是必要的，这需要具体的方法来实现。&lt;/li>
+&lt;li>另一个关键的限制是，查找方法对工厂方法不起作用，特别是对配置类中的@Bean方法不起作用，因为这种情况下，容器不负责创建实例，因此不能即时创建运行时生成的子类。&lt;/li>
+&lt;/ol>
+&lt;h3 id="bean-scope">Bean Scope
+&lt;/h3>&lt;blockquote>
+&lt;p>当你创建一个Bean定义时，你创建了一个“构造方法”，用于创建该Bean定义（definition）是所定义的类的实际实例。Bean定义（definitiion）是一个“构造方法”的想法很重要，因为它意味着，就像一个类一样，你可以从一个“构造方法”中创建许多实例。&lt;/p>&lt;/blockquote>
+&lt;p>Spring框架支持六个scope&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>scope&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>singleton&lt;/td>
+&lt;td>（默认情况下）为每个Spring IOC容器将单个Bean定义的Scope扩大到单个对象实例。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>prototype&lt;/td>
+&lt;td>将单个Bean定义的Scope扩大到任何数量的对象实例。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>request&lt;/td>
+&lt;td>将单个Bean定义的Scope扩大到单个HTTP请求的生命周期。也就是说，每个HTTP请求都有自己的Bean实例，该实例是在单个Bean定义的基础上创建的。只在Web感知的Spring ApplicationContext的上下文中有效。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>session&lt;/td>
+&lt;td>将单个Bean定义的Scope扩大到一个HTTP Session的生命周期。只在Web感知的Spring ApplicationContext的上下文中有效&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Application&lt;/td>
+&lt;td>将单个Bean定义的Scope扩大到ServletContext的生命周期中。只在Web感知的Spring ApplicationContext的上下文中有效。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>websocket&lt;/td>
+&lt;td>将单个Bean定义的Scope扩大到WebSocket的生命周期。仅在具有Web感知的Spring ApplicationContext的上下文中有效。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="单例">单例
+&lt;/h4>&lt;p>只有一个单例的Bean的共享实例被管理，所有对符合该bean定义的id的bean的请求都会被Spring容器返回该特定的Bean实例。&lt;/p>
+&lt;blockquote>
+&lt;p>当你定义了一个Bean的定义，并且它被定义为singleton（单例），Spring Ioc容器就会为该Bean定义的对象创建一个确切的实例。这个单例的实例被存储在单例Bean的缓存中，所有后续的请求和对该命名Bean的引用都会返回缓存中的对象。&lt;/p>&lt;/blockquote>
+&lt;p>&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:31:42-1713940302216.png"
+loading="lazy"
+alt="2024-4-2414:31:42-1713940302216.png"
+>&lt;/p>
+&lt;p>Spring的单例Bean概念和GOF设计模式书中定义的单例模式不同。Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。&lt;/p>
+&lt;h4 id="原型">原型
+&lt;/h4>&lt;p>每次对该特定Bean的请求都会创建一个新的Bean实例。也就是说，该Bean被注入到另一个bean中，或者你通过容器上的getBean（）方法调用来请求它。&lt;/p>
+&lt;blockquote>
+&lt;p>应该对所有有状态的Bean使用原型范围，对无状态的bean使用单例范围。&lt;/p>&lt;/blockquote>
+&lt;p>&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:38:30-1713940709879.png"
+loading="lazy"
+alt="2024-4-2414:38:30-1713940709879.png"
+>&lt;/p>
+&lt;p>与其他作用域相比，Spring不会管理原型模式的Bean的生命周期。容器对原型对象进行实例化，配合和其他方面的组装，并将其交给客户端，而对该原型实例没有进一步的记录。后续销毁需要客户端自己来。&lt;/p>
+&lt;blockquote>
+&lt;p>一个单例bean中，如果有依赖一个原型的Bean，那么这个原型Bean也只会被创建一次。&lt;/p>&lt;/blockquote>
+&lt;h3 id="自定义bean的性质">自定义Bean的性质
+&lt;/h3>&lt;h4 id="生命周期回调">生命周期回调
+&lt;/h4>&lt;p>为了与容器对Bean生命周期的管理进行交互，你可以实现Spring InitializingBean和DispobleBean接口。容器为前者调用afterPropertiesSet()，为后者调用destroy（），让Bean在初始化和销毁你的Bean时执行某些动作。&lt;/p>
+&lt;blockquote>
+&lt;p>@PostConstruct和@PreDestroy注解通常被认为是在现代Spring应用程序中接收生命周期回调的最佳实践。使用这些注解意味着你的Bean不会被耦合到Spring特定的接口。&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>在非Web应用中优雅地关闭Spring IoC容器&lt;/li>
+&lt;/ul>
+&lt;p>如果你在非Web应用环境中使用Spring的Ioc容器，请向JVM注册一个shutdown hook。这样做可以确保优雅地关闭，并在你的单例Bean上调用相关的destroy方法，从而释放所有资源。&lt;/p>
+&lt;blockquote>
+&lt;p>要注册一个shutdown hook，请调用registerShutdown（）方法，该方法在ConfigurableApplicationContext接口上声明。&lt;/p>&lt;/blockquote>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.context.ConfigurableApplicationContext&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.context.support.ClassPathXmlApplicationContext&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">final&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">Boot&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">static&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">main&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kd">final&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="o">[]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">args&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">throws&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Exception&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">ConfigurableApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">new&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ClassPathXmlApplicationContext&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;beans.xml&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// add a shutdown hook for the above context...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">registerShutdownHook&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// app runs here...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// main method exits, hook is called prior to the app shutting down...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>org.springframework.beans 和 org.springframework.context 包是Spring Framework的IoC容器的基础。&lt;/p>
+&lt;p>BeanFactory接口提供了一种高级配置机制，能够管理任何类型的对象。ApplicationContext是BeanFactory的一个子接口。它增加了：&lt;/p>
+&lt;ul>
+&lt;li>更容易和Spring的AOP功能集成&lt;/li>
+&lt;li>Message resource处理（用于国际化）&lt;/li>
+&lt;li>事件发布&lt;/li>
+&lt;li>应用层的特定上下文，如WebApplicationContext，用于web应用&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>在Spring中，构成应用程序的骨干并由Spring IoC容器管理的对象被称为Bean。Bean是一个由Spring IOC容器实例化、组装和管理的对象。Bean以及它们之间的依赖关系都反应在容器使用的配置元数据中。&lt;/p>&lt;/blockquote>
+&lt;h4 id="bean定义definition的继承">Bean定义（Definition）的继承
+&lt;/h4>&lt;p>一个Bean定义可以包含很多配置信息，包括构造函数参数、数据值和容器特有的信息，如初始化方法、静态工厂方法名称等等。一个子Bean定义从父定义继承配置数据。自定义可以覆盖一些值或根据需要添加其他值。使用父Bean定义和子Bean定义可以节省大量的打字工作量。&lt;/p>
+&lt;blockquote>
+&lt;p>ApplicationContext默认设置了所有的Singleton。因此，如果你有一个（父）Bean定义，你打算作为模版使用，并且这个定义指定了一个类，你必须确保将abstract属性设置为true，否则应用上下文将试图预实例化abstract Bean。&lt;/p>&lt;/blockquote>
+&lt;h4 id="容器的扩展">容器的扩展
+&lt;/h4>&lt;h5 id="使用beanpostprocessor自定义bean">使用BeanPostProcessor自定义bean
+&lt;/h5>&lt;blockquote>
+&lt;p>BeanPostProcessor接口定义了回调方法，可以实现这些方法来提供你自己的实例化逻辑、依赖性解析逻辑等。&lt;/p>&lt;/blockquote>
+&lt;p>BeanPostProcessor实例对Bean（或对象）实例进行操作。也就是说，Spring Ioc容器实例化一个Bean实例，然后由BeanPostProcessor实例来完成其工作。&lt;/p>
+&lt;p>BeanPostProcessor实例是按容器范围的。只有在你使用容器结构时才有意义。如果你在一个容器中定义了一个BeanPostProcessor，他只对该容器的bean进行后置处理。换句话说，在一个容器中定义的BeanPostProcessor不会对另一个容器中定义的BeanPostProcessor进行后置处理，即使两个容器都是同一层次结构的一部分。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kn">package&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.beans.factory.config&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.beans.BeansException&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.lang.Nullable&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">interface&lt;/span> &lt;span class="nc">BeanPostProcessor&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Nullable&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">default&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Object&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">postProcessBeforeInitialization&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Object&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">bean&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">beanName&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">throws&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">BeansException&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">bean&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Nullable&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">default&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Object&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">postProcessAfterInitialization&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Object&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">bean&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">beanName&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">throws&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">BeansException&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">bean&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>BeanPostProcessor接口正常由两个回调方法组成。当这样的类被注册为容器的后置处理器时，对于容器创建的每个bean实例，后置处理器在容器初始化方法被调用之前和任何bean初始化回调之后都会从容器获得一个回调。后置处理程序可以对Bean实例采取任何行动，包括完全忽略回调。bean类后置处理器通常会检查回调接口，或者用代理来包装bean类。一些Spring AOP基础设施类被实现为Bean后置处理器，以提供代理封装逻辑。&lt;/p>
+&lt;p>ApplicationContext会自动检测在配置元数据中定义实现BeanPostProcessor 接口的任何Bean。ApplicationContext将这些bean注册为后置处理器，以便以后在bean创建时可以回调它们。Bean后置处理器可以像其他Bean一样被部署在容器中。&lt;/p>
+&lt;blockquote>
+&lt;p>以编程方式注册BeanPostProcessor实例&lt;/p>
+&lt;p>虽然推荐的BeanPostProcessor 虽然推荐的 BeanPostProcessor 注册方法是通过 ApplicationContext 自动检测（如前所述），但你可以通过使用 addBeanPostProcessor 方法，针对 ConfigurableBeanFactory 以编程方式注册它们。
+以编程方式添加的BeanPostProcessor实例并不遵循Order接口的顺序来执行。&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>BeanPostProcessor实例和AOP自动代理&lt;/li>
+&lt;/ul>
+&lt;p>实现了BeanPostProcessor接口的类是特殊的，会被容器区别对待。所有BeanPostProcessor实例和他们直接引用的Bean在启动时被实例化，作为ApplicationContext特殊启动阶段的一部分。接下来，所有BeanPostProcessor实例被分类注册，并应用于容器中的所有其他Bean。因为AOP的自动代理是作为BeanPostProcessor本身实现的，所以BeanPostProcessor实例和它们直接引用的Bean都不符合自动代理的条件，因此，没有切面被织入进去。&lt;/p>
+&lt;h5 id="用beanfactorypostprocessor定制配置元数据">用BeanFactoryPostProcessor定制配置元数据
+&lt;/h5>&lt;p>BeanFactoryPostProcessor对Bean配置元数据进行操作。Spring IoC容器让BeanFactoryPostProcessor读取配置元数据，并在容器实例化BeanFactoryPostProcessor实例以外的任何Bean之前对其进行潜在的修改。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kn">package&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.beans.factory.config&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kn">import&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nn">org.springframework.beans.BeansException&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nd">@FunctionalInterface&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">interface&lt;/span> &lt;span class="nc">BeanFactoryPostProcessor&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">postProcessBeanFactory&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">ConfigurableListableBeanFactory&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">beanFactory&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">throws&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">BeansException&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;blockquote>
+&lt;p>如果你想改变实际的Bean实例（即从配置元数据中创建的对象），那么你需要使用 BeanPostProcessor（如前面 使用 BeanPostProcessor 自定义 Bean 中的描述）。虽然在技术上可以在BeanFactoryPostProcessor中处理Bean实例（例如，通过使用BeanFactory.getBean())，但这样做会导致过早的Bean实例化，违反了标准容器的生命周期。这可能会导致负面的副作用，比如绕过Bean的后置处理器。&lt;/p>&lt;/blockquote>
+&lt;h3 id="基于注解的容器配置">基于注解的容器配置
+&lt;/h3>&lt;h4 id="使用autowired">使用@Autowired
+&lt;/h4>&lt;blockquote>
+&lt;p>@Inject注解可以代替Spring的@Autowired注解&lt;/p>&lt;/blockquote>
+&lt;p>从Springframework 4.3开始，如果目标Bean一开始就只定义了一个构造函数，那么在这样的构造函数上就不再需要@Autowired注解。然而，如果有几个构造函数，而且没有主要/默认构造函数，那么至少有一个构造函数必须用@Autowired注解，以便指示容器使用哪一个。&lt;/p>
+&lt;blockquote>
+&lt;p>@Autowired、@Inject、@Value和@Resource注解是由Spring BeanPostProcessor实现处理的。这意味着你不能在你自己的BeanPostProcessor或BeanFactoryPostProcessor类型（如果有的话）中应用这些注解。这些类型必须通过使用XML或Spring @Bean方法明确地“注入”。&lt;/p>&lt;/blockquote>
+&lt;h4 id="用primary对基于注解的自动注入进行微调">用@Primary对基于注解的自动注入进行微调
+&lt;/h4>&lt;p>因为按照类型自动注入可能会导致多个候选者，所以经常需要对选择过程进行更多的控制。实现这一目标的方法之一是使用Spring 的@Primary注解。&lt;/p>
+&lt;ul>
+&lt;li>Primary&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>当多个Bean是自动注入到一个单值（single value）依赖的候选者时，应该优先考虑一个特定的Bean。如果在候选者中正好有一个主要（Primary）Bean存在，他就会成为自动注入的值。&lt;/p>&lt;/blockquote>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="nd">@Configuration&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">MovieConfiguration&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Bean&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Primary&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieCatalog&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">firstMovieCatalog&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">...&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Bean&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieCatalog&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">secondMovieCatalog&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">...&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// ...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">MovieRecommender&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Autowired&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieCatalog&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieCatalog&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">// ...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="用qualifiers微调基于注解的自动注入">用Qualifiers微调基于注解的自动注入
+&lt;/h4>&lt;p>有几个实例，当可以确定一个主要的候选者时，@Primary是按照类型自动装配的一种有效方式。当你需要对选择过程进行更多控制时，你可以使用Spring 的@Qualefier注解。将限定符的值与特定的参数联系起来，缩小类型匹配的范围，从而为每个参数选择一个特定的bean。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">MovieRecommender&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Autowired&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Qualifier&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;main&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieCatalog&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieCatalog&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c1">//...&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;blockquote>
+&lt;p>在类型匹配候选者中，让Qualifiers针对目标bean名称进行选择，不需要在注入点上进行@Qualifiers注解。如果没有其他解析指标（如果Qualifiers或primary标记），对于非唯一的依赖情况，Spring会将注入点名称（即字段名或参数名）与目标Bean名称进行匹配，并选择同名的候选者（如果有）。&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>Autowired&lt;/li>
+&lt;/ul>
+&lt;p>适用于字段、构造函数和参数方法，允许在参数级别上通过Qualifier注解来缩小范围。&lt;/p>
+&lt;ul>
+&lt;li>Resource&lt;/li>
+&lt;/ul>
+&lt;p>只支持字段和只有一个参数的bean属性setter方法。&lt;/p>
+&lt;p>如果你的注入目标是构造函数或参数方法，你应该坚持使用Qualifier。&lt;/p>
+&lt;h4 id="用resource注入">用@Resource注入
+&lt;/h4>&lt;p>Spring还支持通过在字段或bean属性设置上使用@Resource注解进行注入。
+@Resource需要一个name属性。默认情况下，spring将该值解释为要注入的bean名称。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">SimpleMovieLister&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MovieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Resource&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;myMovieFinder&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">setMovieFinder&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">MovieFinder&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">movieFinder&lt;/span>&lt;span class="p">){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">movieFinder&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">moviedFinder&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>如果没有明确指定名字，默认的名字来源于字段名或setter方法。如果是一个字段，采用字段名。如果是setter方法，则采用Bean的属性名。&lt;/p>
+&lt;p>在没有明确指定名称的@Resource使用的特殊情况下，与@Autowired类似，@Resource会找到一个主要的类型匹配，而不是一个特定的命名的Bean。&lt;/p>
+&lt;h4 id="使用value">使用@Value
+&lt;/h4>&lt;p>@Value通常用于注入外部化properties。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="nd">@Component&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">MovieRecommender&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">private&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">final&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">catalog&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">MovieRecommender&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nd">@Value&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;${catalog.name}&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">catalog&lt;/span>&lt;span class="p">){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">catalog&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">catalog&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="使用postconstruct和predestroy">使用@PostConstruct和@PreDestroy
+&lt;/h4>&lt;p>初始化回调和销毁回调。
+携带了上面注解之一的方法会在生命周期与相应的Spring生命周期接口方法或明确声明的回调方法在同一时间被调用。&lt;/p>
+&lt;blockquote>
+&lt;p>缓存在初始化时被预先填充，在销毁时被清除。&lt;/p>&lt;/blockquote>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">CachingMovieLister&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@PostConstruct&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">populateMovieCache&lt;/span>&lt;span class="p">(){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@PreDestroy&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">clearMovieCache&lt;/span>&lt;span class="p">(){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="spring组件模型元素和jsr标准的比较">Spring组件模型元素和jsr标准的比较
+&lt;/h4>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Spring&lt;/th>
+&lt;th>&lt;strong>jakarta.inject.*&lt;/strong>&lt;/th>
+&lt;th>jakarta.inject 限制 / 说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>@Autowired&lt;/td>
+&lt;td>@Inject&lt;/td>
+&lt;td>@Inject没有‘required’属性。可以用java 8的Optional来代替。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>@Component&lt;/td>
+&lt;td>@Name/@ManagedBean&lt;/td>
+&lt;td>jsr-330没有提供一个可组合的模型，只是提供了一个识别命名组件的方法&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>@Scope(&amp;ldquo;singleton&amp;rdquo;)&lt;/td>
+&lt;td>@Singleton&lt;/td>
+&lt;td>JSR-330 默认scope就像Spring的prototype。然而，为了与Spring的一般默认值保持一致，在Spring容器中声明的JSR-330Bean 默认是一个Singleton。为了使用Singleton以外的scope，你应该使用Spring的@scope注解。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>@Qualifier&lt;/td>
+&lt;td>@Qualifier/@Named&lt;/td>
+&lt;td>jakarta.inject.Qualifier只是一个用于构建自定义Qualifier的元注解。具体的String Qualifier（像Spring 的@Qualifier一样有一个值）可以通过&lt;code>jakarta.inject.Named&lt;/code> 来关联。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>@Value&lt;/td>
+&lt;td>-&lt;/td>
+&lt;td>没有&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>@Lazy&lt;/td>
+&lt;td>-&lt;/td>
+&lt;td>没有&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>ObjectFactory&lt;/td>
+&lt;td>provider&lt;/td>
+&lt;td>jakarta.inject.Provider 是Spring的ObjectFactory的直接代替品，只是get()方法的名字比较短。它也可以与Spring的@Autowired结合使用，或者与非注解的构造器和setter方法结合使用。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="基于java的容器配置">基于java的容器配置
+&lt;/h3>&lt;h4 id="基本概念bean和configuration">基本概念：@Bean和@Configuration
+&lt;/h4>&lt;p>Spring的java配置支持的核心工件是@Configuration注解的类和@Bean注解的方法。&lt;/p>
+&lt;p>@Bean注解用来表示一个方法实例化、配置和初始化了一个新的对象。由Spring IoC容器管理。@Bean注解的作用与&lt;bean/>元素的作用相同。你可以在任何Spring @Component中使用@Bean注解的方法。&lt;/p>
+&lt;p>@Configuration用来注解一个类。表名它的主要目的是作为bean定义的来源。此外，@Configuration类允许通过调用同一个类中的其他@Bean方法来定义Bean间的依赖关系。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="nd">@Configuration&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">AppConfig&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nd">@Bean&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MyServiceImpl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">myService&lt;/span>&lt;span class="p">(){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">new&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">MySerivceImpl&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="通过使用annotationconfigapplicationcontext实例化spring容器">通过使用AnnotationConfigApplicationContext实例化Spring容器
+&lt;/h4>&lt;blockquote>
+&lt;p>在Spring 3.0中引入。能够接受@Configuration类、普通的@Component类和用JSR元数据注解的类。&lt;/p>&lt;/blockquote>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">static&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">main&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="o">[]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">args&lt;/span>&lt;span class="p">){&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">ApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">new&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">AnnotationConfigApplicationContext&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">AppConfig&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">class&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">MyService&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">myService&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">getBean&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">MyService&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">class&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">myService&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">doStuff&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>可以使用无参构造来实例化AnnotationConfigApplicationContext，然后通过register（）方法来配置它。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">class&lt;/span> &lt;span class="nc">TestAnnotationConfigApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="kd">public&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">static&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">main&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">String&lt;/span>&lt;span class="o">[]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">args&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">AnnotationConfigApplicationContext&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">new&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">AnnotationConfigApplicationContext&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">register&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">MyService1&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">class&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">refresh&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">MyService1&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">myService1&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">getBean&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">MyService1&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">class&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">myService1&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="na">doStuff&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>@Configuration类是用@Component元注解的，所以他们是组件扫描的候选者。假设AppConfig在com.acme包中声明的，在调用scan（）是会被选中。在refresh（）时，它的所有@Bean方法都会被处理并注册为容器中的bean定义。&lt;/p>
+&lt;h4 id="使用bean注解">使用@Bean注解
+&lt;/h4>&lt;blockquote>
+&lt;p>@Bean是一个方法级注解，是XML&lt;bean/>元素的直接类似物。
+可以在@Configuration或@Component注解的类中使用@Bean注解。&lt;/p>&lt;/blockquote>
+&lt;p>默认情况下，用java配置定义的具有public 的close或shutdown方法的Bean会自动被列入销毁回调。如果你有一个public的close或shutdown方法，并且你不希望它在容器被关闭时被调用，可以在bean定义中添加@Bean(destroyMethod=&amp;quot;&amp;quot;)来禁用默认(inferred)模式。&lt;/p></description></item></channel></rss>
