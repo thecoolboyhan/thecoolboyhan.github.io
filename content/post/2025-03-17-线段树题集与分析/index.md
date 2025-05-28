@@ -2,6 +2,9 @@
 title: '线段树题集与分析'
 date: 2025-03-17
 permalink: /posts/17/线段树题集与分析/
+image: 2025-03-17.png
+categories: 
+  - 精选
 tags:
 - 算法
 - 力扣
