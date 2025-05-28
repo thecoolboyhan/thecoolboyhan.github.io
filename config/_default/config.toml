@@ -15,4 +15,4 @@ hasCJKLanguage = true
 disqusShortname = "thecoolboyhan"
 
 [pagination]
-pagerSize = 5
+pagerSize = 10
