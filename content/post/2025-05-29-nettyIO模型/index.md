@@ -200,7 +200,7 @@ public class NioServer {
 
 
 
-## NIO多路复用
+## IO多路复用
 
 直接上代码
 
@@ -270,17 +270,147 @@ public class NioSelectorServer {
 
 
 
-### 源码
+### Selector
+
+> 允许一个线程同时管理多个Channel，选择器可以在非阻塞的模式下高效处理多个连接，减少线程切换的开销。
 
 
 
-- selector
+- 选择器的核心作用
 
-由java.nio.channels.spi类中创建
+1. 监控多个通道的状态（监听事件）
+2. 减少线程数量，一个线程可以管理多个IO连接
+3. 提高性能，避免传统阻塞IO为每个连接创建线程的开销
 
 
 
+- 工作原理
 
+1. **注册通道**：将 `SelectableChannel`（如 `SocketChannel`）注册到 `Selector`，并指定感兴趣的事件（如 `OP_READ`、`OP_WRITE`）。
+
+2. **监听事件**：调用 `select()` 方法，阻塞直到至少有一个通道就绪。
+
+3. **处理事件**：遍历 `SelectionKey` 集合，执行相应的 I/O 操作。
+
+
+
+- 事件
+
+| 事件类型事件类型 | 描述描述                                          |
+| ---------------- | ------------------------------------------------- |
+| `OP_ACCEPT`      | 服务器端 `ServerSocketChannel` 接收到新的连接请求 |
+| `OP_CONNECT`     | 客户端 `SocketChannel` 连接成功                   |
+| `OP_READ`        | 通道中有数据可读                                  |
+| `OP_WRITE`       | 通道可以写入数据                                  |
+
+
+
+由java.nio.channels.spi类中创建，取系统默认的java.nio.channels.spi.SelectorProvider。
+
+
+
+### linux：epoll
+
+
+
+- 工作原理
+
+`epoll_create()`：创建 `epoll` 实例，返回一个文件描述符（FD）。
+
+`epoll_ctl()`：向 `epoll` 实例中添加、修改或删除文件描述符（FD）。
+
+`epoll_wait()`：等待事件发生，并返回就绪的文件描述符。
+
+
+
+- 相比传统的优点
+
+1. 事件驱动：相比 `select` 和 `poll`，`epoll` 采用 **事件驱动** 机制，避免了轮询所有文件描述符的开销。
+2. 就绪列表：`epoll` 维护一个 **就绪列表**，只返回发生事件的文件描述符，而不是遍历整个 FD 集合。
+3. **支持大规模连接**：`epoll` 可以处理 **百万级别** 的连接，而不会因为 FD 数量增加而导致性能下降。
+
+
+
+### macOS和BSD：kqueue
+
+
+
+- 工作原理：
+
+`kqueue()`：创建一个事件队列。
+
+`kevent()`：用于注册、修改或删除事件，并等待事件发生。
+
+
+
+- 优点：
+
+1. **低开销**：`kqueue` 采用 **事件驱动** 机制，减少了 CPU 轮询开销。
+2. **支持多种事件类型**：不仅支持 **I/O 事件**，还支持 **进程、信号、定时器** 等事件。
+
+
+
+### Windows：IOCP
+
+
+
+- 工作原理：
+
+`CreateIoCompletionPort()`：创建一个完成端口（Completion Port）。
+
+`PostQueuedCompletionStatus()`：用于提交 I/O 任务。
+
+`GetQueuedCompletionStatus()`：用于获取完成的 I/O 任务。
+
+
+
+- 优点：
+
+1. **异步 I/O**：IOCP 采用 **异步事件驱动** 机制，减少了线程切换开销。
+2. **高吞吐量**：IOCP 适用于 **高并发服务器**，如 Windows Server 上的 Web 服务器。
+
+
+
+### 其他系统：select或poll
+
+- 工作原理
+
+`select()`：遍历所有文件描述符，检查哪些是可读、可写或有异常。
+
+`poll()`：采用类似 `select` 的方式，但使用 **动态数组** 代替固定大小的 FD 集合。
+
+
+
+- 缺点：
+
+1. **性能较低**：`select` 需要遍历整个 FD 集合，导致 **O(n)** 级别的时间复杂度。
+2. **FD 限制**：`select` 只能处理 **1024** 个文件描述符，而 `poll` 没有这个限制。
+
+
+
+### 总结
+
+
+
+Java NIO 选择器的实现位于 `sun.nio.ch` 包中，不同操作系统会加载不同的 SelectorProvider：
+
+- **Linux**：`sun.nio.ch.EPollSelectorImpl`
+- **macOS / BSD**：`sun.nio.ch.KQueueSelectorImpl`
+- **Windows**：`sun.nio.ch.WindowsSelectorImpl`
+- **其他系统**：`sun.nio.ch.PollSelectorImpl`
+
+当 Java 程序调用 `Selector.open()` 时，JVM 会根据操作系统自动选择合适的实现。
+
+
+
+- 性能对比
+
+| 操作系统        | 底层实现          | 主要特点                       |
+| --------------- | ----------------- | ------------------------------ |
+| **Linux**       | `epoll`           | 高效事件驱动，适用于大规模连接 |
+| **macOS / BSD** | `kqueue`          | 低开销，支持多种事件类型       |
+| **Windows**     | `IOCP`            | 异步 I/O，适用于高吞吐量服务器 |
+| **其他系统**    | `select` / `poll` | 适用于较旧系统，但性能较低     |
 
 
 
