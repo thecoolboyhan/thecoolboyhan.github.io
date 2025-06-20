@@ -11,10 +11,73 @@ tags:
 weight: 1       # You can add weight to some posts to override the default sorting (date descending)
 ---
 
-Welcome to Hugo theme Stack. This is your first post. Edit or delete it, then start writing!
 
-For more information about this theme, check the documentation: https://stack.jimmycai.com/
 
-Want a site like this? Check out [hugo-theme-stack-stater](https://github.com/CaiJimmy/hugo-theme-stack-starter)
 
-> Photo by [Pawel Czerwinski](https://unsplash.com/@pawel_czerwinski) on [Unsplash](https://unsplash.com/)
+
+## 写在前面的话
+
+
+
+>  欢迎来到我的网站，我常在这里记录我的各种内容文章。如果想了解我的基本信息，可以直接通过右侧导航栏跳转到关于我。
+
+
+
+## 关于我
+
+> 网站要比简历可以更好的展示自己
+
+姓名：韩永发
+
+年龄：28
+
+学历：赤峰学院（20年毕业）
+
+电话：13847302621
+
+邮箱：hanyongfa2013@163.com
+
+
+
+### 工作经历
+
+#### 成都新希望金融科技有限公司（2022-至今） 信贷核心小组组长
+
+公司主要负责个人贷款业务全生命周期。本人负责的项目为信贷核心和联合贷对接等。
+
+**我负责系统中在贷余额400+亿，日处理数据总条数5000+W，在贷借据量500+w**
+
+**信贷核心（自营）**：银行自营的贷款业务，由自有核心直接完成放款、还款、计提、转列。征信报送等全周期（具体个贷核心涉及的业务请看我的[这篇文章](https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/)）
+
+**联合贷**：银行与各合作方展开的共同出资联合贷款业务，我本人对接过的公司有网商、马上、美团、字节、百度、平安、奇瑞、花呗、借呗、滴滴、华瑞等。（**特点为数据量极大，账务规则互不相同**）
+
+> 以上联合贷部分，均参与了从项目初期对接、设计、开发、上线、优化更新等。从0到1，乃到现在的全生命周期。
+
+- 平台划分
+
+
+
+- 技术亮点
+
+多线程任务管理、异常处理、千万级数据拆分多线程处理、几十亿级数据量单表查询、插入、删除、修改表结构、数据备份等优化。
+
+- 业务亮点
+
+处于整个贷款系统群的核心、账务处理、为行内整行核心输送每日账务，账务校验，为监管报送、征信报送等提供数据。
+
+
+
+
+
+
+
+
+
+## 写这个博客的原因
+
+1. 记录已学过的知识：每篇文章都有上传时间，分类等，可以更好的展示我的心路过程
+2. 更好的展示自己：简历的几张很难全面的说明一个人
+
+
+
+程序员要一直保持着不断学习的习惯，把学到的知识记录，分享，教给别人才是最好的方式。之前有尝试在主流论坛中分享
