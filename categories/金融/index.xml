@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>金融 on 韩永发的博客</title><link>https://thecoolboyhan.github.io/categories/%E9%87%91%E8%9E%8D/</link><description>Recent content in 金融 on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 04 Jun 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/categories/%E9%87%91%E8%9E%8D/index.xml" rel="self" type="application/rss+xml"/><item><title>个贷核心系统业务概览</title><link>https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/</link><pubDate>Wed, 04 Jun 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/</guid><description>&lt;h2 id="业务概览">业务概览
+&lt;/h2>&lt;ul>
+&lt;li>授信&lt;/li>
+&lt;li>放款&lt;/li>
+&lt;li>还款&lt;/li>
+&lt;/ul>
+&lt;h3 id="主要业务">主要业务
+&lt;/h3>&lt;blockquote>
+&lt;p>授信、绑卡、放款、还款、债务重组、不规则还款、延展期、诉讼回款、柜面还款、LPR利率浮动、核销、代偿、机构撤并、管护移交、批量扣款、代偿后还款、日终账务、短信通知、记账机构管理、额度管理、客户信息管理、借据管理、贷款凭证管理、合同管理、核心产品管理、LPR利率维护、银行核心模式、助贷模式、税价分离&amp;hellip;&lt;/p>&lt;/blockquote>
+&lt;h2 id="联机业务">联机业务
+&lt;/h2>&lt;blockquote>
+&lt;p>授信维护、绑卡维护、客户基础信息维护、合同维护、管护机构及记账机构维护、放款、还款、借据信息维护等&lt;/p>&lt;/blockquote>
+&lt;h3 id="授信">授信
+&lt;/h3>&lt;p>授信是业务开始，只有授信后才能开始贷款。&lt;/p>
+&lt;ul>
+&lt;li>额度：客户在一定时间内能够申请贷款的最高金额&lt;/li>
+&lt;li>业务：变更、冻结、解冻、额度占用、恢复、失效、注销&lt;/li>
+&lt;li>额度类型：循环额度、一次性额度、一次性多次使用额度&lt;/li>
+&lt;/ul>
+&lt;h3 id="账户">账户
+&lt;/h3>&lt;ul>
+&lt;li>
+&lt;p>账户：他行卡与本行卡的鉴权、绑定、解绑，用于客户收款和还款&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>鉴权：为了确保用户的真实性和支付的安全性，一般是四要素鉴权&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="放款">放款
+&lt;/h3>&lt;ul>
+&lt;li>预防款：完成产品，额度等校验，生成借据号等关键信息。&lt;/li>
+&lt;li>放款确认：再次校验产品、额度等信息，完成额度占用，生成借据、期供等基本信息&lt;/li>
+&lt;li>支付放款：调用支付，完成放款（标准放款、受托支付）&lt;/li>
+&lt;li>核算记账：放款成功后，异步通知会计核算记账&lt;/li>
+&lt;/ul>
+&lt;h3 id="还款">还款
+&lt;/h3>&lt;ul>
+&lt;li>正常还款：借据到期后的还款&lt;/li>
+&lt;li>提前还款：提前N天还当期&lt;/li>
+&lt;li>提前还N期：缩期，每期本金不变，总期数减少&lt;/li>
+&lt;li>提前还部分：摊薄，每期本金减少，总期数不变&lt;/li>
+&lt;/ul>
+&lt;h3 id="其他概念">其他概念
+&lt;/h3>&lt;ul>
+&lt;li>期供：每个借据都有对应的期供，期供记录了每一期还款的本金、利息、开始日、到期日期等。&lt;/li>
+&lt;li>还款方式：等额本金、等额本息、先息后本、一次性还本付息，周期性还本付息，气球贷，不规则还款。&lt;/li>
+&lt;li>利率：正常利率，罚息利率，复息利率&lt;/li>
+&lt;li>优惠券：N天免息券、利率折扣券、N期免息券、固定利率券、利息抵扣券&lt;/li>
+&lt;li>还款日：固定还款日、范围随机还款日、最大还款日、还款日间隔&lt;/li>
+&lt;/ul>
+&lt;h2 id="批量任务">批量任务
+&lt;/h2>&lt;blockquote>
+&lt;p>各种流水状态同步、批量、代偿、银行核心模式行内数据拉取等&lt;/p>&lt;/blockquote>
+&lt;h3 id="批量扣款">批量扣款
+&lt;/h3>&lt;blockquote>
+&lt;p>客户借据到期后，每日执行的扣款任务&lt;/p>&lt;/blockquote>
+&lt;h4 id="流程">流程
+&lt;/h4>&lt;ol>
+&lt;li>任务生成：按商户、数据库节点、时间点、支付通道等生成批扣&lt;/li>
+&lt;li>数据载入：按生成的不同批扣任务，载入对应的需要批扣的数据&lt;/li>
+&lt;li>执行扣款：按人加产品维度，结合还款账户生成扣款记录，发起扣款&lt;/li>
+&lt;li>短信发送：客户所有借据扣款完成后，按人维度发送扣款结果短信&lt;/li>
+&lt;/ol>
+&lt;h4 id="业务规则">业务规则
+&lt;/h4>&lt;ul>
+&lt;li>
+&lt;p>扣款时间&lt;/p>
+&lt;p>批扣时间点支持配置，配置三次时间 8、16、20点批扣&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>并发控制&lt;/p>
+&lt;p>涉及部分特殊支付渠道的扣款，批扣可以设置不同的并发数量控制&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>扣款账户&lt;/p>
+&lt;p>扣款账户的顺序是按照产品维度配置的，主流扣款顺序：自有虚账户&amp;ndash;&amp;gt;行内虚账户&amp;ndash;&amp;gt; 本行卡&amp;ndash;&amp;gt; 他行卡&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>余额查询&lt;/p>
+&lt;p>扣款前会查询余额，如果余额不足，按可用余额扣款&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>批扣短信&lt;/p>
+&lt;p>扣款完成后，准实时发送扣款短信&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="借据代偿">借据代偿
+&lt;/h3>&lt;blockquote>
+&lt;p>借据人无法按时偿还贷款时，由担保人或保险公司等第三方代为偿还的业务&lt;/p>&lt;/blockquote>
+&lt;h4 id="业务流程">业务流程
+&lt;/h4>&lt;ol>
+&lt;li>代偿试算：命中代偿规则的借据，进行代偿试算，生成代偿明细&lt;/li>
+&lt;li>申请文件：根据代偿明细，生成批量代偿申请文件，上传OSS&lt;/li>
+&lt;li>文件通知：申请文件上传完成后，通过支付通知行内代偿申请已提交&lt;/li>
+&lt;li>审批结果：批量代偿审批文件下载、解析、更新审批状态：通过或拒绝，审批通过的借据，会发起代偿还款&lt;/li>
+&lt;li>代偿结果：代偿完成后，生成代偿结果文件，上传&lt;/li>
+&lt;/ol>
+&lt;h4 id="业务规则-1">业务规则
+&lt;/h4>&lt;ul>
+&lt;li>
+&lt;p>代偿天数&lt;/p>
+&lt;p>只借据的逾期天数，分为单期代偿天数、整笔代偿天数&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>代偿方式&lt;/p>
+&lt;p>单期代偿：单期天数控制，单期做代偿&lt;/p>
+&lt;p>整笔代偿：由整笔借据逾期天数控制，做整笔借据代偿&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>账户管理&lt;/p>
+&lt;p>按渠道配置代偿账户，或在借据放款时指定代偿账户&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>文件同步&lt;/p>
+&lt;p>还款预估文件、代偿申请文件、代偿审批文件、代偿结果文件的同步&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="借据核销">借据核销
+&lt;/h3>&lt;blockquote>
+&lt;p>核销后贷款从资产负债表中剔除，相关坏账不计入当期损益&lt;/p>&lt;/blockquote>
+&lt;h4 id="业务流程-1">业务流程
+&lt;/h4>&lt;ol>
+&lt;li>商户校验：商户是否支持核销，减值核销或非减值核销，核销时是否检查计提&lt;/li>
+&lt;li>产品校验：产品是否支持核销，核销贷款余额，核销逾期天数是否满足要求&lt;/li>
+&lt;li>借据校验：借据状态是否正常，是否处理中，是否做过资产剥离，是否已经核销，贷款余额，逾期天数是否满足条件，最大逾期天数内是否有成功还款记录&lt;/li>
+&lt;/ol>
+&lt;h4 id="业务规则-2">业务规则
+&lt;/h4>&lt;h2 id="日终任务">日终任务
+&lt;/h2>&lt;blockquote>
+&lt;p>计提、结息、转列、拨备、计税&lt;/p>&lt;/blockquote>
+&lt;h3 id="业务流程-2">业务流程
+&lt;/h3>&lt;ol>
+&lt;li>日切前：根据日切时间点，拦截前后10分钟的所有交易&lt;/li>
+&lt;li>日切中-交易拦截：拦截掉除放款外，其他影响账务的交易&lt;/li>
+&lt;li>日切中-核心：执行计提、结息、转列、拨备，生成对应文件通知会计核系统处理&lt;/li>
+&lt;li>日切中-会计核算：处理核心系统计提、结息、转列、拨备等文件&lt;/li>
+&lt;li>日切中-ODS：待核心系统及会计核算系统数据处理完成后，通知ODS抽数&lt;/li>
+&lt;li>日间：ODS完成供数后，通知核心切日间，继续处理被阻塞的还款交易，当日零金额还款的业务。&lt;/li>
+&lt;/ol>
+&lt;h3 id="业务规则-3">业务规则
+&lt;/h3>&lt;ul>
+&lt;li>
+&lt;p>计提&lt;/p>
+&lt;p>对当天应收客户的贷款利息进行计算，体现银行的贷款利息收入&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>结息&lt;/p>
+&lt;p>按约定的时间从客户账扣收贷款利息，体现银行和借据人之间的利息结算&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>转列&lt;/p>
+&lt;p>处理贷款借据的四级分类：正常、逾期、呆滞、呆账&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>拨备&lt;/p>
+&lt;p>贷款减值准备，拨备金额主要根据贷款的五级分类来确定&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h2 id="总结">总结
+&lt;/h2>&lt;p>&lt;img src="https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B.jpg"
+width="1099"
+height="458"
+srcset="https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B_hu_53748e83f55d80e6.jpg 480w, https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B_hu_5ff7f26ce3086724.jpg 1024w"
+loading="lazy"
+alt="业务流程"
+class="gallery-image"
+data-flex-grow="239"
+data-flex-basis="575px"
+>&lt;/p>
+&lt;p>&lt;img src="https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/%E5%80%9F%E6%8D%AE%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.jpg"
+width="1259"
+height="286"
+srcset="https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/%E5%80%9F%E6%8D%AE%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F_hu_85d083b59ef00ff3.jpg 480w, https://thecoolboyhan.github.io/p/%E4%B8%AA%E8%B4%B7%E6%A0%B8%E5%BF%83%E7%B3%BB%E7%BB%9F%E4%B8%9A%E5%8A%A1%E6%A6%82%E8%A7%88/%E5%80%9F%E6%8D%AE%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F_hu_c10a2c1e71353c9a.jpg 1024w"
+loading="lazy"
+alt="借据的生命周期"
+class="gallery-image"
+data-flex-grow="440"
+data-flex-basis="1056px"
+>&lt;/p>
+&lt;h2 id="贷款">贷款
+&lt;/h2>&lt;p>由于各个银行情况不同，有些并不使用本核心做放款、还款等操作。银行为核心的产品本系统只需路由到对应的银行请求行内接口，获取结果。&lt;/p>
+&lt;ul>
+&lt;li>具体的路由方式&lt;/li>
+&lt;/ul>
+&lt;p>目前有两种路由方式：&lt;/p>
+&lt;ol>
+&lt;li>通过产品号来路由（优先）：通过银行（租户）+产品的维度请求对应的接口&lt;/li>
+&lt;li>通过银行路由：有些银行只有一个统一的请求接口，无需区分产品。&lt;/li>
+&lt;/ol>
+&lt;blockquote>
+&lt;p>银行相关的配置信息，统一放入路由配置表，通过请求中的产品号获取对应的规则。&lt;/p>&lt;/blockquote>
+&lt;blockquote>
+&lt;p>接下来的所有流程为自有核心流程&lt;/p>&lt;/blockquote>
+&lt;h3 id="贷款试算">贷款试算
+&lt;/h3>&lt;blockquote>
+&lt;p>放款提现请的准备重要规则，预生成还款计划、计划利息、借据信息等。&lt;/p>&lt;/blockquote>
+&lt;h5 id="前期准备">前期准备
+&lt;/h5>&lt;ul>
+&lt;li>首次还款日&lt;/li>
+&lt;/ul>
+&lt;p>后续期供信息需要根据首次还款日，来向后累计。在交给计算器来生成期供之前，需要先准备好首次还款日。&lt;/p>
+&lt;blockquote>
+&lt;p>所有产品的首次还款日默认不许超过28（不许出现29、30、31等）&lt;/p>&lt;/blockquote>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>类型&lt;/th>
+&lt;th>结果&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>固定还款日&lt;/td>
+&lt;td>每月都使用固定还款日期来还款&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>固定还款日（下月）&lt;/td>
+&lt;td>小于等于固定还款日：使用下月固定还款日&lt;br />大于固定还款日：使用下下月固定还款日&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>随机【1,10】&lt;/td>
+&lt;td>1到10号随机一天&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>随机【11,20】&lt;/td>
+&lt;td>11到20号随机一天&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>随机【21,28】&lt;/td>
+&lt;td>21到28号随机一天&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;blockquote>
+&lt;p>如果客户信息中，曾记录过用户的还款日，尽量使用相同的还款日。（方便合并批扣）&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>获取利率（授信协议）&lt;/li>
+&lt;/ul>
+&lt;p>从授信协议分项中查出授信时风险模型提供的客户贷款利率。&lt;/p>
+&lt;h5 id="试算">试算
+&lt;/h5>&lt;blockquote>
+&lt;p>通过首次还款日、利率信息。来预生成还款计划和借据信息&lt;/p>&lt;/blockquote>
+&lt;p>信贷核心执行过程均采用责任链模式，每一步时都会判断是否继续向后执行，无论中间哪一环出现问题直接让流程失败。&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>试算物料初始化&lt;/p>
+&lt;p>贷款开始日期、产品信息、优惠券信息&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>使用原始利率试算（折前利率）&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>根据还款方式来选择试算器&lt;/p>
+&lt;blockquote>
+&lt;p>不同还款方式的试算器&lt;/p>&lt;/blockquote>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>还款方式&lt;/th>
+&lt;th>试算器&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>先息后本&lt;/td>
+&lt;td>等额本金计算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>等额本息&lt;/td>
+&lt;td>等额本息计算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>等额本金&lt;/td>
+&lt;td>等额本金计算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>自定义周期性还本还息&lt;/td>
+&lt;td>等额本金计算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>气球贷等额本息&lt;/td>
+&lt;td>气球贷等额本息计算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>气球贷等额本金&lt;/td>
+&lt;td>气球贷等额本金计算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>气球贷自定义周期性还本还息&lt;/td>
+&lt;td>气球贷等额本金计算器&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;blockquote>
+&lt;p>各计算器计算方式后文详解&lt;/p>&lt;/blockquote>
+&lt;p>通过试算器试算出：&lt;/p>
+&lt;p>本息总金额、利息、下次还款日、到期日、还款明细、还款期数&lt;/p>
+&lt;p>通过试算器得出的为折前利率，但未使用优惠，需要对总金额和利息使用优惠券（优惠券为负值）&lt;/p>
+&lt;p>&lt;strong>当期初始利息=剩余本金*年利率*计息天数（距离放款的天数）/年计息规则天数（360或365）&lt;/strong>&lt;/p>
+&lt;blockquote>
+&lt;p>目前已知的情报：&lt;/p>
+&lt;p>1、贷款开始日期、产品信息、优惠券信息&lt;/p>
+&lt;p>2、折前：本息总金额、利息、下次还款日、到期日、还款明细、还款期数&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>折后利率计算&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>返回折后利率&lt;/p>&lt;/blockquote>
+&lt;p>优惠后金额需要通过折扣利率来计算，优惠有两种&lt;/p>
+&lt;ol>
+&lt;li>利率折扣：&lt;strong>折后利率=正常利率*折扣率&lt;/strong>&lt;/li>
+&lt;li>利息优惠券：&lt;strong>折后利率=（（折前总利息-|优惠券固定优惠利息金额|）/折前总利息&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;blockquote>
+&lt;p>目前已知的情报：&lt;/p>
+&lt;p>1、贷款开始日期、产品信息、优惠券信息&lt;/p>
+&lt;p>2、折前：本息总金额、利息、下次还款日、到期日、还款明细、还款期数&lt;/p>
+&lt;p>3、折后利率&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>通过折后利率在进行一次试算&lt;/li>
+&lt;/ul>
+&lt;p>上一步中得出折后利率，利用折后利率在进行一次试算，就可得出优惠后的利息情况。&lt;/p>
+&lt;blockquote>
+&lt;p>目前已知的情报：&lt;/p>
+&lt;p>1、贷款开始日期、产品信息、优惠券信息&lt;/p>
+&lt;p>2、折前：本息总金额、利息、下次还款日、到期日、还款明细、还款期数&lt;/p>
+&lt;p>3、折后利率&lt;/p>
+&lt;p>4、折后：本息总金额、利息、下次还款日、到期日、还款明细、还款期数&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>试算出每期优惠的金额&lt;/li>
+&lt;/ul>
+&lt;p>通过优惠试算器试算出每期优惠的金额&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>优惠方式&lt;/th>
+&lt;th>试算器&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>放款使用（折后利息计算还款计划+折扣不提（初始就是折后利息）+回收补提）&lt;/td>
+&lt;td>放款优惠试算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>放款使用（折后利息计算还款计划+折扣不提（初始就是折后利息）+回收补提 等额本息使用优惠券）&lt;/td>
+&lt;td>放款优惠试算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>还款使用（折前利息计算还款计划+折扣反提+回收补提）（默认试算器）&lt;/td>
+&lt;td>还款优惠试算器&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>还款使用（折前利息计算还款计划+折扣反提+回收补提 等额本息）&lt;/td>
+&lt;td>还款优惠试算器&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;ul>
+&lt;li>费用计算&lt;/li>
+&lt;/ul>
+&lt;p>按出资比率或约定费用计算出所需费用&lt;/p>
+&lt;h5 id="试算总结">试算总结
+&lt;/h5>&lt;p>通过以下信息试算出期供明细+借据&lt;/p>
+&lt;ol>
+&lt;li>试算物料初始化：贷款开始日期、产品信息、优惠券信息&lt;/li>
+&lt;li>使用原始利率试算（折前利率）：本息总金额（折前）、利息（折前）、下次还款日、到期日、还款明细、还款期数&lt;/li>
+&lt;li>折后利率计算：折后利率&lt;/li>
+&lt;li>用折后利率试算：本息总金额（折后）、利息（折后）、下次还款日、到期日、还款明细、还款期数&lt;/li>
+&lt;li>抵扣金额：每期优惠金额&lt;/li>
+&lt;li>费用计算：根据规则计算出费用&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>放款试算必须的条件：&lt;/li>
+&lt;/ul>
+&lt;p>产品信息、放款金额、从授信中获取的利率、期数、还款周期、放款日期、优惠方式。&lt;/p>
+&lt;h3 id="放款tcc">放款（TCC）
+&lt;/h3>&lt;h4 id="无事务前期准备">无事务前期准备
+&lt;/h4>&lt;ul>
+&lt;li>生成唯一流水&lt;/li>
+&lt;/ul>
+&lt;p>为了防止重复放款，先生成一条唯一交易流水，插入唯一交易流水表（放款、还款同表）。通过唯一约束的交易流水，防重放。&lt;/p>
+&lt;ul>
+&lt;li>查询产品信息&lt;/li>
+&lt;/ul>
+&lt;p>通过请求参数，查询本次贷款产品信息。&lt;/p>
+&lt;h4 id="额度占用预开户事务1try">额度占用+预开户（事务1：try）
+&lt;/h4>&lt;p>开启事务Transactional&lt;/p>
+&lt;ul>
+&lt;li>获取客户额度与额度协议分项(事务1.1)&lt;/li>
+&lt;/ul>
+&lt;p>校验还款方式、末期本金比例是否合规等&lt;/p>
+&lt;blockquote>
+&lt;p>目前已有：额度信息（未被占用）、协议信息&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>计算还款日(事务1.1)&lt;/li>
+&lt;/ul>
+&lt;p>根据入参计算还款日，校验卡信息&lt;/p>
+&lt;blockquote>
+&lt;p>目前已有：&lt;/p>
+&lt;p>1、额度信息（未被占用）、协议信息&lt;/p>
+&lt;p>2、还款日&lt;/p>&lt;/blockquote>
+&lt;ul>
+&lt;li>查询（客户+产品）名下所有的申请信息（成功+处理中的）(事务1.1)&lt;/li>
+&lt;/ul>
+&lt;p>在本次放款记录落库前，先查询一遍申请信息&lt;/p>
+&lt;ul>
+&lt;li>真正的放款try(事务1.1)&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>利率抉择、额度占用、登记流水&lt;/p>&lt;/blockquote>
+&lt;ol>
+&lt;li>校验客户信息(事务1.1)&lt;/li>
+&lt;/ol>
+&lt;p>判断客户是否可以再借款等&lt;/p>
+&lt;ol start="2">
+&lt;li>抉择利率（开启一个新事务1.2）&lt;/li>
+&lt;/ol>
+&lt;blockquote>
+&lt;p>Q如何在一个事务中同一个bean内的方法调用，开启一个新事务？&lt;/p>
+&lt;p>A由于事务1.1与事务1.2处于同一个bean，且只有通过springAOP代理的对象才会事务生效。（&lt;strong>同类内方法调用即使有@Transactional注解，AOP不会生效&lt;/strong>）&lt;/p>
+&lt;p>可以&lt;strong>通过SpringContextHolder.getBean（*.class）获取bean来调用，使事务或AOP生效&lt;/strong>&lt;/p>&lt;/blockquote>
+&lt;p>根据配置使用客户额度协议中的利率或从风险驾驶舱中获取利率&lt;/p>
+&lt;p>若风险驾驶舱中利率和额度协议中的利率不同，更新协议分项利率&lt;/p>
+&lt;blockquote>
+&lt;p>提交事务1.2&lt;/p>&lt;/blockquote>
+&lt;ol start="3">
+&lt;li>插入唯一交易流水表（事务1.1）&lt;/li>
+&lt;/ol>
+&lt;p>防止重复交易（try）&lt;/p>
+&lt;ol start="4">
+&lt;li>占用额度（事务1.1）&lt;/li>
+&lt;/ol>
+&lt;p>在占用额度之前，先当前读查询额度变更流水（select for update），防止额度重复占用&lt;/p>
+&lt;p>select for update 该用户的额度数据（只要事务没有提交，相当于锁住了该客户的读信息）&lt;/p>
+&lt;p>利用mysql 更新额度数据：剩余额度=原剩余额度-借据金额&lt;/p>
+&lt;p>插入若干流水&lt;/p>
+&lt;p>返回更新后的额度分项&lt;/p>
+&lt;ol start="5">
+&lt;li>贷款预生成（事务1.1）&lt;/li>
+&lt;/ol>
+&lt;blockquote>
+&lt;p>目前已知信息&lt;/p>
+&lt;p>产品信息、卡信息、额度协议信息（已占用）、利率、已登记流水（放款请求，额度占用流水）、还款日、客户信息&lt;/p>&lt;/blockquote>
+&lt;p>通过以上信息预生成一笔借据&lt;/p>
+&lt;p>生成提前申请流水&lt;/p>
+&lt;blockquote>
+&lt;p>事务1.1结束&lt;/p>&lt;/blockquote>
+&lt;h2 id="还款-1">还款
+&lt;/h2></description></item></channel></rss>
