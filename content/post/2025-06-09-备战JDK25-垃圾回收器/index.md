@@ -303,9 +303,7 @@ JDK12开始引入（社区可以支持到JDK8），通用采取分区概念，�
 
 ### 垃圾回收过程
 
-![a9fe75e062ea0bab27c40d519b3ed8b7.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/a9fe75e062ea0bab27c40d519b3ed8b7_1749609042231.png)
-
-
+![1751436527413.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1751436527413_1751436527436.png)
 
 1. 初始标记（STW）
 
@@ -342,6 +340,7 @@ JDK12开始引入（社区可以支持到JDK8），通用采取分区概念，�
 | 并发标记 | 利用加载屏障，实现标记过程中实时捕获对象状态，在超大堆上支持更好（TB） | 利用卡表、记忆集来并发标记，最后有短暂的暂停（再标记阶段），支持上百G的内存 |
 | 迁移过程 | 利用虚拟内存映射，强调零拷贝，几乎无复制                     | 虽然同样采用了彩色指针、加载屏障来保证迁移的准确，但还是存在部分的实际对象复制，所以效率不如ZGC |
 
+![1751436709608.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1751436709608_1751436709649.png)
 
 
 - 为什么选择Shenandoah而不是ZGC？

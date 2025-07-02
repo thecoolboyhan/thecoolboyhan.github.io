@@ -1,7 +1,7 @@
 ---
 title: 备战JDK25--并发
 description: JDK25今年年底就要发布了，这次深入了解结构化并发和各种并发框架，争取一起搞清后面几年的并发
-slug: JDK25-1
+slug: JDK25-2
 date: 2025-06-18 00:00:00+0000
 image: 1.png
 categories:
