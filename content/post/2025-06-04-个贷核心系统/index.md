@@ -1,9 +1,9 @@
 ---
-title:  个贷核心系统业务概览
+title:  个贷核心系统业务与核算规则概览
 date: 2025-06-04
-#image: 2025-05-29.png
+image: 1.png
 categories: [金融,精选,个贷核心]
-tags: [业务,随笔]
+tags: [业务,随笔,账务]
 ---
 
 

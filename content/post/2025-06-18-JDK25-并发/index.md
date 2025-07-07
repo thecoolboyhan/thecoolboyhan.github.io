@@ -16,6 +16,12 @@ tags:
 
 
 
+
+
+# JDK25 并发
+
+
+
 ## 并发集合
 
 
@@ -237,4 +243,37 @@ get方法依赖于volatile来保证元素内存的可见性。能够在JVM层面
 写时产生的新数组会替换旧数组，每次读取时都只读取内部数组（内部数组被Volatile修饰），从而保证可见性和有序性
 
 
+
+
+
+
+
+- 写操作上锁
+
+写操作集合内部使用一个lock对象用synchronized（老版本是用ReentrantLock）来保证并发安全。
+
+
+
+> 具体步骤：
+
+1. 获取锁
+2. 复制当前的数组（Arrays.copyOf）
+3. 在新的数组中进行修改
+4. 将新的数组值赋值给内部的volatile字段
+5. 释放锁
+
+
+
+``` java
+public boolean add(E e) {
+        synchronized (lock) {
+            Object[] es = getArray();
+            int len = es.length;
+            es = Arrays.copyOf(es, len + 1);
+            es[len] = e;
+            setArray(es);
+            return true;
+        }
+    }
+```
 
