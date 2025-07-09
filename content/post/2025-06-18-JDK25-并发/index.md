@@ -363,6 +363,14 @@ private static final Unsafe U = Unsafe.getUnsafe();
 
 
 
+
+
+![250708094129439.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250708094129439_1751938889451.png)
+
+
+
+
+
 - 线程安全：锁状态位，控制JVM对共享资源的访问。
 - 高效（锁升级）：（偏向锁→轻量级锁→重量级锁），JVM减少了同步的性能开销。
 - GC友好：存放GC相关的元数据，对象的年龄，用于辅助垃圾回收
@@ -373,19 +381,19 @@ private static final Unsafe U = Unsafe.getUnsafe();
 
 
 
-
+![1751938945966.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1751938945966_1751938946010.png)
 
 synchronized的不同markword
 
-| 锁状态   | markword前3位 | 描述                                      |
-| -------- | ------------- | ----------------------------------------- |
-| 无锁     | 01            | 存放哈希码                                |
-| 偏向锁   | 001           | 存储偏向线程的指针（JDK15之后被弃用）     |
-| 轻量级锁 | 00            | 存放指向线程栈锁记录的指针（JDK21默认锁） |
-| 重量级锁 | 10            | 存放指向监视器的指针                      |
-| 可被回收 | 11            | 表示当前对象可被回收                      |
+| 锁状态   | markword末尾3位 | 描述                                      |
+| -------- | --------------- | ----------------------------------------- |
+| 无锁     | 01              | 存放哈希码                                |
+| 偏向锁   | 100             | 存储偏向线程的指针（JDK15之后被弃用）     |
+| 轻量级锁 | 00              | 存放指向线程栈锁记录的指针（JDK21默认锁） |
+| 重量级锁 | 10              | 存放指向监视器的指针                      |
+| 可被回收 | 11              | 表示当前对象可被回收                      |
 
-
+![1751939000120.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1751939000120_1751939000151.png)
 
 
 
@@ -399,7 +407,7 @@ synchronized的不同markword
 
 当线程首次获取锁，markword中记录线程偏向线程的指针。被记录的线程后续对上锁对象进行操作时是无锁的。（效率高）
 
-如果另一个线程尝试获取该锁时，偏向锁会被撤销，需要Safepoint操作，此操作会停止所有的线程。
+如果另一个线程尝试获取该锁时，偏向锁会被撤销，需要**Safepoint**操作，此操作会停止所有的线程。
 
 
 
@@ -461,4 +469,753 @@ synchronized的不同markword
 3. 动态的调节锁，可以达到部分场景的“既要又要”。
 
 
+
+
+
+| 特点     | 轻量级                                   | 重量级                              |
+| -------- | ---------------------------------------- | ----------------------------------- |
+| 定义     | 优化机制，减少低竞争场景的同步开销       | 传统锁机制，处理高竞争场景          |
+| 使用场景 | 低竞争                                   | 高竞争                              |
+| 实现机制 | 使用CAS操作，存储在对象头MarkWord中      | 依赖操作系统Mutex Lock，创建Monitor |
+| 等待方式 | 自旋等待，循环检测锁可用                 | 阻塞等待，进入阻塞队列              |
+| 性能     | 低竞争高效，避免上下文切换               | 高竞争时高效，涉及上下文切换开销    |
+| 内存占用 | 直接使用对象头，几乎不占用内存           | 需要Monitor对象，增加内存使用       |
+| 锁位     | 00                                       | 10                                  |
+| 升级条件 | 自旋10次或有第三个线程竞争锁升级重量级锁 | 默认状态，锁竞争激烈时升级          |
+
+
+
+
+
+
+
+- 原理
+
+| 操作   | 轻量级                                                       | 重量级                                                       |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 获取锁 | 1、检测对象头是否为无锁（01）<br />2、如果无锁，线程使用CAS操作将MarkWord更新为指向线程栈中的锁记录<br />3、如果失败，进入自旋状态，循环尝试获取锁 | 1、线程检测对象MarkWord是否为重量级锁（10）<br />2、如果是，调用操作系统互斥锁接口尝试获取Monitor<br />3、如果Monitor已被其他线程持有，当前线程阻塞，进入EntrySet等待 |
+| 解锁   | 1、检测markwor是否指向自己的<br />2、如果是：线程使用CAS操作将MarkWord恢复为无锁状态（01）<br />3、如果CAS失败，表示锁已升级为重量级锁，调用重量级锁的解锁机制 | 1、检测MarkWord是否指向自己的Monitor<br />2、如果是：线程调用操作系统互斥锁接口，释放Monitor<br />3、操作系统唤醒EntrySet中的一个线程，继续竞争锁 |
+
+ 
+
+
+
+
+
+
+
+## volatile
+
+
+
+> 保证多线程间的可见性，防止指令重排序
+
+
+
+**注意**：volatile不能保证原子性，如果想要原子性，需要synchronized或原子类配合
+
+
+
+
+
+
+
+### 可见性
+
+
+
+
+
+![250708132014757.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250708132014757_1751952014821.png)
+
+
+
+读操作：直接与主内存交互，而不是与线程本地缓存交互。
+
+写操作：立刻刷新到主内存，读操作直接从主内存读取。
+
+
+
+
+
+> 实现方式：在cpu的三级缓存中，每个核心有自己独有的本地缓存。cpu间的共享变量由L3存放。volatile通过给CPU上锁，实现可见性。
+
+
+
+老CPU：老CPU通过给CPU总线上锁，实现共同修改的变量同时只会有一个核心能够读取到。（这样锁粒度太大，效率低）
+
+新CPU：采用给L3的共享变量的内存地址上锁，保证同时只会有一个线程能够修改共享的变量。而且每次修改，都会强制回写到主内存中。
+
+- 缺点
+
+虽然现在volatile锁定的内存区域很小，但如果是修改特别频繁的变量。由于每次都会锁定主内存中的地址，修改后再释放。修改频繁，导致效率低下。
+
+
+
+
+
+### 有序性
+
+> 由于不同的操作可能使用到计算器不同的部件，于是CPU为了增快运行效率，程序并不会严格按照代码的顺序执行。<font color='red'>CPU会在**单线程不影响结果**的情况下，随机分配创建对象和对象操作的顺序。</font>
+
+但并发场景，我们想让对象按照我们想要的顺序执行，就需要保证有序性。volatile采用的方式是通过内存屏障（读写屏障）
+
+
+
+
+
+- 写操作
+
+通过store barrier，确保之前的写操作都完成，并将写缓冲区的数据刷新到主内存中。
+
+新CPU采用Lock add指令，起到full barrier作用。（lock add效率更高）
+
+
+
+- 读操作
+
+读操作前加入load barrier，确保之后的读操作都能看到最新的数据。
+
+**X86 新CPU自带禁止指令重排序，不需要额外指令。**
+
+
+
+### 举例
+
+
+
+- 单例模式创建对象，使用DCL
+
+> 防止半初始化问题
+
+
+
+``` java
+public class Singleton {
+    private static volatile Singleton instance;
+
+    public static Singleton getInstance() {
+        if (instance == null) {
+            synchronized (Singleton.class) {
+                if (instance == null) {
+                    instance = new Singleton();
+                }
+            }
+        }
+        return instance;
+    }
+}
+```
+
+
+
+- 线程之间共享变量
+
+当通讯标志
+
+
+
+``` java
+public class FlagExample {
+    private volatile boolean running = true;
+
+    public void start() {
+        new Thread(() -> {
+            while (running) {
+                // do something
+            }
+        }).start();
+    }
+  //可以从外部停止线程
+    public void stop() {
+        running = false;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+## Lock接口及其相关同步器
+
+
+
+> LockSupport、AQS、ReentrantLock、[Semaphore](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Semaphore.html), [CyclicBarrier](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CyclicBarrier.html), [CountdownLatch](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountDownLatch.html), [Phaser](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Phaser.html), 和 [Exchanger](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Exchanger.html)
+
+### LockSupport
+
+> 让线程阻塞，和解除阻塞的工具，是锁实现的核心功能之一。
+
+
+
+性能优于传统的 wait/notify方法。
+
+
+
+
+
+- API
+
+| 方法                     | 描述                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| park()                   | 阻塞当前线程，直到获得继续运行的许可。如果一直没有许可，线程进入阻塞状态，直到被unpark或中断 |
+| unpark(Thread thread)    | 为指定线程提供许可。如果线程被park阻塞，许可会解除其阻塞状态；否则，许可保留供后续park使用。<font color='red'>（**也就是说，解锁可以在上锁之前**）</font> |
+| parkNanos(long nanos)    | 阻塞当前线程，最多等待纳秒数，除非获得许可。（锁超时）       |
+| parkUntil(long deadline) | 阻塞当前线程，直到指定截止实现，除非获得许可。锁超时）       |
+| getBlocker(Thread t)     | 返回线程的阻塞对象，用来检测线程阻塞的原因。如果线程未阻塞，返回null |
+
+
+
+
+
+- 许可机制
+
+每个线程最多持有一个许可。unpark增加许可，park消耗许可或阻塞线程。
+
+
+
+
+
+
+
+
+
+每个线程都有一个许可计数器，初始为0，最大为1。
+
+unpark会计数器设为1，park检查并消耗许可或阻塞线程。
+
+
+
+>  Park和unpark是操作系统原生方法，通过JNI调用操作系统的线程管理功能实现。
+
+
+
+
+
+- 中断支持
+
+当线程被park时如果被中断，park会立刻返回，并设置成中断状态。
+
+> 所以写park代码时，要考虑Thread.interrupted()
+
+
+
+
+
+- java内部使用场景
+
+**Reentrantlock**：通过LockSupport阻塞等待锁的线程，unpark唤醒等待队列中的下一个线程。
+
+**Semaphore**：park和unpark管理许可的分配和等待。
+
+
+
+
+
+- 用于线程间协调
+
+生产消费者模式，生产者调用unpark唤醒消费者线程。
+
+
+
+
+
+
+
+> LockSupport解锁虚拟线程时，有特殊的方式，放到虚拟线程那里统一讲。
+
+
+
+
+
+### AQS（AbstractQueuedSynchronizer）
+
+> 并发包核心框架，抽象类，实现了同步器。
+>
+> 多种锁、线程池都是通过AQS来实现唤醒和竞争的。
+>
+> 这是一种典型的<font color='red'>模板方法</font>，它提供了一个基本的同步框架，子类实现特定抽象方法，即可构建不同的同步器。
+
+
+
+**主要组成部份**
+
+
+
+- 同步状态（state）:一个用volatile修饰的整数，表示同步器的当前状态。0表示未被锁定，大于0表示被锁定。用volatile修饰后保证所有线程可见。
+- 等待队列（Queue）：一个FIFO（先进先出）双向链表，用于存储等待获取同步状态的线程。当同步状态不可用（state大于0时），线程会被加入等待队列，按顺序等待。
+- 条件变量（condition）：AQS支持通过条件变量，让线程等待特定的条件变为真。每个条件变量有自己的等待队列，可以通过条件变量实现复杂的同步逻辑。
+
+
+
+- **为什么等待队列要使用双向链表**？
+
+当某个线程被中断，或者需要退出锁竞争时，可以直接让需要退出队列的线程，修改自己的前后节点的指针，实现快速删除。
+
+
+
+
+
+![250708201041259.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250708201041259_1751976641270.png)
+
+- API
+
+| 方法                  | 描述                                           |
+| --------------------- | ---------------------------------------------- |
+| acquire(int arg)      | 尝试获取同步状态，如果不可用则阻塞等待         |
+| release（int arg）    | 释放同步状态                                   |
+| tryAcquire（int arg） | 尝试获取同步状态，不会阻塞，子类需要实现此方法 |
+| tryRelease(int arg)   | 尝试释放同步状态，子类实现此方法               |
+| isHeldExclusively（） | 检查当前线程是否独占持有同步状态               |
+| getQueueLength()      | 返回等待队列中的线程数                         |
+| hasQueuedThreads()    | 检查是否用线程在等待队列中                     |
+
+
+
+> AQS为抽象类，子类实现AQS时，需要重写tryAcquire和tryRelease，定义具体的获取和释放逻辑。
+>
+> ReentrantLock会检查当前线程是否持有锁（可重入）
+>
+> Semaphore会检查剩余的许可数量
+
+
+
+
+
+
+
+
+
+- 线程阻塞和唤醒
+  AQS使用AbstractOwnableSynchronizer管理线程的所有权，通过LockSupport来阻塞和唤醒线程。阻塞的线程会暂停执行，等待被唤醒后重新尝试获取锁。
+
+
+
+
+
+- AQS的使用场景
+
+1. ReentrantLock：可重入锁
+2. Semaphore：信号量，控制同时访问资源的线程数。（限流）
+3. CountDownLatch：倒数器，协调多线程执行。
+4. CyclicBarrier：阶段锁：多个线程相互等待，直到所有线程到达某个点。
+5. ReadWriteLock：读写锁。多读一写
+
+
+
+
+
+- 自定义锁
+
+
+
+``` java
+public class MyLock extends AbstractQueuedSynchronizer {
+    @Override
+    protected boolean tryAcquire(int acquires) {
+        return compareAndSetState(0, 1);
+    }
+//解锁是一个非常复杂的操作，这里演示就直接让锁释放成功
+    @Override
+    protected boolean tryRelease(int releases) {
+        setState(0);
+        return true;
+    }
+
+    public void lock() {
+        acquire(1);
+    }
+
+    public void unlock() {
+        release(1);
+    }
+}
+```
+
+
+
+
+
+> condition没有单独讲解，其实这才是线程唤醒条件的关键，上面提到的各种AQS实现，其实都是对condition的一些不同的运用。
+
+
+
+
+
+### ReentrantLock（可重入锁）
+
+> 基于AQS的可重入锁，最常用的自定义锁，比synchronized更灵活。
+
+
+
+- 实现原理
+
+基于AQS实现，通过等待队列管理竞争线程，支持公平和非公平模式。公平模式，线程先来先获取锁；非公平模式，可能出现插队情况。
+
+
+
+> 公平模式，严格按照等待队列顺序来修改state对象
+>
+> 非公平模式，新来的线程会先尝试修改state对象，若修改成功直接获取锁，如果没有在进入等待队列获取锁。（已经进入等待队列的线程要按顺序来获取锁）
+
+
+
+
+
+- 主要API
+
+**获取锁**：lock获取锁，阻塞直到成功。trylock尝试获取锁，不阻塞。
+
+**释放锁**：unlock释放锁，必须在持有锁时调用。
+
+**条件变量**：newCondition创建条件变量（之前提到的Condition），用于等待和通知。
+
+**监控**：getHoldCount查看当前线程的锁持有次数。
+
+
+
+> 可重入：通过holdCount锁被获取的次数，每获取一次+1
+
+
+
+
+
+> **为了避免死锁，lock必须在finally代码中有unlock**
+
+
+
+- 与synchronized对比
+
+| 特性     | ReentrantLock                | synchronized                |
+| -------- | ---------------------------- | --------------------------- |
+| 可重入性 | 支持，基于hold count         | 支持，基于监视器（Monitor） |
+| 公平性   | 可选                         | 非公平                      |
+| 超时获取 | 支持（trylock with timeout） | 不支持                      |
+| 可中断   | 支持（lockInterruptibly）    | 部分支持（可通过中断处理）  |
+| 条件变量 | 支持（newCondition）         | 支持（手动wait/notify)      |
+| 监控     | 支持（getHoldCount）         | 不提供对外api               |
+
+
+
+
+
+
+
+
+
+- 如何自定义 Condition
+
+``` java
+Lock lock = new ReentrantLock();
+Condition notEmpty = lock.newCondition();
+lock.lock();
+try {
+    while (queue.isEmpty()) {
+        notEmpty.await(); // 消费者等待
+    }
+    // 处理队列中的元素
+} finally {
+    lock.unlock();
+}
+```
+
+
+
+
+
+### Semaphore（信号量）
+
+> java的计数信号量，用来控制同时访问共享资源的线程数，基于AQS实现。
+
+
+
+- 实现原理
+
+通过AQS的同步状态（state）表示可用许可数量。
+
+
+
+初始设置的state值，就是最大同时可以访问资源的数量。
+
+
+
+获取锁：acquire ，通过CAS减少state值，若state小于0，则线程进入等待队列。
+
+
+
+释放锁：release，增加state值，并唤醒等待队列中的线程
+
+
+
+> state对象可以被减少到负值，当state对象为负数时，表示有过多的线程来竞争锁。同时也可以提现出目前共有多少个线程需要竞争锁。
+
+
+
+
+
+
+
+
+
+- 使用场景
+
+1. 限流：控制访问资源的线程数，限制API请求的并发量。
+2. 资源池管理：管理固定数量的资源，如数据库连接池或线程池。
+   1. 用Semaphore管理连接池，确保连接数量不超过上限
+3. 线程协调：实现类似栅栏的效果，控制多线程的执行顺序。
+4. 互斥锁：当state设置为1时，可以做互斥锁（但是不可重入）
+
+
+
+- 限流
+
+``` java
+Semaphore semaphore = new Semaphore(3); // 允许 3 个线程并发访问
+try {
+    semaphore.acquire(); // 获取许可
+    // 访问共享资源
+} finally {
+    semaphore.release(); // 释放许可
+}
+```
+
+
+
+
+
+### CyclicBarrier（阶段锁）
+
+> 基于AQS，让一组线程在某个点同步等待，当全部到达时，在一起行动。（可以重复使用）
+
+
+
+
+
+- 主要方法
+
+await()：让线程等待，直到所有线程到达屏障点。
+
+reset()：重置屏障，供下次使用。
+
+
+
+
+
+- 工作原理
+
+1. 屏障点：当一组线程都调用await方法到达屏障点时，屏障被触发，所有线程被释放继续执行。
+2. 屏障动作：当所有线程到达屏障点后，由最后一个线程执行Runnable任务（barrier action）。
+3. 重用：CyclicBarrier可以被重用（与他类似的CountDownLatch不可以），所有线程通过屏障后，可以通过reset方法重置屏障，供下次使用。
+4. 异常处理：如果一个线程在等待屏障时因中断、超时或者其他原因离开屏障点，所有等待的线程都会抛出BrokenBarrierException，表示屏障已经被破坏。
+
+
+
+
+
+- 对比
+
+| 特性     | CyclicBarrier          | CountDownLatch                 | Semaphore    |
+| -------- | ---------------------- | ------------------------------ | ------------ |
+| 重用     | 支持（reset）          | 不支持                         | 支持         |
+| 线程等待 | 所有线程相互等待       | 一个或多个线程等待其他线程完成 | 控制并发访问 |
+| 屏障动作 | 支持（可选的Runnable） | 不支持                         | 不支持       |
+| 场景     | 并行计算、数据处理     | 启动/完成信号                  | 限流、资源池 |
+
+
+
+
+
+
+
+- 使用场景
+
+1. 并行计算：多个线程各自完成一部分任务，需要同步执行下一步操作。
+
+   多个线程各自执行任务，在所有线程完成后再合并结果。
+
+2. 数据处理：分块处理数据，每个线程处理一个数据块，所有线程完成后再进行下一步处理。
+
+3. 游戏开发：多个玩家需要在游戏开始前都做好准备。
+
+4. 线程协调：当一组线程需要在某个点上同步执行时。
+
+
+
+
+
+``` java
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+
+public class CyclicBarrierExample {
+    private static final CyclicBarrier BARRIER = new CyclicBarrier(4);
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 4; i++) {
+            new Thread(() -> {
+                try {
+                    System.out.println(Thread.currentThread().getName() + " is waiting at barrier");
+                    BARRIER.await(); // 等待所有线程到达屏障点
+                    System.out.println(Thread.currentThread().getName() + " has crossed the barrier");
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+}
+```
+
+
+
+> 四个线程在屏障点等待，等全部都完成时，再继续执行。
+
+
+
+
+
+
+
+### CountdownLatch（倒数器）
+
+
+
+
+
+> 基于AQS的同步工具，允许一个或多个线程等待直到其他线程完成一组操作。
+
+
+
+
+
+- 工作原理
+
+1. 初始化，规定需要等待几个操作完成。
+2. 等待：需要等待的线程调用await方法阻塞，直到等待计数器归零。如果计数器大于零，线程会被加入AQS的等待队列，并通过LockSupport.park阻塞。
+3. 计数：线程调用countDown方法将计数器减一。每调用一次，计数器减少1，如果计数器到达零，上方等待的线程会被释放。
+4. **不可重用**：countDownLatch是一次性的，计数器不能重置。如果想要重用，可以使用CyclicBarrier。
+
+
+
+
+
+- 实现原理
+
+如何实现等待的数量：利用AQS的state对象
+
+
+
+如何等待：需要等待的线程在AQS的等待队列中，当state对象变成0时，立刻返回。
+
+
+
+内存可见：开发遵守happens-before规范，如果通过volatile变量保证可见性。
+
+
+
+
+
+- 使用场景
+
+1. 待定多个线程初始化完成：每次初始化完成后，调用countDown
+2. 启动多个线程后等待它们完成：规定好需要运行的次数，然后倒数。
+3. 分阶段执行：某个阶段需要等待所有线程都完成后再执行。（一次性）
+
+
+
+### Phaser（"分段锁"）
+
+
+
+> 基于AQS，比CyclicBarrier更灵活的同步机制。允许多个线程在不同阶段同步等待。支持动态注册和解注册线程，适合线程数量会变化的场景。（**可以伸缩**）
+
+
+
+- 阶段（Phase）：支持多个同步阶段，每个阶段都有自己的编号。从0开始，到达同步点后，阶段号递增。
+- 注册：通过register方法，动态的把线程注册到Phaser中。
+- 到达：arrive或arriveAndAwaitAdvance表示到达同步点。arriveAndAwaitAdvance会阻塞当前线程
+- 等待：没有满足到达的线程数量时，线程会等待。注册数量的线程到达时，所有等待线程会被释放。
+- 解注册（解绑）：arriveAndDeregister方法，在<font color='red'>**到达同步点时**</font>解注册
+- onAdvance(钩子函数)：运行重写onAdvance方法自定义阶段结束时的行为，例如执行更新操作。
+
+
+
+
+
+
+
+#### 底层实现
+
+虽然是基于AQS的共享模式，但实现更加复杂。内部主要包括
+
+
+
+1. 阶段计数器：每个阶段都有唯一的编号，阶段结束时递增。通过getPhase查询当前所处的阶段。
+2. 注册计数器：动态管理当前注册的线程数。通过getRegisteredParties查询数量。
+3. 等待队列：使用AQS的等待队列管理等待线程，当线程调用arriveAndAwaitAdvance时，如果有线程未到达同步点，当前线程会被加入队列并阻塞。
+4. onAdvance机制：当所有线程到达同步点时，Phaser会调用onAdvance方法。
+
+
+
+- 使用场景
+
+1. 动态线程池：线程数可以变化的场景，例如并行计算任务。线程可以运行时动态加入或离开。
+2. 多阶段计算：每个阶段需要同步的计算任务，例如数据处理管道。每个阶段可以有不同的线程数。
+3. 递归算法：任务数变化的递归策略，例如快排，Phaser可以处理任务分治过程中线程数的动态变化。
+
+
+
+
+
+- 多阶段计算
+
+``` java
+import java.util.concurrent.Phaser;
+
+public class PhaserExample {
+    public static void main(String[] args) {
+        int threads = 3;
+      //初始规定三个线程
+        Phaser phaser = new Phaser(threads);
+
+        for (int i = 0; i < threads; i++) {
+            final int threadNum = i;
+            new Thread(() -> {
+                System.out.println("Thread " + threadNum + " starting phase " + phaser.getPhase());
+                // 模拟工作
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Thread " + threadNum + " arriving at phase " + phaser.getPhase());
+                phaser.arriveAndAwaitAdvance(); // 到达同步点并等待
+
+                System.out.println("Thread " + threadNum + " starting phase " + phaser.getPhase());
+                // 模拟下一阶段工作
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Thread " + threadNum + " arriving at phase " + phaser.getPhase());
+                phaser.arriveAndDeregister(); // 到达同步点并解注册
+            }).start();
+        }
+    }
+}
+```
+
+
+
+
+
+- 动态线程池
 
