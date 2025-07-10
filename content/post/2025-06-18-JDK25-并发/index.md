@@ -1130,7 +1130,7 @@ public class CyclicBarrierExample {
 
 
 
-### Phaser（"分段锁"）
+### Phaser（"强大的多段锁"）
 
 
 
@@ -1217,5 +1217,668 @@ public class PhaserExample {
 
 
 
+
+
+#### 动态线程池
+
+
+
+
+
 - 动态线程池
 
+> 利用Phaser实现，线程可以在运行时，动态的加入或离开。
+
+
+
+
+
+```java
+class DynamicThreadPoolWithPhaser {
+    public static void main(String[] args) throws InterruptedException {
+        // 创建 Phaser
+        Phaser phaser = new Phaser() {
+            @Override
+            protected boolean onAdvance(int phase, int registeredParties) {
+                System.out.println("Advancing to phase " + (phase + 1) + " with " + registeredParties + " parties remaining");
+                return registeredParties == 0; // 当没有注册线程时终止
+            }
+        };
+
+        // 阶段 1：启动 4 个线程
+        Thread[] threads = new Thread[6]; // 预分配最大线程数
+        System.out.println("Starting Phase 1 with 4 threads");
+        for (int i = 0; i < 4; i++) {
+            phaser.register(); // 为每个线程注册
+            threads[i] = new Thread(new Worker(phaser, i, i < 2 ? 2 : 3), "Worker-" + i);
+            threads[i].start();
+        }
+        phaser.arriveAndAwaitAdvance(); // 主线程等待 Phase 1 完成
+
+        // 阶段 2：增加到 6 个线程
+        System.out.println("Starting Phase 2 with 6 threads");
+        for (int i = 4; i < 6; i++) {
+            phaser.register(); // 为新线程注册
+            threads[i] = new Thread(new Worker(phaser, i, 3), "Worker-" + i);
+            threads[i].start();
+        }
+        phaser.arriveAndAwaitAdvance(); // 主线程等待 Phase 2 完成
+
+        // 阶段 3：减少到 2 个线程（由 Worker 内部逻辑控制）
+        System.out.println("Starting Phase 3 with 2 threads");
+        phaser.arriveAndAwaitAdvance(); // 主线程等待 Phase 3 完成
+
+        // 等待所有线程结束
+        for (Thread t : threads) {
+            if (t != null) {
+                t.join();
+            }
+        }
+        System.out.println("All phases completed. Final phase: " + phaser.getPhase() + ", terminated: " + phaser.isTerminated());
+    }
+}
+
+class Worker implements Runnable {
+    private final Phaser phaser;
+    private final int id;
+    private final int maxPhase; // 最大参与阶段
+
+    public Worker(Phaser phaser, int id, int maxPhase) {
+        this.phaser = phaser;
+        this.id = id;
+        this.maxPhase = maxPhase;
+    }
+
+    @Override
+    public void run() {
+        try {
+            for (int p = 0; p <= maxPhase; p++) {
+                if (phaser.isTerminated()) {
+                    System.out.println("Worker-" + id + " stopped: Phaser terminated");
+                    return;
+                }
+                System.out.println("Worker-" + id + " starting phase " + p);
+                Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 2000)); // 模拟工作
+                System.out.println("Worker-" + id + " completed phase " + p);
+                if (p == maxPhase) {
+                    phaser.arriveAndDeregister(); // 到达最大阶段后解注册
+                } else {
+                    phaser.arriveAndAwaitAdvance(); // 等待其他线程
+                }
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Worker-" + id + " interrupted: " + e.getMessage());
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+```
+
+> 初始化Phaser时，可以不指定最大阶段数。（为了方便自己复用）。可以给使用的运行的线程规定不同的最大阶段数。当固定的线程到达最大阶段数时，就让他退出。其他最大阶段数较大的，继续运行。
+
+
+
+
+
+
+
+
+
+
+
+- 动态核心线程数的线程池（与Phaser无关）
+
+```java
+class DynamicThreadPool {
+    public static void main(String[] args) throws InterruptedException {
+        // 创建 ThreadPoolExecutor，初始核心线程数为 5，最大线程数为 10
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                5, // 核心线程数
+                10, // 最大线程数
+                60L, // 空闲线程存活时间
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>() // 任务队列
+        );
+
+        // 打印初始线程池状态
+        System.out.println("初始核心线程数: " + executor.getCorePoolSize());
+        System.out.println("初始线程池大小: " + executor.getPoolSize());
+
+        // 提交 10 个任务
+        for (int i = 0; i < 10; i++) {
+            final int taskId = i;
+            executor.execute(() -> {
+                System.out.println("任务 " + taskId + " 开始执行，线程: " + Thread.currentThread().getName());
+                try {
+                    Thread.sleep(2000); // 模拟工作
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                System.out.println("任务 " + taskId + " 完成，线程: " + Thread.currentThread().getName());
+            });
+        }
+
+        // 等待 3 秒，让部分任务运行并排队
+        Thread.sleep(3000);
+
+        // 打印当前线程池状态
+        System.out.println("3 秒后，线程池大小: " + executor.getPoolSize());
+        System.out.println("活跃线程数: " + executor.getActiveCount());
+        System.out.println("已完成任务数: " + executor.getCompletedTaskCount());
+        System.out.println("排队任务数: " + executor.getQueue().size());
+
+        // 将核心线程数动态调整为 10
+        executor.setCorePoolSize(10);
+        System.out.println("核心线程数调整为: " + executor.getCorePoolSize());
+
+        // 等待 2 秒，让新线程启动
+        Thread.sleep(2000);
+
+        // 打印调整后的线程池状态
+        System.out.println("调整核心线程数后，线程池大小: " + executor.getPoolSize());
+        System.out.println("活跃线程数: " + executor.getActiveCount());
+        System.out.println("已完成任务数: " + executor.getCompletedTaskCount());
+        System.out.println("排队任务数: " + executor.getQueue().size());
+
+        // 提交另外 5 个任务
+        for (int i = 10; i < 15; i++) {
+            final int taskId = i;
+            executor.execute(() -> {
+                System.out.println("任务 " + taskId + " 开始执行，线程: " + Thread.currentThread().getName());
+                try {
+                    Thread.sleep(2000); // 模拟工作
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                System.out.println("任务 " + taskId + " 完成，线程: " + Thread.currentThread().getName());
+            });
+        }
+
+        // 关闭线程池
+        executor.shutdown();
+        System.out.println("线程池关闭已启动");
+
+        // 等待所有任务完成
+        executor.awaitTermination(1, TimeUnit.HOURS);
+        System.out.println("所有任务完成");
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+- 总结
+
+其他同步工具理论上也可以实现类似的阶段功能，但像Phaser这种动态注册的只有Phaser
+
+
+
+
+
+| 特性     | Phaser                 | CyclicBarrier          | CountDownLatch           | Semaphore    |
+| -------- | ---------------------- | ---------------------- | ------------------------ | ------------ |
+| 重用     | 支持                   | 支持                   | 不支持                   | 支持         |
+| 动态注册 | 支持                   | 不支持                 | 不支持                   | 不支持       |
+| 多阶段   | 支持                   | 支持（固定线程数）     | 不支持                   | 不支持       |
+| 使用场景 | 动态线程池、多阶段计算 | 固定线程数的多阶段同步 | 等待初始化完成、任务结束 | 限流、资源池 |
+
+
+
+
+
+
+
+
+
+### Exchanger（交换器，线程键沟通工具）
+
+> 并不基于AQS，只基于LockSupport实现的交换器。在两个线程之前交换数据，一个线程使用exchange方法就阻塞，直到另一个线程也调用exchange方法。两个线程交换各自的结果，然后运行。
+
+
+
+
+
+- API
+
+| 方法名                                       | 描述                               |
+| -------------------------------------------- | ---------------------------------- |
+| Exchanger                                    | 构造方法                           |
+| V exchange(V x)                              | 等待另一个线程到达汇合点并交换对象 |
+| V exchange(V x, long timeout, TimeUnit unit) | 等待交换的对象，可能超时           |
+
+
+
+
+
+- 实现原理
+
+1. 阻塞唤醒：利用LockSupport.park 和LockSupport.unpark实现线程阻塞和唤醒。
+2. 超时机制：利用LockSupport.parkNanos
+3. 被交换的对象存储的位置：被交换的对象存储在ThreadLocal中
+
+
+
+
+
+
+
+- 使用场景
+
+
+
+1. 生产者消费者：两个线程交换缓冲区
+2. 遗传算法：两个线程可能需要交换种群或部分计算结果。
+3. 管道设计：在多个阶段中，阶段间的数据传递可以通过Exchanger实现
+4. 两个线程同步数据
+
+
+
+
+
+- 生产者消费者代码
+
+
+
+``` java
+import java.util.concurrent.Exchanger;
+
+public class ProducerConsumerExample {
+    public static void main(String[] args) {
+        Exchanger<String> exchanger = new Exchanger<>();
+        new Thread(() -> {
+            try {
+                for (int i = 0; i < 5; i++) {
+                    String data = "Data " + i;
+                    System.out.println("Producer sending: " + data);
+                    String received = exchanger.exchange(data);
+                    System.out.println("Producer received: " + received);
+                    Thread.sleep(1000); // 模拟生产时间
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+        new Thread(() -> {
+            try {
+                for (int i = 0; i < 5; i++) {
+                    String ack = "Ack " + i;
+                    System.out.println("Consumer sending: " + ack);
+                    String received = exchanger.exchange(ack);
+                    System.out.println("Consumer received: " + received);
+                    Thread.sleep(1200); // 模拟消费时间
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+## 线程池（重点）
+
+> 这部分来自于权威的[javaguide](https://javaguide.cn/java/concurrent/java-thread-pool-summary.html#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%BB%8B%E7%BB%8D)
+
+
+
+- 线程池的好处
+
+1. **降低资源消耗**：通过重复利用已创建的线程降低线程创建和销毁造成的消耗
+2. **提高响应速度**：当任务到达时，任务可以不需要等到线程创建就能立即执行。
+3. **提高线程的可管理性**：线程（平台线程）是稀缺资源，如果无限制的创建（虚拟线程就是可以近乎无限制的创建:-)），不仅会消耗系统资源，还会降低系统的稳定性。
+
+> 这些都只平台线程，永远不要试图池化虚拟线程
+
+
+
+### Executor框架
+
+
+
+通过Excutor来启动线程要比使用Thread的start方法更好，效率更高（用线程池实现，节约开销）。<font color='red'>有助于避免this逃逸问题</font>
+
+
+
+- this逃逸问题：在构造函数返回之前，其他线程就持有该对象的引用，调用尚未构造完全的对象的方法可能引发错误。
+
+
+
+
+
+
+
+Executor主要分三大部分：
+
+
+
+
+
+
+
+1、**任务**（Runnable/callable)
+
+
+
+被执行的任务需要实现Runnable和Callable接口。
+
+
+
+
+
+2、 **任务的执行**（Executor）
+
+类关系图
+
+![250710164606221.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250710164606221_1752137166268.png)
+
+
+
+ThreadPoolExecutor和ScheduledThreadPoolExecutor两个类都可以执行任务。
+
+ThreadPoolExecutor使用频率更高
+
+
+
+
+
+3、 **异步计算的结果**(Future)
+
+> 存储异步计算的结果
+
+
+
+![1752137379630.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752137379630_1752137379657.png)
+
+
+
+
+
+- 执行流程
+
+1. 主线程首先要创建实现 `Runnable` 或者 `Callable` 接口的任务对象。
+2. 把创建完成的实现 `Runnable`/`Callable`接口的 对象直接交给 `ExecutorService` 执行: `ExecutorService.execute（Runnable command）`）或者也可以把 `Runnable` 对象或`Callable` 对象提交给 `ExecutorService` 执行（`ExecutorService.submit（Runnable task）`或 `ExecutorService.submit（Callable <T> task）`）。
+3. 如果执行 `ExecutorService.submit（…）`，`ExecutorService` 将返回一个实现`Future`接口的对象（我们刚刚也提到过了执行 `execute()`方法和 `submit()`方法的区别，`submit()`会返回一个 `FutureTask 对象）。由于 FutureTask` 实现了 `Runnable`，我们也可以创建 `FutureTask`，然后直接交给 `ExecutorService` 执行。
+4. 最后，主线程可以执行 `FutureTask.get()`方法来等待任务执行完成。主线程也可以执行 `FutureTask.cancel（boolean mayInterruptIfRunning）`来取消此任务的执行。
+
+
+
+
+
+### ThreadPoolExecutor类（重点）
+
+
+
+``` java
+    /**
+     * 用给定的初始参数创建一个新的ThreadPoolExecutor。
+     */
+    public ThreadPoolExecutor(int corePoolSize,//线程池的核心线程数量
+                              int maximumPoolSize,//线程池的最大线程数
+                              long keepAliveTime,//当线程数大于核心线程数时，多余的空闲线程存活的最长时间
+                              TimeUnit unit,//时间单位
+                              BlockingQueue<Runnable> workQueue,//任务队列，用来储存等待执行任务的队列
+                              ThreadFactory threadFactory,//线程工厂，用来创建线程，一般默认即可
+                              RejectedExecutionHandler handler//拒绝策略，当提交的任务过多而不能及时处理时，我们可以定制策略来处理任务
+                               ) {
+        if (corePoolSize < 0 ||
+            maximumPoolSize <= 0 ||
+            maximumPoolSize < corePoolSize ||
+            keepAliveTime < 0)
+            throw new IllegalArgumentException();
+        if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+```
+
+
+
+- 核心参数：
+
+
+
+1. corePoolSize：核心线程数
+2. maximumPoolSize：最大线程数
+3. long keepAliveTime：**核心线程外的线程**的存活实现
+4. TimeUnit unit：时间单位
+5. BlockingQueue<Runnable> workQueue：等待队列
+6. ThreadFactory threadFactory：创建线程的工厂
+7. RejectedExecutionHandler handler：拒绝策略
+
+
+
+![1752137770223.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752137770223_1752137770241.png)
+
+
+
+
+
+- 拒绝策略
+
+
+
+1. `ThreadPoolExecutor.AbortPolicy`：抛出 `RejectedExecutionException`来拒绝新任务的处理。
+2. `ThreadPoolExecutor.CallerRunsPolicy`：调用执行自己的线程运行任务，也就是直接在调用`execute`方法的线程中运行(`run`)被拒绝的任务，如果执行程序已关闭，则会丢弃该任务。因此这种策略会降低对于新任务提交速度，影响程序的整体性能。如果您的应用程序可以承受此延迟并且你要求任何一个任务请求都要被执行的话，你可以选择这个策略。
+3. `ThreadPoolExecutor.DiscardPolicy`：不处理新任务，直接丢弃掉。
+4. `ThreadPoolExecutor.DiscardOldestPolicy`：此策略将丢弃最早的未处理的任务请求。
+
+> 阻塞队列可以参考并发集合中的7种等待队列
+
+
+
+### **线程池的原理（重点）**
+
+
+
+
+
+- 使用Executor.execute(worker)提交一个线程
+
+
+
+``` java
+   // 存放线程池的运行状态 (runState) 和线程池内有效线程的数量 (workerCount)
+   private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
+
+    private static int workerCountOf(int c) {
+        return c & CAPACITY;
+    }
+    //任务队列
+    private final BlockingQueue<Runnable> workQueue;
+
+    public void execute(Runnable command) {
+        // 如果任务为null，则抛出异常。
+        if (command == null)
+            throw new NullPointerException();
+        // ctl 中保存的线程池当前的一些状态信息
+        int c = ctl.get();
+
+        //  下面会涉及到 3 步 操作
+        // 1.首先判断当前线程池中执行的任务数量是否小于 corePoolSize
+        // 如果小于的话，通过addWorker(command, true)新建一个线程，并将任务(command)添加到该线程中；然后，启动该线程从而执行任务。
+        if (workerCountOf(c) < corePoolSize) {
+            if (addWorker(command, true))
+                return;
+            c = ctl.get();
+        }
+        // 2.如果当前执行的任务数量大于等于 corePoolSize 的时候就会走到这里，表明创建新的线程失败。
+        // 通过 isRunning 方法判断线程池状态，线程池处于 RUNNING 状态并且队列可以加入任务，该任务才会被加入进去
+        if (isRunning(c) && workQueue.offer(command)) {
+            int recheck = ctl.get();
+            // 再次获取线程池状态，如果线程池状态不是 RUNNING 状态就需要从任务队列中移除任务，并尝试判断线程是否全部执行完毕。同时执行拒绝策略。
+            if (!isRunning(recheck) && remove(command))
+                reject(command);
+                // 如果当前工作线程数量为0，新创建一个线程并执行。
+            else if (workerCountOf(recheck) == 0)
+                addWorker(null, false);
+        }
+        //3. 通过addWorker(command, false)新建一个线程，并将任务(command)添加到该线程中；然后，启动该线程从而执行任务。
+        // 传入 false 代表增加线程时判断当前线程数是否少于 maxPoolSize
+        //如果addWorker(command, false)执行失败，则通过reject()执行相应的拒绝策略的内容。
+        else if (!addWorker(command, false))
+            reject(command);
+    }
+```
+
+
+
+1. 如果当前运行的线程数小于核心线程数，那么就会新建一个线程来执行任务
+2. 如果当前运行的线程数等于或大于核心线程数，但是小于最大线程数，那么就把该任务放入到任务队列里等待执行。
+3. 如果向任务队列投放任务失败（任务队列已经满了），但是当前运行的线程数是小于最大线程数的，就新建一个线程来执行任务。
+4. 如果当前运行的线程数已经等同于最大线程数了，新建线程将会使当前运行的线程超出最大线程数，那么当前任务会被拒绝，拒绝策略会调用`RejectedExecutionHandler.rejectedExecution()`方法。
+
+
+
+![1752138126645.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752138126645_1752138126692.png)
+
+
+
+``` java
+    // 全局锁，并发操作必备
+    private final ReentrantLock mainLock = new ReentrantLock();
+    // 跟踪线程池的最大大小，只有在持有全局锁mainLock的前提下才能访问此集合
+    private int largestPoolSize;
+    // 工作线程集合，存放线程池中所有的（活跃的）工作线程，只有在持有全局锁mainLock的前提下才能访问此集合
+    private final HashSet<Worker> workers = new HashSet<>();
+    //获取线程池状态
+    private static int runStateOf(int c)     { return c & ~CAPACITY; }
+    //判断线程池的状态是否为 Running
+    private static boolean isRunning(int c) {
+        return c < SHUTDOWN;
+    }
+
+
+    /**
+     * 添加新的工作线程到线程池
+     * @param firstTask 要执行
+     * @param core参数为true的话表示使用线程池的基本大小，为false使用线程池最大大小
+     * @return 添加成功就返回true否则返回false
+     */
+   private boolean addWorker(Runnable firstTask, boolean core) {
+        retry:
+        for (;;) {
+            //这两句用来获取线程池的状态
+            int c = ctl.get();
+            int rs = runStateOf(c);
+
+            // Check if queue empty only if necessary.
+            if (rs >= SHUTDOWN &&
+                ! (rs == SHUTDOWN &&
+                   firstTask == null &&
+                   ! workQueue.isEmpty()))
+                return false;
+
+            for (;;) {
+               //获取线程池中工作的线程的数量
+                int wc = workerCountOf(c);
+                // core参数为false的话表明队列也满了，线程池大小变为 maximumPoolSize
+                if (wc >= CAPACITY ||
+                    wc >= (core ? corePoolSize : maximumPoolSize))
+                    return false;
+               //原子操作将workcount的数量加1
+                if (compareAndIncrementWorkerCount(c))
+                    break retry;
+                // 如果线程的状态改变了就再次执行上述操作
+                c = ctl.get();
+                if (runStateOf(c) != rs)
+                    continue retry;
+                // else CAS failed due to workerCount change; retry inner loop
+            }
+        }
+        // 标记工作线程是否启动成功
+        boolean workerStarted = false;
+        // 标记工作线程是否创建成功
+        boolean workerAdded = false;
+        Worker w = null;
+        try {
+
+            w = new Worker(firstTask);
+            final Thread t = w.thread;
+            if (t != null) {
+              // 加锁
+                final ReentrantLock mainLock = this.mainLock;
+                mainLock.lock();
+                try {
+                   //获取线程池状态
+                    int rs = runStateOf(ctl.get());
+                   //rs < SHUTDOWN 如果线程池状态依然为RUNNING,并且线程的状态是存活的话，就会将工作线程添加到工作线程集合中
+                  //(rs=SHUTDOWN && firstTask == null)如果线程池状态小于STOP，也就是RUNNING或者SHUTDOWN状态下，同时传入的任务实例firstTask为null，则需要添加到工作线程集合和启动新的Worker
+                   // firstTask == null证明只新建线程而不执行任务
+                    if (rs < SHUTDOWN ||
+                        (rs == SHUTDOWN && firstTask == null)) {
+                        if (t.isAlive()) // precheck that t is startable
+                            throw new IllegalThreadStateException();
+                        workers.add(w);
+                       //更新当前工作线程的最大容量
+                        int s = workers.size();
+                        if (s > largestPoolSize)
+                            largestPoolSize = s;
+                      // 工作线程是否启动成功
+                        workerAdded = true;
+                    }
+                } finally {
+                    // 释放锁
+                    mainLock.unlock();
+                }
+                //// 如果成功添加工作线程，则调用Worker内部的线程实例t的Thread#start()方法启动真实的线程实例
+                if (workerAdded) {
+                    t.start();
+                  /// 标记线程启动成功
+                    workerStarted = true;
+                }
+            }
+        } finally {
+           // 线程启动失败，需要从工作线程中移除对应的Worker
+            if (! workerStarted)
+                addWorkerFailed(w);
+        }
+        return workerStarted;
+    }
+```
+
+
+
+
+
+### 对比
+
+
+
+- Runnable和Callable
+
+run没有返回值，call有返回值，run可以被execute也可以被submit，call只能被submit
+
+
+
+
+
+- execute和submit
+
+
+
+1. 返回值：
+
+   execute用来提交不需要返回值的任务。无法判断任务是否被成功执行。
+
+   submit
