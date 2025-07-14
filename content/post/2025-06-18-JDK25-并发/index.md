@@ -1,8 +1,8 @@
 ---
 title: 备战JDK25--并发
-description: JDK25今年年底就要发布了，这次深入了解结构化并发和各种并发框架，争取一起搞清后面几年的并发
+description: JDK25今年年底就要发布了，这次深入了解结构化并发和各种并发框架，争取一起搞清后面几年的并发。后记：用时一个多月终于完成了本文，对于并发比之前又更上了一层楼。
 slug: JDK25-2
-date: 2025-06-18 00:00:00+0000
+date: 2025-07-12 00:00:00+0000
 image: 1.png
 categories:
     - java
@@ -11,7 +11,8 @@ tags:
     - java
     - 多线程
     - 结构化并发
-    - 并发
+    - 并发	
+    - 虚拟线程
 ---
 
 
@@ -19,6 +20,10 @@ tags:
 
 
 # JDK25 并发
+
+
+
+[TOC]
 
 
 
@@ -1438,7 +1443,7 @@ class DynamicThreadPool {
 
 
 
-### Exchanger（交换器，线程键沟通工具）
+### Exchanger（交换器，线程间沟通工具）
 
 > 并不基于AQS，只基于LockSupport实现的交换器。在两个线程之前交换数据，一个线程使用exchange方法就阻塞，直到另一个线程也调用exchange方法。两个线程交换各自的结果，然后运行。
 
@@ -1925,12 +1930,6 @@ run没有返回值，call有返回值，run可以被execute也可以被submit，
 
 
 
-
-
-
-
-
-
 - Shutdown和shutdownnow
 
 1. shutdown：关闭线程池，线程池的状态变为shutdown，线程池不再接收新的任务，但队列里的任务要执行完毕。
@@ -2075,11 +2074,328 @@ IO密集型CPU：M*N（M:整数，如2）
 
 IO密集型任务，CPU消耗小，适合把运行中的线程调多。
 
-CPU密集型的任务，CPU消耗大，如果核心线程多。容易产生OOM
+CPU密集型的任务，CPU消耗大，如果核心线程多。容易产生OOM，但如果线程少，响应慢。
+
+
+
+> 最好可以动态化的调整线程
+
+![1752283049617.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752283049617_1752283307154.png)
+
+
+
+### 动态化线程池
+
+
+
+- **简化线程池配置**：
+
+线程池构造函数有7个参数，但最核心的是3个：核心线程数、最大线程数、等待队列。
+
+简化方式：
+
+
+
+1. **并行执行子任务，提高响应速度**：应该使用同步队列，所有子任务都不应该被缓存下来，应该立刻执行。
+2. **并行执行大批次任务，提高吞吐量**：应该使用有界队列，使用队列去缓冲大批量的任务，队列容量必须固定，防止任务无限堆积。
 
 
 
 
+
+- **参数可动态配置**
+
+美团为了解决参数不好配，修改参数成本高等问题。在java线程池留有高扩展性的基础上，封装线程池，**允许线程池监听同步外部的消息，根据消息修改配置**。
+
+
+
+- **增加线程池的监控**
+
+在线程池的生命周期添加监控能力，时刻了解线程池的状态。
+
+
+
+![1752284028374.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752284028374_1752284028396.png)
+
+
+
+
+
+- 功能架构
+
+![1752284156569.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752284156569_1752284156599.png)
+
+
+
+- 实现方式
+
+利用ThreadPoolExecutor提供的setter方法，设置核心线程数。最大线程数等。
+
+![1752284432146.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752284432146_1752284432171.png)
+
+用核心线程举例
+
+
+
+1. 当前值小于原始值：中断多余的线程。
+2. 当前值大于原始值：尝试消费队列中的任务。
+
+
+
+
+
+- 队列如何控制？
+
+美团自定义了一个ResizableCapacityLinkedBlockIngQueue队列，让他变为可变的。
+
+
+
+
+
+- 线程池避坑
+
+1. 不要重复创建线程池。特别不要在每次请求中创建线程池。
+2. 线程池和ThreadLocal公用：由于核心线程是复用的，新的任务可能会从ThreadLocal中读取到老数据。
+
+
+
+## ThreadLocal
+
+
+
+> Thread类有一个类型为ThreadLocal.ThreadLocalMap的变量threadLocals，每个线程都一个自己的ThreadLocalMap。
+
+![1752286327130.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752286327130_1752286327153.png)
+
+每个线程在往ThreadLocal里放值时，都会往自己的ThreadLocalMap里存。读也是在自己的map里找对应的key，从而达到线程隔离。
+
+
+
+### 各种引用
+
+
+
+- java的四种引用：
+
+1. 强：普通new出的对象，垃圾回收器永远不会回收强引用的对象，哪怕内存不足
+2. 软：使用softReference修饰的对象，软引用会在内存要溢出的时候被回收
+3. 弱：使用WeakReference修饰的对象，只要发生垃圾回收，弱引用就会被回收
+4. 虚：使用PhantomReference进行定义。
+
+
+
+> ThreadLocal的key为弱引用。
+
+
+
+- 内存泄露问题
+
+ThreadLocal的key在GC后会被回收，但Thread对map的强引用还在，map中的value也同样存在。
+
+![1752286993099.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752286993099_1752286993129.png)
+
+> 上面的情况会出现value的值永远存在，导致内存泄露。
+
+
+
+> TIPS：ThreadLocalMap使用的是开放寻址法，没有链表结构。
+
+
+
+### 子线程如何获取父线程的数据
+
+> 利用JDK的InheritableThreadLocal类获取父线程变量
+
+``` java
+public class InheritableThreadLocalDemo {
+    public static void main(String[] args) {
+        ThreadLocal<String> ThreadLocal = new ThreadLocal<>();
+        ThreadLocal<String> inheritableThreadLocal = new InheritableThreadLocal<>();
+        ThreadLocal.set("父类数据:threadLocal");
+        inheritableThreadLocal.set("父类数据:inheritableThreadLocal");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("子线程获取父类ThreadLocal数据：" + ThreadLocal.get());
+                System.out.println("子线程获取父类inheritableThreadLocal数据：" + inheritableThreadLocal.get());
+            }
+        }).start();
+    }
+}
+```
+
+结果：
+
+> 子线程获取父类ThreadLocal数据：null
+> 子线程获取父类inheritableThreadLocal数据：父类数据:inheritableThreadLocal
+
+
+
+- 实现原理
+
+父线程在创建子线程时，Thread#Init方法在构造方法中被调用，会将inheritableThreadLocal中的数据拷贝给子线程：
+
+``` java
+private void init(ThreadGroup g, Runnable target, String name,
+                      long stackSize, AccessControlContext acc,
+                      boolean inheritThreadLocals) {
+    if (name == null) {
+        throw new NullPointerException("name cannot be null");
+    }
+
+    if (inheritThreadLocals && parent.inheritableThreadLocals != null)
+        this.inheritableThreadLocals =
+            ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
+    this.stackSize = stackSize;
+    tid = nextThreadID();
+}
+```
+
+
+
+## ForkJoinPool
+
+
+
+
+
+### why ForkJoinPool
+
+> 计算从1到10000的累加
+
+- 传统方式
+
+> 利用两个线程，分别拆分然后计算。
+
+``` java
+public class ExecutorTest {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+//        用线程池计算从1到10000的累加
+        ThreadPoolExecutor threadPoolExecutor= new ThreadPoolExecutor(10,100,1000, TimeUnit.MILLISECONDS,new LinkedBlockingDeque<>());
+//        分两个线程计算，计算速度应对是单线程的两倍
+        Future<Integer> future1 = threadPoolExecutor.submit(() -> {
+            int sum = 0;
+            for (int i = 0; i < 5000; i++) {
+                sum += i;
+            }
+            return sum;
+        });
+        Future<Integer> future2 = threadPoolExecutor.submit(() -> {
+            int sum = 0;
+            for (int i = 5000; i <= 10000; i++) {
+                sum += i;
+            }
+            return sum;
+        });
+        Integer s1 = future1.get();
+        Integer s2 = future2.get();
+        threadPoolExecutor.shutdown();
+        System.out.println(s1+s2);
+    }
+}
+```
+
+
+
+
+
+- # ForkJoinPool
+
+> 利用forkJoin来拆分任务，首先定义，
+>
+> 如果增加数字的数量小于100，就不需要再拆分。
+>
+> 如果大于100个，任务会被二分。
+
+
+
+任务拆分的代码：
+
+``` java
+public class SumTask extends RecursiveTask<Long> {
+
+    private final int l;
+    private final int r;
+
+    public SumTask(int l, int r) {
+        this.l = l;
+        this.r = r;
+    }
+    @Override
+    protected Long compute() {
+        long res=0;
+//        判断任务是否拆封
+        if(r-l<100){
+            for (int i = l; i <=r; i++) {
+                res+=i;
+            }
+            return res;
+        }
+//        需要被拆封的情况：经典二分查找
+        int mid=(l+r)/2;
+        SumTask leftTask=new SumTask(l,mid);
+        SumTask rightTask=new SumTask(mid+1,r);
+        leftTask.fork();
+        rightTask.fork();
+        long left=leftTask.join();
+        long right=rightTask.join();
+        return left+right;
+    }
+}
+```
+
+
+
+
+
+任务执行的代码：
+
+```java
+public class ForkJoinExecutorTest1 {
+    public static void main(String[] args) {
+//        拆封核心线程来运行任务，共拆封10个
+        try(ForkJoinPool forkJoinPool = new ForkJoinPool(10)){
+            SumTask sumTask = new SumTask(1, 10000);
+            ForkJoinTask<Long> future = forkJoinPool.submit(sumTask);
+//            如果检测到错误，输出错误信息
+            if (future.isCompletedAbnormally()) System.out.println(future.getException());
+//            Thread.sleep(5000);
+            System.out.println(future.get());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+
+
+> 自由的拆分任务，合理的利用核心线程，对CPU有更强的利用率。
+
+
+
+### 运行过程
+
+1. 任务提交后：
+
+
+
+
+
+
+
+![1752329052241.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752329052241_1752329052265.png)
+
+
+
+
+
+
+
+
+
+> 用时一个多月终于完成了本文。
 
 
 
