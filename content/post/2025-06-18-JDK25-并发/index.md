@@ -2302,7 +2302,7 @@ public class ExecutorTest {
 
 - # ForkJoinPool
 
-> 利用forkJoin来拆分任务，首先定义，
+> 利用forkJoin来拆分任务，首先定义：
 >
 > 如果增加数字的数量小于100，就不需要再拆分。
 >
@@ -2377,7 +2377,97 @@ public class ForkJoinExecutorTest1 {
 
 ### 运行过程
 
-1. 任务提交后：
+
+
+
+
+1. 工作窃取算法
+
+   每个工作线程（ForkJoinWorkerThread）都有自己的双端队列Deque，用于存储任务。
+
+   当一个线程运行完自己的任务队列后，它可以从其他忙碌线程的队列头部获取任务，从而达到平衡负载。
+
+2. 并行度
+
+   并行度：只有多少个线程同时运行，默认为CPU可用的核心数，可以通过构造函数自定义。
+
+3. 任务执行
+
+   任务必须是ForkJoinTask的子类，支持fork（异步启动任务）和join（等待子任务完成）操作。
+
+4. 内存可见
+
+   每个任务中的status字段为volatile修饰的，保证状态的变化是可见的。
+
+
+
+- 使用场景
+
+1. 分治算法：归并排序、快速排序等。
+2. 并行流：java8的并行流（parallelStream）底层基于ForkJoinPool
+3. 异步任务：异步任务可以使用
+4. 虚拟线程：虚拟线程内部也是ForkJoinPool实现的，不过是系统单独的pool，与commonPool公共池不相干。
+
+
+
+### 坑
+
+
+
+
+
+1. 公共池的滥用：commonPool公共池是整个JVM中共享的，很多公共组件也会使用公共池中资源，如果自定义的任务过长，会影响系统其他组件的运行。
+
+   > 可以自定义创建独立的ForkJoinPool，但是使用起来需要特别小心
+
+2. 任务分解不合理：实例中的拆封方式采取二分查找，且规定一个任务的最小单位为100，如果将单位设的过小，会特别浪费资源。
+
+3. 异常处理：异常处理不会传播，每次拆封时都需要考虑异常情况。
+
+   > 在拆分过程中，运行过程中，最好都用try-catch处理异常
+
+4. 工作窃取：ForkJoin适合CPU密集型的任务，对于IO密集型任务（网络请求或文件读取等），其效率可能不如正常使用线程池，因为IO操作会阻塞线程， 影响工作窃取算法的效率。
+
+5. **把ForkJoin与虚拟线程搞混**：虚拟线程虽然基于ForkJoin，但和ForkJoinpool不是一回事。ForkJoin更适合CPU密集型任务，不适合长任务或IO密集型任务。如果线程阻塞，ForkJoin就会被阻塞。虚拟线程适合IO密集型任务，如果CPU利用率高的任务，反而使用虚拟线程并不会带来什么好处。
+
+
+
+
+
+
+
+- 如果任务拆分的不好会怎样？
+
+ForkJoinTask任务是轻量级任务，任务内部包含拆分和运行两部分，如果代码开发不当，导致任务无限拆分，无限被提交。会导致堆内存溢出。
+
+
+
+> 需要合理的拆分任务、设置任务的颗粒度。
+> 同时也可以考虑是否采用一些别的框架：如powerJob等带MapReduce功能的框架。（但使用powerjob调度复杂，反而降低了效率）。
+
+
+
+
+
+<font color='red'>**一定要做好getQueuedTaskCount队列大小监控，检测是否存在异常增长**</font>
+
+
+
+
+
+
+
+
+
+## 虚拟线程
+
+我[这篇关于虚拟线程](https://thecoolboyhan.github.io/p/java21%E6%A0%B8%E5%BF%83%E5%BA%93--%E5%B9%B6%E5%8F%91/)的文章，放到现在依然非常经典。
+
+
+
+
+
+
 
 
 
@@ -2386,6 +2476,588 @@ public class ForkJoinExecutorTest1 {
 
 
 ![1752329052241.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752329052241_1752329052265.png)
+
+
+
+
+
+
+
+虚拟线程是轻量级线程，可减少编写、维护和调试高吞吐量并发应用程序的工作量。
+
+
+
+> 从JDK19开始提供，JDK21中完成。
+
+
+
+线程是可以调度的最小单元。它们彼此之间独立。
+
+线程主要分两种：平台线程和虚拟线程。
+
+
+
+### 简介
+
+- 什么是平台线程？
+
+
+
+平台线程被是操作系统的包装实现。平台线程在底层的操作系统线程上运行java代码，并且平台线程整个生命周期都是由操作系统线程完成的。因此，可用的平台线程数量受限于操作系统线程数量。
+
+
+
+平台线程通常具有较大的线程栈和其他由操作系统维护的资源。它们适合执行各种任务，但是可能是一种有限的资源。（操作系统的线程数有限）
+
+
+
+
+
+- 什么是虚拟线程？
+
+
+
+
+
+像平台线程一样，虚拟线程也是java.lang.Thread类的一个实例。然而虚拟线程并不绑定特定的操作系统线程上。虚拟线程仍然在操作系统线程上运行。然而，当在虚拟线程中运行的代码调用阻塞I/O操作时，java会暂停该虚拟线程，知道它可以恢复。与被暂停的虚拟线程相关联的操作系统线程可以自由的为其他虚拟线程执行操作。
+
+
+
+
+
+
+
+虚拟线程的实现方式类似于虚拟内存。为了模拟大量内存，操作系统将一个大的虚拟空间映射到有限的RAM上。同样，为了模拟大量线程，java将大量虚拟线程映射到少量的操作系统线程上。
+
+
+
+
+
+
+
+与平台线程不同，虚拟线程通常具有较浅的调用栈，只执行少量操作，例如：单个HTTP客户端调用或单个JDBC查询。虽然虚拟线程支持线程局部变量和可继承线程局部变量，但需要谨慎使用，因为单个JVM可能支持数百万个虚拟线程。
+
+
+
+
+
+
+
+> 虚拟线程适合运行大部分时间被阻塞的任务，这些任务通常在等待i/o操作完成。虚拟线程不适合运行长时间的CPU密集型操作。
+
+
+
+
+
+- 为什么使用虚拟线程？
+
+
+
+
+
+在高吞吐量的并发应用程序中使用虚拟线程，特别是那些由大量并发任务组成的应用程序，这些任务大部分时间都在等待。服务器应用程序就是高吞吐量应用程序的例子，因为它们通常执行许多阻塞I/O操作的客户端请求。
+
+
+
+
+
+
+
+> 虚拟线程并不是更快的线程：它的运行速度和平台线程没有区别。虚拟线程存在的目的是为了提供规模（更高的吞吐量），而不是速度（更低的延迟）。
+
+
+
+
+
+### 创建和使用虚拟线程
+
+
+
+> 以下项目代码可以我的另一个项目(personStudy)中找到
+
+#### 使用Thread类和使用Thread.Builder 接口来创建虚拟线程
+
+
+
+
+
+
+
+- 使用Thread类创建虚拟线程
+
+
+
+```java
+
+private static void createByThread() throws InterruptedException {
+
+    Thread thread = Thread.ofVirtual().start(() -> System.out.println("Hello"));
+
+//    join是为了让虚拟线程插队到主线程之前，保证在主线程结束之前可以看到虚拟线程的打印
+
+    thread.join();
+
+  }
+
+```
+
+
+
+
+
+
+
+- 通过Thread.Builder创建
+
+
+
+
+
+
+
+```java
+//创建一个线程
+**private static void createByThreadBuilder1() throws InterruptedException {
+    Thread.Builder builder = Thread.ofVirtual().name("virtualThread");
+//    同样可以用来创建平台线程,所有其他API都兼容
+//    Thread.Builder builder = Thread.ofPlatform().name("PlatformThread");
+    Runnable task= () -> {
+      System.out.println("Running thread");
+    };
+    Thread t = builder.start(task);
+    System.out.println("Thread t name"+t.getName());
+    t.join();
+}
+```
+
+
+
+
+
+
+
+- 通过builder快速创建两个虚拟线程并启动
+
+```java
+private static void createByThreadBuilder2() throws InterruptedException {
+    Thread.Builder builder=Thread.ofVirtual().name("worker-",0);
+    Runnable task=()->{
+     System.out.println("Thread ID:"+Thread.currentThread().threadId());
+    };
+//启动后会总动给start+1.
+    Thread t1 = builder.start(task);
+    t1.join();
+    System.out.println(t1.getName()+" terminated");
+    Thread t2 = builder.start(task);
+    t2.join();
+    System.out.println(t2.getName()+" terminated");
+}
+```
+
+
+
+
+
+#### 使用Executors创建虚拟线程
+
+
+
+> Future.get()会自动上锁等待任务返回，所以不需要join方法
+
+
+
+```java
+private static void createByExecutors(){
+  try(ExecutorService myExecutor = Executors.newVirtualThreadPerTaskExecutor()){
+    Future<?> future = myExecutor.submit(() -> System.out.println("Running thread"));
+    future.get();
+
+    System.out.println("task completed");
+  } catch (ExecutionException | InterruptedException e) {
+    throw new RuntimeException(e);
+  }
+}
+
+```
+
+
+
+
+
+#### 实例
+
+
+
+> 客户端向服务器发送消息，服务器将每个请求都用一个虚拟线程来处理。
+
+
+
+- 服务端
+
+
+
+```java
+public class EchoServer {
+		public static void main(String[] args) {
+
+//    if(args.length != 1){
+//      System.out.println("usage: java EchoServer <port>");
+//      System.exit(0);
+//    }
+
+    int port = 8080;
+
+//    传入端口号
+//    int port = Integer.parseInt(args[0]);
+
+    try(
+
+        ServerSocket serverSocket = new ServerSocket(port)
+   ){
+
+      while(true){
+//      不知道hostname
+//        System.out.println(serverSocket.getInetAddress().getHostName());
+//       获取到连接请求，创建一个虚拟线程来处理
+        Socket clientSocket = serverSocket.accept();
+
+//        创建虚拟线程的方式为Thread类
+        Thread.ofVirtual().start(()->{
+          try(
+//            输入输出流
+             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+         ) {
+//            获取客户端发送来的请求
+            String inputLine;
+            while((inputLine=in.readLine())!=null){
+              System.out.println(inputLine);
+              out.println(inputLine);
+            }
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
+      }
+    } catch (IOException e) {
+      System.out.println(e.getMessage());
+    }
+  }
+}
+```
+
+
+
+
+
+- 客户端
+
+```java
+public class EchoClient {
+  public static void main(String[] args) throws IOException {
+    if(args.length!=2){
+      System.out.println(args.length);
+      for (String arg : args) {
+        System.out.println(arg);
+      }
+      System.out.println("Usage: EchoClient <host> <port>");
+      System.exit(1);
+    }
+    String hostName=args[0];
+    int port=Integer.parseInt(args[1]);
+    try(
+        Socket echoSocket = new Socket(hostName,port);
+        PrintWriter out = new PrintWriter(echoSocket.getOutputStream(),true);
+        BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()))
+    ){
+      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+      String userInput;
+      while((userInput=bufferedReader.readLine())!=null){
+        out.println(userInput);
+        System.out.println("echo:"+in.readLine());
+        if (userInput.equals("bye")) break;
+      }
+    }
+  }
+}
+```
+
+### 调度虚拟线程和固定虚拟线程
+
+当虚拟线程开始运行时，java runtime会将虚拟线程分配或挂载到平台线程上，然后操作系统会像往常一样调度该平台线程。虚拟线程运行一段代码后，java runtime可以将该虚拟线程从平台线程上卸载。（在虚拟线程发生IO操作阻塞时）空闲的平台线程可以被java运行时重新挂载一个新的虚拟线程。
+
+#### 虚拟线程无法被卸载的情况
+
+在虚拟线程执行以下阻塞操作时，无法被java runtime卸载：
+
+- 当执行被synchronized修饰的同步代码块（被上锁的代码）
+- 运行本地方法或外部函数时
+
+#### 虚拟线程使用指南
+
+
+
+
+
+- 非阻塞风格开发的代码，即使使用虚拟线程，也不会有多大提升
+
+```java
+CompletableFuture.supplyAsync(info::getUrl, pool)
+  .thenCompose(url -> getBodyAsync(url, HttpResponse.BodyHandlers.ofString()))
+  .thenApply(info::findImage)
+  .thenCompose(url -> getBodyAsync(url, HttpResponse.BodyHandlers.ofByteArray()))
+  .thenApply(info::setImageData)
+  .thenAccept(this::process)
+  .exceptionally(t -> { t.printStackTrace(); return null; });
+```
+
+
+
+
+
+
+
+
+
+- 以同步风格开发的代码，使用虚拟线程将带来极大的提升
+
+```java
+try {
+  String page = getBody(info.getUrl(), HttpResponse.BodyHandlers.ofString());
+  String imageUrl = info.findImage(page);
+  byte[] data = getBody(imageUrl, HttpResponse.BodyHandlers.ofByteArray());  
+  info.setImageData(data);
+  process(info);
+} catch (Exception ex) {
+  t.printStackTrace();
+}
+```
+
+- 将每个并发任务表示为一个虚拟线程；永远不用对虚拟线程进行池化
+
+
+
+> 尽管虚拟线程的行为与平台线程相同，但不是相同的程序概念。
+
+
+
+平台线程稀缺，所以需要使用线程池来管理。（线程池中的平台线程数始终小于等于最大线程数）
+
+
+
+虚拟线程众多，每个线程都不应该代表某种共享的、池化的资源，而应代表一个任务。虚拟线程的数量始终等于程序中的并发任务数量。
+
+
+
+
+
+> 应该将每个任务表示为一个虚拟线程
+
+```java
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+  Future<ResultA> f1 = executor.submit(task1);
+  Future<ResultB> f2 = executor.submit(task2);
+  // ... use futures
+}
+```
+
+
+
+Executors.newVirtualThreadPerTaskExecutor()不会返回线程池，它为每个提交的任务都创建一个新的虚拟线程。
+
+
+
+
+
+- 同时向多个服务器发起注销操作
+
+```java
+void handle(Request request, Response response) {
+  var url1 = ...
+  var url2 = ...
+
+  try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    var future1 = executor.submit(() -> fetchURL(url1));
+    var future2 = executor.submit(() -> fetchURL(url2));
+    response.send(future1.get() + future2.get());
+  } catch (ExecutionException | InterruptedException e) {
+    response.fail(e);
+  }
+}
+
+String fetchURL(URL url) throws IOException {
+  try (var in = url.openStream()) {
+    return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+  }
+}
+```
+
+#### 使用信号量限制并发
+
+- 平台线程使用池化技术来限制并发
+
+```java
+ExecutorService es = Executors.newFixedThreadPool(10);
+...
+Result foo() {
+  try {
+    var fut = es.submit(() -> callLimitedService());
+    return f.get();
+  } catch (...) { ... }
+}
+```
+
+
+
+
+
+> 线程池限制并发数量只是附带效果，线程池主旨在于共享稀缺资源，而虚拟线程不是稀缺资源，因此永远不应被池化。
+
+
+
+
+
+- 使用semaphore来限制虚拟线程的并发数量
+
+```java
+Semaphore sem = new Semaphore(10);
+...
+Result foo() {
+  sem.acquire();
+  try {
+    return callLimitedService();
+  } finally {
+    sem.release();
+  }
+}
+```
+
+
+
+
+
+
+![67bc238255790.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/67bc238255790_1747189632774.png)
+
+
+
+
+- 不要在虚拟线程中创建复杂的线程独享变量
+- 在虚拟线程内部使用synchronized代码块，会阻塞OS线程。可以试着把synchronized放到虚拟线程外面或者使用ReentrantLock
+
+
+
+```java
+synchronized(lockObj) {
+  frequentIO();
+}
+```
+
+
+
+替换后：
+
+```java
+lock.lock();
+try {
+  frequentIO();
+} finally {
+  lock.unlock();
+}
+```
+
+
+
+
+
+
+
+
+
+### 原理
+
+
+
+- 虚拟线程的Thread类和平台线程的Thread并不相同，虚拟线程使用的是VirtualThread，继承自平台Thread。整个VirtualThread都是重新设计的。
+
+
+
+> 虚拟线程统一由JVM调度，当遇到阻塞时，JVM暂停该虚拟线程并调度其他虚拟线程。
+
+
+
+
+
+- 创建和调度
+
+JVM会创建一个拥有固定核心数的ForkJoinPool，此ForkJoinPool的核心池由虚拟线程独有，与JVM自带的公共池不冲突。每次虚拟线程运行是，会绑定到ForkJoinPool中的平台线程运行，并且遇到阻塞时，会让出平台线程，给其他虚拟线程使用。
+
+
+
+
+
+- 续体和切换
+
+续体：虚拟线程会保存当前运行状态（堆栈和局部变量）。
+
+切换：ForkJoinPool继续消费队列中的其他虚拟线程，相当于虚拟线程遇到阻塞时，会自动调用forkJoin中的join方法，切换到其他子任务运行。
+
+
+
+
+
+
+
+- mount和unmount
+
+挂载当前到平台线程、从平台线程中解绑当前虚拟线程
+
+
+
+
+
+### ThreadContainers
+
+> JDK的内部类，用来管理虚拟线程和平台线程的层次结构。
+
+
+
+用树形结构来存储，每次提交或者运行数据时，通过ThreadContainers.root()来启动和遍历虚拟线程与平台线程，然后运行。
+
+
+
+
+
+有了ThreadContainers，可以管理上百万个虚拟线程。
+
+### Thread常用API和虚拟线程API实现对比
+
+
+
+
+
+| API       | 平台线程                                                     | 虚拟线程                                                     |
+| --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 创建      | 继承Thread类，重写run方法<br />实现Runnable接口并传递给Thread | Thread.ofVirtual().start(Runnable)<br />Thread.Builder.virtual() |
+| start     | 用synchronized锁定当前线程对象(为了保证一线程只能被启动一次)，使用start0方法调用操作系统启动线程。 | 使用start(ThreadContainers.root())方法，从根开始调用虚拟线程，并不会固定的启动某个虚拟线程。尝试安排此虚拟线程启动，最后还是会交给ForkJoinPool来实现调度。 |
+| join      | synchronized锁住当前线程，然后无限wait（0）                  | 利用CountDownLatch来实现await操作，直到超时或者CountDownLatch被归零 |
+| wait      | 利用操作系统wait0方法，来实现等待                            | 同平台线程，只是在被打断时，会清理走虚拟线程独有的打断方法   |
+| interrupt | synchronized锁住当前线程，调用interrupt0方法，打断操作系统线程。 | 锁住线程的interruptLock，调用unpark方法解除当前虚拟线程的锁（unsafe操作） |
+| sleep     | 创建一个event实现，调用sleep0方法，让操作系统执行睡眠。睡眠结束后，提交sleepevent事件 | 调用虚拟线程类中的ScheduledExecutorService定时任务线程池，创建一个睡眠时间的定时任务。等到固定时间，会unpark当前虚拟线程。<font color='red'>（就是利用定时任务线程池，使得多个虚拟线程同时sleep，且同时被唤醒）</font> |
+| notify    | 唤醒等待此对象的监视器（monitor）中的线程，是synchronized的原理，与线程本身无关 | 与虚拟线程无关                                               |
+| yield     | 调用yield0方法，让操作系统调度当前线程退出CPU                | 尝试修改当前虚拟线程的运行状态为YIELDING，让平台线程重新竞争一次虚拟线程。 |
+
+
+
+
+
+> <font color='red'>综上所述，其实平台线程中的所有阻塞方法，在虚拟线程中都是非阻塞的。</font>所以虚拟线程可是实现真正意义上的“虚拟概念”，如果需要进入传统的阻塞方法，都是由JVM平台自己来实现的。不会调用操作系统的方法来真正的阻塞线程。
+
+
+
+但是，如果虚拟线成的平台线程，因为锁等情况被阻塞了，就还是会正常的走平台线程的阻塞方法，让虚拟线程也暂停运行。
+
+
 
 
 
