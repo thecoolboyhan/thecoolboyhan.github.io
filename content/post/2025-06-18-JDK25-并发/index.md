@@ -2,7 +2,7 @@
 title: 备战JDK25--并发
 description: JDK25今年年底就要发布了，这次深入了解结构化并发和各种并发框架，争取一起搞清后面几年的并发。后记：用时一个多月终于完成了本文，对于并发比之前又更上了一层楼。
 slug: JDK25-2
-date: 2025-07-12 00:00:00+0000
+date: 2025-07-16 00:00:00+0000
 image: 1.png
 categories:
     - java
@@ -3036,26 +3036,287 @@ JVM会创建一个拥有固定核心数的ForkJoinPool，此ForkJoinPool的核�
 
 
 
-| API       | 平台线程                                                     | 虚拟线程                                                     |
-| --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| 创建      | 继承Thread类，重写run方法<br />实现Runnable接口并传递给Thread | Thread.ofVirtual().start(Runnable)<br />Thread.Builder.virtual() |
-| start     | 用synchronized锁定当前线程对象(为了保证一线程只能被启动一次)，使用start0方法调用操作系统启动线程。 | 使用start(ThreadContainers.root())方法，从根开始调用虚拟线程，并不会固定的启动某个虚拟线程。尝试安排此虚拟线程启动，最后还是会交给ForkJoinPool来实现调度。 |
-| join      | synchronized锁住当前线程，然后无限wait（0）                  | 利用CountDownLatch来实现await操作，直到超时或者CountDownLatch被归零 |
-| wait      | 利用操作系统wait0方法，来实现等待                            | 同平台线程，只是在被打断时，会清理走虚拟线程独有的打断方法   |
-| interrupt | synchronized锁住当前线程，调用interrupt0方法，打断操作系统线程。 | 锁住线程的interruptLock，调用unpark方法解除当前虚拟线程的锁（unsafe操作） |
-| sleep     | 创建一个event实现，调用sleep0方法，让操作系统执行睡眠。睡眠结束后，提交sleepevent事件 | 调用虚拟线程类中的ScheduledExecutorService定时任务线程池，创建一个睡眠时间的定时任务。等到固定时间，会unpark当前虚拟线程。<font color='red'>（就是利用定时任务线程池，使得多个虚拟线程同时sleep，且同时被唤醒）</font> |
-| notify    | 唤醒等待此对象的监视器（monitor）中的线程，是synchronized的原理，与线程本身无关 | 与虚拟线程无关                                               |
-| yield     | 调用yield0方法，让操作系统调度当前线程退出CPU                | 尝试修改当前虚拟线程的运行状态为YIELDING，让平台线程重新竞争一次虚拟线程。 |
+| API                                  | 平台线程                                                     | 虚拟线程                                                     |
+| ------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 创建                                 | 继承Thread类，重写run方法<br />实现Runnable接口并传递给Thread | Thread.ofVirtual().start(Runnable)<br />Thread.Builder.virtual() |
+| start                                | 用synchronized锁定当前线程对象(为了保证一线程只能被启动一次)，使用start0方法调用操作系统启动线程。 | 使用start(ThreadContainers.root())方法，从根开始调用虚拟线程，并不会固定的启动某个虚拟线程。尝试安排此虚拟线程启动，最后还是会交给ForkJoinPool来实现调度。 |
+| join                                 | synchronized锁住当前线程，然后无限wait（0）                  | 利用CountDownLatch来实现await操作，直到超时或者CountDownLatch被归零 |
+| wait                                 | 利用操作系统wait0方法，来实现等待监听Monitor对象             | 同平台线程，只是在被打断时，会清理走虚拟线程独有的打断方法   |
+| interrupt                            | synchronized锁住当前线程，调用interrupt0方法，打断操作系统线程。 | 锁住线程的interruptLock，调用unpark方法解除当前虚拟线程的锁（unsafe操作） |
+| sleep                                | 创建一个event实现，调用sleep0方法，让操作系统执行睡眠。睡眠结束后，提交sleepevent事件 | 调用虚拟线程类中的ScheduledExecutorService定时任务线程池，创建一个睡眠时间的定时任务。等到固定时间，会unpark当前虚拟线程。<font color='red'>（就是利用定时任务线程池，使得多个虚拟线程同时sleep，且同时被唤醒）</font> |
+| notify                               | 唤醒等待此对象的监视器（monitor）中的线程，是synchronized的原理，与线程本身无关 | 与虚拟线程无关                                               |
+| yield                                | 调用yield0方法，让操作系统调度当前线程退出CPU                | 尝试修改当前虚拟线程的运行状态为YIELDING，让平台线程重新竞争一次虚拟线程。 |
+| LockSupport工具类                    | 通过每个平台线程都有的许可变量，调用操作系统park方法，park让许可变为0，unpark 让许可变为1。实现高效的加锁解锁 | 利用JavaLangAccess对当前虚拟线程实现续体操作，让出绑定的平台线程给其他虚拟线程调度。 |
+| 利用BufferedReader等实现的IO读写操作 | 也是利用LockSupport.park实现上锁操作，等读取到数据后再解锁   | 由于利用LockSupport故而不会阻塞平台线程                      |
 
 
 
-
+注：ReentrantLock等lock工具类，都是使用LockSupport或AQS上锁工具与框架实现。均不会阻塞虚拟线程。
 
 > <font color='red'>综上所述，其实平台线程中的所有阻塞方法，在虚拟线程中都是非阻塞的。</font>所以虚拟线程可是实现真正意义上的“虚拟概念”，如果需要进入传统的阻塞方法，都是由JVM平台自己来实现的。不会调用操作系统的方法来真正的阻塞线程。
 
 
 
 但是，如果虚拟线成的平台线程，因为锁等情况被阻塞了，就还是会正常的走平台线程的阻塞方法，让虚拟线程也暂停运行。
+
+
+
+
+
+
+
+### 注意事项
+
+
+
+- 虚拟线程在什么情况下会阻塞（老黄历了，pinning问题在JDK24被解决）？
+
+从上面得知，虚拟线程在传统java实现的阻塞方法中，都不会被阻塞。就是无论是IO阻塞还是LockSupport实现的java自定义锁都不会阻塞虚拟线程。但如果调用synchronized同步工具，会调用操作系统wait方法，阻塞平台线程，故而阻塞虚拟线程。（虚拟线程被阻塞是由于synchronized的上锁方式，由操作系统实现，操作系统不会感知虚拟线程故而阻塞虚拟线程绑定的平台线程）。
+
+
+
+
+
+- 不要池化虚拟线程
+
+java官方说明虚拟线程大小只有几kb，并非稀缺资源，所以不应当也不能被池化。Executors.newVirtualThreadPerTaskExecutor只是提供了一个使用虚拟线程的API（为了和平台线程统一API，方便使用）。并不会真正的创建虚拟线程池。
+
+
+
+
+
+- pinning问题解决
+
+传统synchronized会调用操作系统wait方法，通过轻量级线程或Monitor对象阻塞平台线程，导致绑定在平台线程上的虚拟线程也被阻塞。现在当平台线程被wat阻塞后，卸载虚拟线程，通知后重新调度，可能使用新载体。
+
+
+
+
+
+- ThreadLocal内存
+
+每个虚拟线程都有自己的ThreadLocal，但虚拟线程理论上是无限的资源，因此要谨慎使用虚拟线程的ThreadLocal。
+
+
+
+- 虽然使用了ForkJoinPool但只合适IO密集型任务
+
+ForkJoinPool可以分解任务，窃取其他线程任务，增加CPU的利用率。非常适合CPU密集型任务。
+
+但同样使用了ForkJoinPool实现的虚拟线程，却更适用于IO密集型任务。因为ForkJoinpool只是虚拟线程的载体， 虚拟线程真正优秀的是他几乎所有的阻塞场景，都开发了虚拟线程非阻塞的应对方式。当虚拟线程阻塞时，就取消挂载当前虚拟线程，转让其他虚拟线程挂载到载体线程上。
+
+
+
+
+
+
+
+
+
+## 结构化并发(扩展)
+
+
+
+
+
+> 将运行在不同线程中的相关任务组视为一个工作单元，从而简化错误处理和取消操作，提高可靠性，增强可观察性。
+
+
+
+- StructuredTaskScope
+
+可以将每个子任务分叉，让它们在各自独立线程中运行。StructuredTaskScope可以确保在主任务继续之前完成所有子任务。或者可以指定某个子任务成功时程序继续运行。
+
+
+### StructuredTaskScope的用法
+
+1. 创建一个StructuredTaskScope，使用“try-with-resources”语法一起（自动关闭）
+2. 将子任务定义为callable实例。
+3. 使用“StructuredTaskScope::fork”语法在各自线程中为每个子任务创建分支。
+4. 调用StructuredTaskScope::join 
+5. 处理子任务的结果
+6. 关闭StructuredTaskScope
+
+
+
+![67bd253b95065.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/67bd253b95065_1747189902643.png)
+
+``` java
+    Callable<String> task1 = ...
+    Callable<Integer> task2 = ...
+
+    try (var scope = new StructuredTaskScope<Object>()) {
+
+        Subtask<String> subtask1 = scope.fork(task1);
+        Subtask<Integer> subtask2 = scope.fork(task2);
+
+        scope.join();
+
+        ... process results/exceptions ...
+
+    } // close
+```
+
+
+### ShutdownOnSuccess和ShutdownOnFailure
+
+- ShutdownOnFailure
+
+其中一个子任务失败，就取消所有子任务。
+
+
+
+- ShutdownOnSuccess
+
+其中一个子任务成功，就取消剩余所有的子任务。
+
+
+
+``` java
+public class SCRandomTasks {
+
+    class TooSlowException extends Exception {
+        TooSlowException(String s){
+            super(s);
+        }
+    }
+
+    /**
+     分别启动5个任务，调用成功关闭和失败关闭。
+     */
+    public static void main(String[] args) {
+        var myApp = new SCRandomTasks();
+        try{
+            System.out.println("Running handleShutdownOnFailure...");
+            myApp.handleShutdownOnFailure();
+        } catch (ExecutionException | InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        try{
+            System.out.println("Running handleShutdownOnSuccess...");
+            myApp.handleShutdownOnSuccess();
+        } catch (ExecutionException | InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public Integer randomTask(int max,int threshold) throws TooSlowException, InterruptedException {
+        int t = new Random().nextInt(max);
+        System.out.println("Duration:"+t);
+        if(t>threshold) throw new TooSlowException(STR."Duration \{t} greater than threshold \{threshold}");
+        Thread.sleep(t);
+        return t;
+    }
+
+    void handleShutdownOnSuccess() throws InterruptedException, ExecutionException {
+        try(var scope=new StructuredTaskScope.ShutdownOnSuccess()){
+            IntStream.range(0,5)
+                    .mapToObj(i->scope.fork(()->randomTask(1000,850)))
+                    .toList();
+            scope.join();
+//            捕获第一个完成的子任务，并返回其结果。
+            System.out.println(STR."First task to finish: \{scope.result()}");
+        }
+    }
+
+    void handleShutdownOnFailure() throws InterruptedException, ExecutionException {
+        try(var scope=new StructuredTaskScope.ShutdownOnFailure()){
+//            var t= new SCRandomTasks();
+            var subtasks= IntStream.range(0,5)
+                    .mapToObj(i->scope.fork(new Callable<Integer>() {
+                        @Override
+                        public Integer call() throws Exception {
+                            return randomTask(1000,850);
+                        }
+                    }))
+                    .toList();
+//            捕获子任务抛出的第一个异常，然后调用该方法:中断所有新的子任务启动，中断所有正在运行的其他子任务线程，并让主程序继续执行。
+            scope.join()
+                    .throwIfFailed();
+            var totalDuration=subtasks.stream()
+                    .map(StructuredTaskScope.Subtask::get)
+                    .reduce(0,Integer::sum);
+            System.out.println(STR."Total Duration:\{totalDuration}");
+        }
+
+    }
+}
+```
+
+
+### 自定义结构化任务策略
+
+```java
+public class CollectingScope<T> extends StructuredTaskScope<T> {
+    private final Queue<Subtask<?extends T>> successSubtasks=new LinkedTransferQueue<>();
+    private final Queue<Subtask<?extends T>> failedSubtasks=new LinkedTransferQueue<>();
+
+    @Override
+    protected void handleComplete(Subtask<? extends T> subtask) {
+        if(subtask.state()==Subtask.State.SUCCESS) successSubtasks.add(subtask);
+        else if (subtask.state()==Subtask.State.FAILED) failedSubtasks.add(subtask);
+    }
+
+    @Override
+    public StructuredTaskScope<T> join() throws InterruptedException {
+        super.join();
+        return this;
+    }
+    public Stream<Subtask<? extends T>> successfulTasks(){
+        super.ensureOwnerAndJoined();
+        return successSubtasks.stream();
+    }
+    
+    public Stream<Subtask<? extends T>> failedTasks(){
+        super.ensureOwnerAndJoined();
+        return failedSubtasks.stream();
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+``` java
+import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
+
+record Response(String user, int order) {}
+
+class StructuredConcurrencyExample {
+    Response handle() throws InterruptedException {
+        try (var scope = StructuredTaskScope.open()) { // 默认 Joiner，等待所有子任务完成
+            var userTask = scope.fork(() -> findUser()); // 子任务1：获取用户
+            var orderTask = scope.fork(() -> fetchOrder()); // 子任务2：获取订单
+            scope.join(); // 等待所有子任务完成
+            return new Response(userTask.get(), orderTask.get()); // 提取结果
+        } catch (Exception e) {
+            throw new RuntimeException("Task failed", e);
+        }
+    }
+
+    String findUser() throws InterruptedException {
+        Thread.sleep(1000); // 模拟 I/O 操作
+        return "User123";
+    }
+
+    int fetchOrder() throws InterruptedException {
+        Thread.sleep(1500); // 模拟 I/O 操作
+        return 456;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        var example = new StructuredConcurrencyExample();
+        System.out.println(example.handle());
+    }
+}
+```
 
 
 
