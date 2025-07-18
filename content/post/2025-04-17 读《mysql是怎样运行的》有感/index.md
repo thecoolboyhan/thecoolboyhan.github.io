@@ -5,6 +5,7 @@ image: 1.png
 date: 2025-04-17
 categories: 
   - 精选
+  - mysql
 tags:
   - mysql
   - book
