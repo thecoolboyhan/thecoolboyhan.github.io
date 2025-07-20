@@ -1,6 +1,6 @@
 ---
 title: Hello
-description: 欢迎
+description: readme，欢迎来到我的网站，建议先看看这篇文章对我和本网站有个大概的了解。
 slug: hello-world
 date: 2022-03-06 00:00:00+0000
 image: welcome.jpg
@@ -21,7 +21,7 @@ weight: 1       # You can add weight to some posts to override the default sorti
 
 >  欢迎来到我的网站，我常在这里记录我的各种内容文章。如果想了解我的基本信息，可以直接通过右侧导航栏跳转到关于我。
 
-
+为保证体验网站完整功能，访问本网站最好开启科学上网
 
 ## 关于我
 
@@ -37,7 +37,7 @@ weight: 1       # You can add weight to some posts to override the default sorti
 
 邮箱：hanyongfa2013@163.com
 
-
+> 如果您是HR，为保证我快速响应，请直接通过邮箱或电话与我联系。（下方评论区反馈可能不会很及时）
 
 ### 工作经历
 
@@ -67,7 +67,43 @@ weight: 1       # You can add weight to some posts to override the default sorti
 
 
 
+### 取得的一些小成就
 
+- 算法基本功
+
+目前周赛成绩普遍保持在1800左右（最近几场略有下降），（拿过几次knight但没一直保住）最好成绩全国56名。
+
+![250720155229116.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250720155229116_1752997949162.png)
+
+目前题量大概在1400+左右（三年出勤率超90%）
+
+![1752998012179.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998012179_1752998012205.png)
+
+
+
+![250720160156752.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250720160156752_1752998516773.png)
+
+![1752998579780.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998579780_1752998579805.png)
+
+![1752998606435.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998606435_1752998606456.png)
+
+![1752998626948.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998626948_1752998626973.png)
+
+
+
+- 工作成就
+
+2023年公司年度最佳S级员工
+
+![1752998100152.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998100152_1752998100179.png)
+
+
+
+所带小组为项目组第一届优秀小组奖获得者（可惜图没了）
+
+公司2023年1024算法比赛二等奖获得者
+
+![1752998310191.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998310191_1752998310218.png)
 
 
 
@@ -76,8 +112,26 @@ weight: 1       # You can add weight to some posts to override the default sorti
 ## 写这个博客的原因
 
 1. 记录已学过的知识：每篇文章都有上传时间，分类等，可以更好的展示我的心路过程
-2. 更好的展示自己：简历的几张很难全面的说明一个人
+2. 更好的展示自己：简历的几张纸很难全面的说明一个人
 
 
 
-程序员要一直保持着不断学习的习惯，把学到的知识记录，分享，教给别人才是最好的方式。之前有尝试在主流论坛中分享
+程序员要一直保持着不断学习的习惯，把学到的知识记录，分享，教给别人才是最好的方式。之前有尝试在主流论坛中分享。可惜网络爬虫流氓太多，把我的博客以原创名义发到各种网站。（投诉还无果）
+
+
+
+## 知识导航
+
+
+
+
+
+
+
+## QA
+
+- 如何与我互动？
+
+可以通过我的联系方式来直接与我取得联系，本网站自带评论功能，评论需科学上网。技术由Disqus提供，可以直接发表评论。
+
+![1752999018190.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752999018190_1752999018207.png)
