@@ -566,3 +566,17 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 **在「可重复读」隔离级别下，使用了记录锁、间隙锁、Next-Key 锁三种类型的锁。**
 
 **可重复读存在幻读的问题，但实际上在 MySQL 中，因为其使用了间隙锁，所以在「可重复读」隔离级别下，可以通过加 锁解决幻读问题。因此，MySQL 将「可重复读」作为了其默认的隔离级别。**
+
+
+- 不同版本如何查看各种锁信息
+
+| 方法                              | MySQL 5.6 | MySQL 5.7 | MySQL 8.0 | MySQL 8.4 | 注意事项                         |
+|-----------------------------------|-----------|-----------|-----------|-----------|----------------------------------|
+| SHOW ENGINE INNODB STATUS         | ✅        | ✅        | ✅        | ✅        | 需启用 innodb_status_output_locks |
+| SHOW PROCESSLIST                  | ✅        | ✅        | ✅        | ✅        | 显示线程状态，非锁详情            |
+| SHOW OPEN TABLES                  | ✅        | ✅        | ✅        | ✅        | 适合 MyISAM 表锁                 |
+| INNODB_LOCKS/WAITS                | ✅        | ✅        | 废弃      | 废弃      | MySQL 8.0.1 起用 data_locks      |
+| INNODB_TRX                        | ✅        | ✅        | ✅        | ✅        | 查看活跃事务                     |
+| performance_schema.data_locks     | ❌        | ❌        | ✅        | ✅        | 需启用 Performance Schema        |
+| performance_schema.metadata_locks | ❌        | ✅        | ✅        | ✅        | 适合元数据锁和用户锁             |
+| IS_USED_LOCK                      | ✅        | ✅        | ✅        | ✅        | 查看 GET_LOCK 锁                |
