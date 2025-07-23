@@ -1,12 +1,11 @@
 ---
 title: 状态机（FSM）
-description: 从状态机基本概念，到spring状态机，分布式事务状态和如何利用状态机减少if else
+description: 从状态机基本概念，到spring状态机，分布式事务状态和如何利用状态机减少if else,感觉暂时有点烂尾，后续详细更新
 slug: FSM
 date: 2025-07-17 00:00:00+0000
 image: 1.png
 categories:
     - java
-    - 精选
 tags: 
     - 设计模式
     - spring
