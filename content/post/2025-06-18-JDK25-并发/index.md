@@ -2155,17 +2155,89 @@ CPU密集型的任务，CPU消耗大，如果核心线程多。容易产生OOM�
 - 线程池避坑
 
 1. 不要重复创建线程池。特别不要在每次请求中创建线程池。
-2. 线程池和ThreadLocal公用：由于核心线程是复用的，新的任务可能会从ThreadLocal中读取到老数据。
+2. 线程池和ThreadLocal公用：由于核心线程是复用的，新的任务可能会从ThreadLocal中读取到老数据。如果没有显示的remove变量。变量依旧会保存在上下文中。这种情况会导致类加载器泄露，因为线程池中线程被重用，旧的ThreadLocal变量无法被回收。
 
 
 
 
 
-### tomcat线程池
+
+
+### tomcat线程池（重点）
 
 
 
-> tomcat内部线程池为了应对高并发场景，打破java线程池运行规律，单独定制了自己的任务处理方式。
+> tomcat重写了ThreadPool，新版本tomcat已支持使用虚拟线程来执行任务。
+>
+> tomcat在传统线程池调用逻辑上进行了修改，打破了传统线程池的任务处理方式。
+
+- 参数列表
+
+1. maxThreads:线程池中最大的活动线程数，默认为200.控制同时处理请求的最大线程数。当有新的HTTP请求到达时，如果当前有空闲线程（即当前活跃线程数小于maxThreads），Tomcat会直接使用这些空闲线程来处理请求。等maxThreads用尽后，才会让请求入队等待。
+2. minSpareThreads：始终保持存活的线程数（线程池的核心线程数）默认为25，确保可以快速响应请求，避免创建线程的延迟。
+3. maxIdleTime：空闲线程等待任务的最大时间，默认1分钟，超过此时间线程会被关闭。
+4. threadPriority：线程优先级，默认为5（普通优先级）。影响操作系统对线程的调度。
+5. daemon：是否为守护线程，默认为True。守护线程不会阻止JVM退出。（让JVM不会由于有请求在处理而无法关闭）
+6. namePreFix：线程名称的前缀，默认`tomcat-exec-`
+7. 任务队列的最大长度，默认为Integer.MAX_VALUE。所有线程都忙时，超出此长度的任务会被拒绝。
+8. threadRenewalDelay：上下文停止后线程更新的延迟时间，默认为1秒。防止线程泄露。
+
+
+
+- 不是线程池的参数，但依然会影响到线程池
+
+acceptCount：当所有线程忙时，最大排队连接数。默认值为 100，超过则拒绝新连接。
+
+maxConnections：服务器同时接受和处理的连接数上限，与线程池的 maxThreads 配合使用。（默认使用无界队列，但通过此参数可以控制队列中任务的数量）
+
+
+
+
+
+
+
+
+
+- <font color='red'>**tomcat线程池源码中的运行逻辑**</font>
+
+> tomcat重写了ThreadPool，重新设计了任务提交等方法。这也算是双亲委派机制的一种破坏
+
+
+
+1. 通过addWorker(Runnable firstTask, boolean core)方法来接收任务，先尝试使用核心线程来运行任务。
+2. 如果核心线程不能启动，则判断数量是否超过maxThreads
+3. 如果没有超过maxThreads，则启动新线程处理
+4. 如果超过maxThreads，则尝试让任务入队，如果队列中任务超过maximumPoolSize，则直接给客户端返回异常。
+
+
+
+
+
+
+
+
+
+- **<font color='red'> 什么是线程泄露？为什么threadRenewalDelay可以防止线程泄露？</font>**
+
+线程泄露指在多线程环境中，线程被创建但未能被正确终止或释放，导致这些线程一直占用系统资源（内存、CPU）。
+
+tomcat中的内存泄露：
+
+1. 未终止的线程：Web应用在运行时，可能通过new Thread（）或其他方式创建线程，但当应用停止（如Tomcat关闭或应用卸载），这些线程没有被正确终止。
+2. ThreadLocal变量没有被清理：ThreadLocal中的变量无法被回收。
+
+
+
+- 如何利用threadRenewalDelay防止上面的情况？
+
+threadRenewalDelay的主要功能：
+
+1. 定期更新线程：当一个Web应用上下文停止后，Tomcat会等待指定的延迟时间，然后更新线程池中的线程。这意味着旧的线程会被终止，新的线程会被创建。
+2. 清理ThreadLocal变量：更新线程的过程中，Tomcat会确保旧线程上的ThreadLocal变量被清理，从而避免这些变量持有的引用导致的类加载器泄露。
+
+> 所以后面提到的ThreadLocal中的内存泄露情况，在普通web调用中使用ThreadLocal，即使没有清理，也不会导致内存泄露。
+
+
 
 
 
