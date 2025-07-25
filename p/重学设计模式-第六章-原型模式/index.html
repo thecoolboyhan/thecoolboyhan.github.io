@@ -1,0 +1,591 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="原型模式 原型模式主要解决的问题就是创建重复对象，而这部分对象内容比较复杂，生成过程可能从库或者RPC接口中获取数据的耗时比较长，因此采用克隆的方式节省时间。\n"><title>重学设计模式-第六章-原型模式</title><link rel=canonical href=https://thecoolboyhan.github.io/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/><link rel=stylesheet href=/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css><meta property='og:title' content="重学设计模式-第六章-原型模式"><meta property='og:description' content="原型模式 原型模式主要解决的问题就是创建重复对象，而这部分对象内容比较复杂，生成过程可能从库或者RPC接口中获取数据的耗时比较长，因此采用克隆的方式节省时间。\n"><meta property='og:url' content='https://thecoolboyhan.github.io/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/'><meta property='og:site_name' content='韩永发的博客'><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='设计模式'><meta property='article:tag' content='book'><meta property='article:tag' content='读后感'><meta property='article:published_time' content='2025-07-24T00:00:00+00:00'><meta property='article:modified_time' content='2025-07-24T00:00:00+00:00'><meta name=twitter:title content="重学设计模式-第六章-原型模式"><meta name=twitter:description content="原型模式 原型模式主要解决的问题就是创建重复对象，而这部分对象内容比较复杂，生成过程可能从库或者RPC接口中获取数据的耗时比较长，因此采用克隆的方式节省时间。\n"><link rel="shortcut icon" href=/favicon.png></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label=切换菜单>
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu_4821a064c9f375b.png width=300 height=300 class=site-logo loading=lazy alt=Avatar>
+</a><span class=emoji>🍥</span></figure><div class=site-meta><h1 class=site-name><a href=/>韩永发的博客</a></h1><h2 class=site-description>目前人在上海，20年毕业，普通muggle，java开发。邮箱：hanyongfa2013@163.com 。</h2></div></header><ol class=menu-social><li><a href=https://github.com/thecoolboyhan target=_blank title=GitHub rel=me><svg class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://leetcode.cn/u/thecoolboy/ target=_blank title=力扣 rel=me><svg role="img" viewBox="0 0 24 24"><title>LeetCode</title><path d="M13.483.0a1.374 1.374.0 00-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266.0 00-1.209 2.104 5.35 5.35.0 00-.125.513 5.527 5.527.0 00.062 2.362 5.83 5.83.0 00.349 1.017 5.938 5.938.0 001.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378.0 00-1.951-.003l-2.396 2.392a3.021 3.021.0 01-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68.0 01.066-.523 2.545 2.545.0 01.619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384.0 00-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384.0 0013.483.0zm-2.866 12.815a1.38 1.38.0 00-1.38 1.382 1.38 1.38.0 001.38 1.382H20.79a1.38 1.38.0 001.38-1.382 1.38 1.38.0 00-1.38-1.382z"/></svg></a></li><li><a href=mailto:hanyongfa2013@163.com target=_blank title=邮箱 rel=me><svg id="mdi-email-arrow-right-outline" viewBox="0 0 24 24"><path d="M13 19C13 18.66 13.04 18.33 13.09 18H4V8l8 5 8-5v5.09C20.72 13.21 21.39 13.46 22 13.81V6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18c0 1.1.9 2 2 2h9.09C13.04 19.67 13 19.34 13 19M20 6l-8 5L4 6H20m0 16V20H16V18h4V16l3 3-3 3z"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/archives/><svg class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/search/><svg class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/links/><svg class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg>
+<span>Links</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>暗色模式</span></li></ol></li></ol></aside><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">目录</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#上机考试案例>上机考试案例</a></li><li><a href=#bad>bad</a></li><li><a href=#good>good</a></li><li><a href=#总结>总结</a></li></ol></nav></div></section></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><div class=article-title-wrapper><h2 class=article-title><a href=/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/>重学设计模式-第六章-原型模式</a></h2></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Jul 24, 2025</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>阅读时长: 8 分钟</time></div></footer></div></header><section class=article-content><h1 id=原型模式>原型模式</h1><blockquote><p>原型模式主要解决的问题就是创建重复对象，而这部分对象内容比较复杂，生成过程可能从库或者RPC接口中获取数据的耗时比较长，因此采用克隆的方式节省时间。</p></blockquote><h2 id=上机考试案例>上机考试案例</h2><blockquote><p>需要实现一个上级考试抽题的服务</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-xml data-lang=xml><span class=line><span class=cl>itstack-demo-design-4-00
+</span></span><span class=line><span class=cl>└── src
+</span></span><span class=line><span class=cl>    └── main
+</span></span><span class=line><span class=cl>        └── java
+</span></span><span class=line><span class=cl>            └── org.itstack.demo.design
+</span></span><span class=line><span class=cl>                ├── AnswerQuestion.java
+</span></span><span class=line><span class=cl>                └── ChoiceQuestion.java
+</span></span></code></pre></td></tr></table></div></div><ul><li>选择题</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-java data-lang=java><span class=line><span class=cl><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>ChoiceQuestion</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>name</span><span class=p>;</span><span class=w>                 </span><span class=c1>// 题目</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>option</span><span class=p>;</span><span class=w>  </span><span class=c1>// 选项；A、B、C、D</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=p>;</span><span class=w>                  </span><span class=c1>// 答案；B</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=nf>ChoiceQuestion</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=nf>ChoiceQuestion</span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>name</span><span class=p>,</span><span class=w> </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>option</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>name</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>name</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>option</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>option</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>key</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>key</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// ...get/set</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>}</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><ul><li>问答题</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-java data-lang=java><span class=line><span class=cl><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>AnswerQuestion</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>name</span><span class=p>;</span><span class=w>  </span><span class=c1>// 问题</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=p>;</span><span class=w>   </span><span class=c1>// 答案</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=nf>AnswerQuestion</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=nf>AnswerQuestion</span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>name</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>name</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>name</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>key</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>key</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// ...get/set</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>}</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><h2 id=bad>bad</h2><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-xml data-lang=xml><span class=line><span class=cl>itstack-demo-design-4-01
+</span></span><span class=line><span class=cl>└── src
+</span></span><span class=line><span class=cl>    └── main
+</span></span><span class=line><span class=cl>        └── java
+</span></span><span class=line><span class=cl>            └── org.itstack.demo.design
+</span></span><span class=line><span class=cl>                └── QuestionBankController.java
+</span></span></code></pre></td></tr></table></div></div><ul><li>梭哈</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span><span class=lnt>74
+</span><span class=lnt>75
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-java data-lang=java><span class=line><span class=cl><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>QuestionBankController</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=nf>createPaper</span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>candidate</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>number</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>List</span><span class=o>&lt;</span><span class=n>ChoiceQuestion</span><span class=o>&gt;</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>ChoiceQuestion</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>List</span><span class=o>&lt;</span><span class=n>AnswerQuestion</span><span class=o>&gt;</span><span class=w> </span><span class=n>answerQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>AnswerQuestion</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map01</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 EE&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 Card&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 ME&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 HE&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;E&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 SE&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map02</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序的main方法必须写在类里面&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序中可以有多个main方法&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序中类名必须与文件名一样&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序的main方法中如果只有一条语句，可以不用{}(大括号)括起来&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map03</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;变量由字母、下划线、数字、$符号随意组成；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;变量不能以数字作为开头；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;A和a在java中是同一个变量；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;不同类型的变量，可以起相同的名字；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map04</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;STRING&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;x3x;&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;void&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;de$f&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map05</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;31&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;0&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;1&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;2&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;JAVA所定义的版本中不包括&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map01</span><span class=p>,</span><span class=w> </span><span class=s>&#34;D&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;下列说法正确的是&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map02</span><span class=p>,</span><span class=w> </span><span class=s>&#34;A&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;变量命名规范说法正确的是&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map03</span><span class=p>,</span><span class=w> </span><span class=s>&#34;B&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;以下()不是合法的标识符&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map04</span><span class=p>,</span><span class=w> </span><span class=s>&#34;C&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;表达式(11+3*8)/4%3的值是&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map05</span><span class=p>,</span><span class=w> </span><span class=s>&#34;D&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;小红马和小黑马生的小马几条腿&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;4条腿&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;铁棒打头疼还是木棒打头疼&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;头最疼&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;什么床不能睡觉&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;牙床&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;为什么好马不吃回头草&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;后面的草没了&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=c1>// 输出结果</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>StringBuilder</span><span class=w> </span><span class=n>detail</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>StringBuilder</span><span class=p>(</span><span class=s>&#34;考生：&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>candidate</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n&#34;</span><span class=w> </span><span class=o>+</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;考号：&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>number</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n&#34;</span><span class=w> </span><span class=o>+</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;--------------------------------------------\r\n&#34;</span><span class=w> </span><span class=o>+</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;一、选择题&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>0</span><span class=p>;</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>size</span><span class=p>();</span><span class=w> </span><span class=n>idx</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;第&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>idx</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>1</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;题：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getName</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>option</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getOption</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=w> </span><span class=p>:</span><span class=w> </span><span class=n>option</span><span class=p>.</span><span class=na>keySet</span><span class=p>())</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=n>key</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>option</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>key</span><span class=p>)).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;答案：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getKey</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;二、问答题&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>0</span><span class=p>;</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>size</span><span class=p>();</span><span class=w> </span><span class=n>idx</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;第&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>idx</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>1</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;题：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getName</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;答案：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getKey</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=n>detail</span><span class=p>.</span><span class=na>toString</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>}</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><h2 id=good>good</h2><p>原型模式解决的问题为创建大量重复的类。</p><p>重复创建有时需要用到远程RPC调用，将消耗大量的时间。原型模式利用本地克隆的方式。</p><blockquote><p>在需要用到克隆的类中都需要实现 <code>implements Cloneable</code> 接口。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-xml data-lang=xml><span class=line><span class=cl>itstack-demo-design-4-02
+</span></span><span class=line><span class=cl>└── src
+</span></span><span class=line><span class=cl>    ├── main
+</span></span><span class=line><span class=cl>    │   └── java
+</span></span><span class=line><span class=cl>    │       └── org.itstack.demo.design
+</span></span><span class=line><span class=cl>    │           ├── util
+</span></span><span class=line><span class=cl>    │           │   ├── Topic.java
+</span></span><span class=line><span class=cl>    │           │   └── TopicRandomUtil.java
+</span></span><span class=line><span class=cl>    │           ├── QuestionBank.java
+</span></span><span class=line><span class=cl>    │           └── QuestionBankController.java 
+</span></span><span class=line><span class=cl>    └── test
+</span></span><span class=line><span class=cl>         └── java
+</span></span><span class=line><span class=cl>             └── org.itstack.demo.design.test
+</span></span><span class=line><span class=cl>                 └── ApiTest.java
+</span></span></code></pre></td></tr></table></div></div><p><img src=https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753345440048_1753345440072.png loading=lazy alt=1753345440048.png></p><ul><li>题目选项打乱</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-java data-lang=java><span class=line><span class=cl><span class=cm>/**
+</span></span></span><span class=line><span class=cl><span class=cm> * 乱序Map元素，记录对应答案key
+</span></span></span><span class=line><span class=cl><span class=cm> * @param option 题目
+</span></span></span><span class=line><span class=cl><span class=cm> * @param key    答案
+</span></span></span><span class=line><span class=cl><span class=cm> * @return Topic 乱序后 {A=c., B=d., C=a., D=b.}
+</span></span></span><span class=line><span class=cl><span class=cm> */</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=kd>static</span><span class=w> </span><span class=kd>public</span><span class=w> </span><span class=n>Topic</span><span class=w> </span><span class=nf>random</span><span class=p>(</span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>option</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=n>Set</span><span class=o>&lt;</span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>keySet</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>option</span><span class=p>.</span><span class=na>keySet</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>keyList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>String</span><span class=o>&gt;</span><span class=p>(</span><span class=n>keySet</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=n>Collections</span><span class=p>.</span><span class=na>shuffle</span><span class=p>(</span><span class=n>keyList</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>optionNew</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kt>int</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>0</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=n>String</span><span class=w> </span><span class=n>keyNew</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>next</span><span class=w> </span><span class=p>:</span><span class=w> </span><span class=n>keySet</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>String</span><span class=w> </span><span class=n>randomKey</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>keyList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=o>++</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>key</span><span class=p>.</span><span class=na>equals</span><span class=p>(</span><span class=n>next</span><span class=p>))</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>keyNew</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>randomKey</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>optionNew</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=n>randomKey</span><span class=p>,</span><span class=w> </span><span class=n>option</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>next</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>Topic</span><span class=p>(</span><span class=n>optionNew</span><span class=p>,</span><span class=w> </span><span class=n>keyNew</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>}</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><ul><li>克隆对象处理</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-java data-lang=java><span class=line><span class=cl><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>QuestionBank</span><span class=w> </span><span class=kd>implements</span><span class=w> </span><span class=n>Cloneable</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>candidate</span><span class=p>;</span><span class=w> </span><span class=c1>// 考生</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>number</span><span class=p>;</span><span class=w>    </span><span class=c1>// 考号</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>ChoiceQuestion</span><span class=o>&gt;</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>ChoiceQuestion</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>AnswerQuestion</span><span class=o>&gt;</span><span class=w> </span><span class=n>answerQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>AnswerQuestion</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=n>QuestionBank</span><span class=w> </span><span class=nf>append</span><span class=p>(</span><span class=n>ChoiceQuestion</span><span class=w> </span><span class=n>choiceQuestion</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=n>choiceQuestion</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=k>this</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=n>QuestionBank</span><span class=w> </span><span class=nf>append</span><span class=p>(</span><span class=n>AnswerQuestion</span><span class=w> </span><span class=n>answerQuestion</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>add</span><span class=p>(</span><span class=n>answerQuestion</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=k>this</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nd>@Override</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=n>Object</span><span class=w> </span><span class=nf>clone</span><span class=p>()</span><span class=w> </span><span class=kd>throws</span><span class=w> </span><span class=n>CloneNotSupportedException</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>QuestionBank</span><span class=w> </span><span class=n>questionBank</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>QuestionBank</span><span class=p>)</span><span class=w> </span><span class=kd>super</span><span class=p>.</span><span class=na>clone</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>questionBank</span><span class=p>.</span><span class=na>choiceQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>ChoiceQuestion</span><span class=o>&gt;</span><span class=p>)</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>clone</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>questionBank</span><span class=p>.</span><span class=na>answerQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>AnswerQuestion</span><span class=o>&gt;</span><span class=p>)</span><span class=w> </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>clone</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=c1>// 题目乱序</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Collections</span><span class=p>.</span><span class=na>shuffle</span><span class=p>(</span><span class=n>questionBank</span><span class=p>.</span><span class=na>choiceQuestionList</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Collections</span><span class=p>.</span><span class=na>shuffle</span><span class=p>(</span><span class=n>questionBank</span><span class=p>.</span><span class=na>answerQuestionList</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=c1>// 答案乱序</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>ArrayList</span><span class=o>&lt;</span><span class=n>ChoiceQuestion</span><span class=o>&gt;</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>questionBank</span><span class=p>.</span><span class=na>choiceQuestionList</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=n>ChoiceQuestion</span><span class=w> </span><span class=n>question</span><span class=w> </span><span class=p>:</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>Topic</span><span class=w> </span><span class=n>random</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>TopicRandomUtil</span><span class=p>.</span><span class=na>random</span><span class=p>(</span><span class=n>question</span><span class=p>.</span><span class=na>getOption</span><span class=p>(),</span><span class=w> </span><span class=n>question</span><span class=p>.</span><span class=na>getKey</span><span class=p>());</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>question</span><span class=p>.</span><span class=na>setOption</span><span class=p>(</span><span class=n>random</span><span class=p>.</span><span class=na>getOption</span><span class=p>());</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>question</span><span class=p>.</span><span class=na>setKey</span><span class=p>(</span><span class=n>random</span><span class=p>.</span><span class=na>getKey</span><span class=p>());</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=n>questionBank</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>setCandidate</span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>candidate</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>candidate</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>candidate</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>setNumber</span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>number</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>this</span><span class=p>.</span><span class=na>number</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>number</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nd>@Override</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=nf>toString</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>StringBuilder</span><span class=w> </span><span class=n>detail</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>StringBuilder</span><span class=p>(</span><span class=s>&#34;考生：&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>candidate</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n&#34;</span><span class=w> </span><span class=o>+</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;考号：&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>number</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n&#34;</span><span class=w> </span><span class=o>+</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;--------------------------------------------\r\n&#34;</span><span class=w> </span><span class=o>+</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;一、选择题&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>0</span><span class=p>;</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>size</span><span class=p>();</span><span class=w> </span><span class=n>idx</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;第&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>idx</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>1</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;题：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getName</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>option</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getOption</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>key</span><span class=w> </span><span class=p>:</span><span class=w> </span><span class=n>option</span><span class=p>.</span><span class=na>keySet</span><span class=p>())</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=n>key</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>option</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>key</span><span class=p>)).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n&#34;</span><span class=p>);;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;答案：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>choiceQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getKey</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;二、问答题&#34;</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>0</span><span class=p>;</span><span class=w> </span><span class=n>idx</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>size</span><span class=p>();</span><span class=w> </span><span class=n>idx</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;第&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>idx</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>1</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;题：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getName</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=n>detail</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;答案：&#34;</span><span class=p>).</span><span class=na>append</span><span class=p>(</span><span class=n>answerQuestionList</span><span class=p>.</span><span class=na>get</span><span class=p>(</span><span class=n>idx</span><span class=p>).</span><span class=na>getKey</span><span class=p>()).</span><span class=na>append</span><span class=p>(</span><span class=s>&#34;\r\n\n&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=n>detail</span><span class=p>.</span><span class=na>toString</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>}</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><ul><li>初始化试卷</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-java data-lang=java><span class=line><span class=cl><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>QuestionBankController</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>private</span><span class=w> </span><span class=n>QuestionBank</span><span class=w> </span><span class=n>questionBank</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>QuestionBank</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=nf>QuestionBankController</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map01</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 EE&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 Card&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 ME&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 HE&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map01</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;E&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA2 SE&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map02</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序的main方法必须写在类里面&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序中可以有多个main方法&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序中类名必须与文件名一样&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map02</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;JAVA程序的main方法中如果只有一条语句，可以不用{}(大括号)括起来&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map03</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;变量由字母、下划线、数字、$符号随意组成；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;变量不能以数字作为开头；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;A和a在java中是同一个变量；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map03</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;不同类型的变量，可以起相同的名字；&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map04</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;STRING&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;x3x;&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;void&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map04</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;de$f&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>Map</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=w> </span><span class=n>map05</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=n>HashMap</span><span class=o>&lt;</span><span class=n>String</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=o>&gt;</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;A&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;31&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;B&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;0&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;C&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;1&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>map05</span><span class=p>.</span><span class=na>put</span><span class=p>(</span><span class=s>&#34;D&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;2&#34;</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>questionBank</span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;JAVA所定义的版本中不包括&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map01</span><span class=p>,</span><span class=w> </span><span class=s>&#34;D&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;下列说法正确的是&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map02</span><span class=p>,</span><span class=w> </span><span class=s>&#34;A&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;变量命名规范说法正确的是&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map03</span><span class=p>,</span><span class=w> </span><span class=s>&#34;B&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;以下()不是合法的标识符&#34;</span><span class=p>,</span><span class=n>map04</span><span class=p>,</span><span class=w> </span><span class=s>&#34;C&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>ChoiceQuestion</span><span class=p>(</span><span class=s>&#34;表达式(11+3*8)/4%3的值是&#34;</span><span class=p>,</span><span class=w> </span><span class=n>map05</span><span class=p>,</span><span class=w> </span><span class=s>&#34;D&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;小红马和小黑马生的小马几条腿&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;4条腿&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;铁棒打头疼还是木棒打头疼&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;头最疼&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;什么床不能睡觉&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;牙床&#34;</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>.</span><span class=na>append</span><span class=p>(</span><span class=k>new</span><span class=w> </span><span class=n>AnswerQuestion</span><span class=p>(</span><span class=s>&#34;为什么好马不吃回头草&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;后面的草没了&#34;</span><span class=p>));</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>public</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=nf>createPaper</span><span class=p>(</span><span class=n>String</span><span class=w> </span><span class=n>candidate</span><span class=p>,</span><span class=w> </span><span class=n>String</span><span class=w> </span><span class=n>number</span><span class=p>)</span><span class=w> </span><span class=kd>throws</span><span class=w> </span><span class=n>CloneNotSupportedException</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>QuestionBank</span><span class=w> </span><span class=n>questionBankClone</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>QuestionBank</span><span class=p>)</span><span class=w> </span><span class=n>questionBank</span><span class=p>.</span><span class=na>clone</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>questionBankClone</span><span class=p>.</span><span class=na>setCandidate</span><span class=p>(</span><span class=n>candidate</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=n>questionBankClone</span><span class=p>.</span><span class=na>setNumber</span><span class=p>(</span><span class=n>number</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=n>questionBankClone</span><span class=p>.</span><span class=na>toString</span><span class=p>();</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>}</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><h2 id=总结>总结</h2><blockquote><p>原型模式使用的场景并不是很高。</p></blockquote><ul><li>优点</li></ul><p>便于通过克隆方式创建复杂对象、也可以避免重复做初始化操作、不需要与类中所属的其他类耦合等</p><ul><li>缺点</li></ul><p>如果对象中包括了循环引用的克隆，以及类中深度使用对象的克隆，都会使此模式变得异常麻烦。</p></section><footer class=article-footer><section class=article-tags><a href=/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/>设计模式</a>
+<a href=/tags/book/>Book</a>
+<a href=/tags/%E8%AF%BB%E5%90%8E%E6%84%9F/>读后感</a></section><section class=article-copyright><svg class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>相关文章</h2><div class=related-content><div class="flex article-list--tile"><article><a href=/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E5%85%AB%E7%AB%A0-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/><div class=article-details><h2 class=article-title>重学设计模式-第八章-单例模式</h2></div></a></article><article><a href=/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E5%85%AD%E7%AB%A0-%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/><div class=article-details><h2 class=article-title>重学设计模式-第六章-建造者模式</h2></div></a></article><article><a href=/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E4%BA%94%E7%AB%A0-%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/><div class=article-details><h2 class=article-title>重学设计模式-第五章-抽象工厂模式</h2></div></a></article><article><a href=/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E5%9B%9B%E7%AB%A0-%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/><div class=article-details><h2 class=article-title>重学设计模式-第四章-工厂模式</h2></div></a></article><article><a href=/p/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%AC%E4%BA%8C%E7%AB%A0-6%E5%A4%A7%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/><div class=article-details><h2 class=article-title>重学设计模式-第二章-6大设计原则</h2></div></a></article></div></div></aside><div class=disqus-container><div id=disqus_thread></div><script>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//thecoolboyhan.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div><style>.disqus-container{background-color:var(--card-background);border-radius:var(--card-border-radius);box-shadow:var(--shadow-l1);padding:var(--card-padding)}</style><script>window.addEventListener("onColorSchemeChange",e=>{typeof DISQUS=="object"&&DISQUS.reset({reload:!0})})</script><footer class=site-footer><section class=copyright>&copy;
+2020 -
+2025 韩永发的博客</section><section class=powerby>使用 <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> 构建<br>主题 <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.30.0>Stack</a></b> 由 <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a> 设计</section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
