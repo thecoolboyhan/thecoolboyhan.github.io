@@ -36,6 +36,17 @@
             </LeetcodeEditor>
           </value>
         </entry>
+        <entry key="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/[1780]判断一个数字是否可以表示成三的幂的和.java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/doc/content/[1780]判断一个数字是否可以表示成三的幂的和.md" />
+              <option name="frontendQuestionId" value="leetcode.cn1780" />
+              <option name="host" value="leetcode.cn" />
+              <option name="path" value="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/[1780]判断一个数字是否可以表示成三的幂的和.java" />
+              <option name="titleSlug" value="check-if-number-is-a-sum-of-powers-of-three" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
         <entry key="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/[1957]删除字符使字符串变好.java">
           <value>
             <LeetcodeEditor>
@@ -319,6 +330,17 @@
               <option name="host" value="leetcode.cn" />
               <option name="path" value="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/[3373]连接两棵树后最大目标节点数目 II.java" />
               <option name="titleSlug" value="maximize-the-number-of-target-nodes-after-connecting-trees-ii" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+        <entry key="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/[342]4的幂.java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/doc/content/[342]4的幂.md" />
+              <option name="frontendQuestionId" value="leetcode.cn342" />
+              <option name="host" value="leetcode.cn" />
+              <option name="path" value="/var/folders/6y/6zgd2lwn7c376xr484_djkhm0000gn/T/leetcode/editor/cn/[342]4的幂.java" />
+              <option name="titleSlug" value="power-of-four" />
             </LeetcodeEditor>
           </value>
         </entry>
