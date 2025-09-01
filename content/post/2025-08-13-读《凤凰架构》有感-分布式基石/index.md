@@ -848,3 +848,37 @@ Kubernetes 严格保证了同一个 Pod 中的容器不会跨越不同的节点�
 
 
 
+## DDD领域驱动设计
+
+### 传统MVC架构
+
+主要包括M-mode对象层，封装到domain里。V-view展示层，前后端分离，几乎没有JSP文件了。C-Controller控制层，对外提供接口实现类。
+
+![img](https://bugstack.cn/images/roadmap/tutorial/road-map-230623-02.png?raw=true)
+
+
+
+![img](https://bugstack.cn/images/roadmap/tutorial/road-map-230623-03.png?raw=true)
+
+
+
+### DDD
+
+> DDD是一种软件设计方法。DDD是指导我们做软件工程设计的一种手段，主要用来切割工程模型：领域、界限上下文、实体、值对象、聚合、工厂、仓储等。通过DDD的指导思想，我们可以在前期投入更多的时间，更加合理的规划出可持续迭代的工程设计。
+
+
+
+**DDD用来解决什么问题**
+
+- 战略设计
+
+  主要以应对复杂的业务需求，通过抽象、分治的过程，合理的拆分出多个微服务，分而治之。少数几个中等规模的单体应用，周围环绕着一个服务生态系统，这更有意义。[你实际上并没有构建微服务 @贾斯汀·埃瑟里奇](https://www.simplethread.com/youre-not-actually-building-microservices/)
+
+- 战术设计
+
+  如何基于面向对象思维，运用领域模型来表达业务概念。传统MVC三层架构，会让Service扁平的、大量的，平铺出非常复杂的业务逻辑代码。系统会不断的增加复杂度，直到难以维护的程度。
+
+
+
+
+
