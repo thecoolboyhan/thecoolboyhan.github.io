@@ -114,6 +114,8 @@ K8s优雅下线+滚动更新实现零空窗发布 让核心服务发版不再需
 
 
 所带小组为项目组第一届优秀小组奖获得者（可惜图没了）
+![WechatIMG4.jpg](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-09/WechatIMG4_1758002513899.jpg)
+
 
 公司2023年1024算法比赛二等奖获得者
 
