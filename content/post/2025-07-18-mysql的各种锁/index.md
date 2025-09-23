@@ -529,7 +529,7 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 
 
 
-**<font color='red'>在读已提交隔离级别下，通过二级索引上锁，数据会按照二级索引+主键索引的情况排序。及时只是通过排他锁锁定固定值的二级索引。</font>**
+**<font color='red'>在可重复读隔离级别下，通过二级索引上锁，数据会按照二级索引+主键索引的情况排序。即使只是通过排他锁锁定固定值的二级索引。</font>**
 
 
 
@@ -539,7 +539,7 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 
 **<font color='red'>在锁定值后：上一个GAP间隙锁，锁定范围为指定值到下一条数据（不包含）的间隙。</font>**
 
-<font color='red'>注意，这里提到的上一条数据和下一条数据包括曾经被删除但没有被整理的数据。所以在读已提交下，二级索引上锁并不稳定。</font>
+<font color='red'>注意，这里提到的上一条数据和下一条数据包括曾经被删除但没有被整理的数据。所以在可重复读下，二级索引上锁并不稳定。</font>
 
 
 
