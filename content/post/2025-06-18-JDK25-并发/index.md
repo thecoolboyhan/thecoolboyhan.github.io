@@ -2384,7 +2384,7 @@ public class ExecutorTest {
 
 
 
-## ForkJoinPool
+### ForkJoinPool
 
 > 利用forkJoin来拆分任务，首先定义：
 >
@@ -3197,7 +3197,7 @@ ForkJoinPool可以分解任务，窃取其他线程任务，增加CPU的利用�
 
 
 
-## 结构化并发(扩展)
+## 结构化并发(JDK21预览版扩展)
 
 
 
@@ -3403,6 +3403,234 @@ class StructuredConcurrencyExample {
 ```
 
 
+
+## JDK25官方结构化并发
+
+
+
+### **使用** `ExecutorService` **实现的非结构化并发**
+
+> 传统的多个子任务拆分和聚合
+
+```java
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<String> user = executor.submit(UnstructuredConcurrencyWithExecutorService::findUser);
+            Future<Integer> order = executor.submit(UnstructuredConcurrencyWithExecutorService::fetchOrder);
+//            执行get方法时，主线程会阻塞，等待子任务都执行结束后，才会继续运行
+            String theUser = user.get();
+            Integer theOrder = order.get();
+            System.out.println("user:"+theUser+",order:"+theOrder);
+        }
+    }
+    private static int fetchOrder(){
+        return 1;
+    }
+    private static String findUser(){
+        return "rose";
+    }
+```
+
+
+
+- 传统Executors存在的缺陷
+
+
+
+如果获取顺序或者获取姓名操作任意一个失败，并不会影响另一个线程的运行，这样会导致系统资源（线程）的浪费，造成<font color='red'>线程泄露</font>。而且仍在后台运行的线程，可能会影响到其他线程的正常运行。
+
+> 最好的情况是：如果一个子任务出现了异常，就主动通知其他子任务取消运行，但Future并没有提供这样的方法，且Future的任务之间无法获取关联关系。所有线程都可以往同一个Executors提交任务，被提交的任务无法感知到互相之间的关联关系。
+
+
+
+### 结构化并发的优化
+
+> 上面提出的问题，虽然可以通过ForkJoinPool中的fork和join操作来实现如果中途出现问题，就取消fork操作来部分的解决问题。
+>
+> 但ForkJoinPool是针对CPU密集型任务设计的线程池，不能涉及到IO密集型的任务。
+
+结构化并发保留了任务和子任务之间的自然关系，从而形成更易读懂，更易维护的并发代码。
+
+
+
+- 结构化并发原则
+
+如果一个任务被分解成并发的子任务，那么它都会返回到同一个地方，即该任务的代码块。
+
+
+
+对于多层嵌套的父子任务（父任务下有子任务，父任务上还有父任务）形成的树型结构，所有子任务的生命周期与自己父任务的生命周期相同。
+
+由于多层嵌套，且父任务可以无限（接近无限）的创建子任务，并递归。会产生大量的线程，虚拟线程的出现让这种结构成为了可能。
+
+
+
+- 利用结构化并发优化代码
+
+```java
+public static void main(String[] args) throws InterruptedException {
+    try(var scope=StructuredTaskScope.open()){
+        StructuredTaskScope.Subtask<Integer> user= scope.fork(()->fetchOrder());
+        StructuredTaskScope.Subtask<String> order= scope.fork(()->findUser());
+        scope.join();
+        System.out.println("user:"+user.get()+",order:"+order.get());
+    }
+}
+private static int fetchOrder(){
+    return 1;
+}
+private static String findUser(){
+    return "rose";
+}
+```
+
+如果任意一个子任务在运行过程中出错，当前父任务下的子任务全部失效。
+
+
+
+### 模拟其中一个任务失败，导致其他所有子任务“短路”
+
+```java
+public class UnstructuredConcurrencyWithStructuredTaskScope {
+    public static void main(String[] args) {
+        long l = System.currentTimeMillis();
+        try(var scope=StructuredTaskScope.open()){
+            StructuredTaskScope.Subtask<Integer> user= scope.fork(()->fetchOrder());
+            StructuredTaskScope.Subtask<String> order= scope.fork(()->findUser());
+            scope.join();
+            System.out.println("user:"+user.get()+",order:"+order.get());
+        }catch (Exception e){
+//            捕获并不处理异常，来统计父任务运行时间
+        }
+//        运行耗时
+        System.out.println("父任务聚合结果耗时："+(System.currentTimeMillis()-l));
+    }
+    private static int fetchOrder() {
+        long l = System.currentTimeMillis();
+        try {
+            Thread.sleep(10000l);
+        } catch (InterruptedException e) {
+//            捕获异常统计子任务运行时间
+            System.out.println("其他子任务出现异常，打断当前任务运行:"+(System.currentTimeMillis()-l));
+            return 1;
+        }
+        System.out.println("运行结束，正常返回");
+        return 1;
+    }
+    private static String findUser() throws InterruptedException {
+//        模拟抛异常，看看是否会打断另一个线程
+        Thread.sleep(2000l);
+//        两秒后抛出异常，打断另一个线程
+        throw new RuntimeException("123");
+//        return "rose";
+    }
+}
+```
+
+运行结果：
+
+![1758695574930.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-09/1758695574930_1758695574942.png)
+
+
+
+
+
+## 作用域值 ScopedValue
+
+多个线程中共享变量，一直都是成本高，且很难管控和处理的问题。尤其是有了虚拟线程和结构化并发后，java线程并不再是稀缺资源，多线程变量共享成为了目前最大的瓶颈。于是新的作用域值应孕而生。
+
+
+
+### 传统多个线程间传递信息的方式
+
+1. 使用共享内存
+   1. 类的static变量是属于class对象独有的，固可以在多个线程（栈）中共享，但对其操作需要考虑可见性（cas）、原子性问题。
+   2. 线程安全集合、队列、map等共享信息
+2. 使用javaIO中的管道流，通过IO流利用操作系统实现生成消费模型，让两个线程之间共享。
+3. 利用Exchange（ThreadLocal）实现线程上下文保存。
+
+
+
+- 以上三种方式的弊端
+
+共享内存、IO流需要使用锁或有操作系统调度的IO来阻塞线程，共享成本较高。
+
+利用ThreadLocal可实现伴随着线程同生命周期的上下文对象，但内存占用高。且如果在线程池中，会出现内存泄露问题。
+
+ThreadLocal在多个线程间传递时，需要多值复制。
+
+> 通常，线程局部变量被声明为 `static final` 字段，并将其可访问性设置为 `private` ，从而将共享限制在单个代码库中的单个类或一组类的实例之间。
+
+
+
+**ThreadLocal的三个缺陷**
+
+1. 不受约束的可变性——每个线程局部变量都是可变的
+2. 无限制的生命周期——一旦通过 `set` 方法设置线程本地变量的副本，该值将一直保留到线程结束，或者直到线程中的代码调用 `remove` 方法。
+3. 昂贵的继承——使用大量线程时，线程局部变量的开销可能会更糟，因为父线程的线程局部变量可以被子线程继承。(InheritableThreadLocal)
+
+
+
+### ScopedValue
+
+随着虚拟线程和结构化并发的流行，父子线程传递变量，线程池化技术等成为了必不可少的一部分。
+
+
+
+作用域值可以伴随着所有设计到此作用域值的线程消亡而消亡。且作用域值对于相同作用域的
+
+**作用域值的生命周期**
+
+```
+|
+  |   +–– a
+  |   |
+  |   |  +–– b
+  |   |  |
+TIME  |  |  +–– c
+  |   |  |  |
+  |   |  |  |__
+  |   |  |
+  |   |  |__
+  |   |
+  |   |__
+  |
+  v
+```
+
+
+
+**测试代码**：
+
+``` java
+public class ScopedValueApi1 {
+    private static final ScopedValue<String> X=ScopedValue.newInstance();
+    void foo(){
+//       false：检测是否存在值
+        System.out.println(X.isBound());
+        where(X,"Hello").run(()->bar());
+//        没有值会直接报错
+//        System.out.println(X.get());
+        
+    }
+    void bar(){
+//       打印父线程传递的值
+//        Hello接收到父线程传递的hello
+        System.out.println(X.get());
+        where(X,"goodbye").run(()->baz());
+//        Hello:把goodbye传递给了baz，但自己不受到影响
+        System.out.println(X.get());
+    }
+    void baz(){
+      //goodbye:接收到父线程传递的goodbye
+        System.out.println(X.get());
+    }
+    public static void main(String[] args) {
+        ScopedValueApi1 scopedValueApi1 = new ScopedValueApi1();
+        scopedValueApi1.foo();
+    }
+}
+```
 
 
 
