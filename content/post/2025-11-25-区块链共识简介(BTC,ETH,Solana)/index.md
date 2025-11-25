@@ -2,7 +2,7 @@
 title:  区块链共识简介（BTC、ETH、Solana）
 description: 区块链一直是21世纪较为流行的技术，但其本质就是在分布式场景中如何达成共识。这与分布式事务，分布式系统设计异曲同工。
 image: 1.png
-date: 2025-11-18
+date: 2025-11-25
 categories: 
   - 精选
   - web3
