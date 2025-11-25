@@ -1,15 +1,17 @@
 ---
-title:  从区块链角度研究分布式一致性问题
+title:  区块链共识简介（BTC、ETH、Solana）
 description: 区块链一直是21世纪较为流行的技术，但其本质就是在分布式场景中如何达成共识。这与分布式事务，分布式系统设计异曲同工。
 image: 1.png
 date: 2025-11-18
 categories: 
   - 精选
   - web3
+  - rust
 tags:
   - 架构
   - 分布式
-  - web3
+  - web3	
+  - rust
 ---
 
 # 区块链
@@ -366,3 +368,145 @@ Solana的设计：
 - **交易并行处理**：Solana的交易必须提前声明将读取和修改哪些账户。运行时可以同时在多个CPU核心上执行不冲突的交易。如果交易A修改账户X，而交易B修改账户Y，它们可以并行运行。（本质上对于单个账户还是串行处理，多个线程操作的账户完全隔离）
 - **优化执行**：SVM使用基于寄存器的架构，而不是EVM基于堆栈的方式，从而减少了计算过程中的数据复制和移动，程序编译为本地汇编，而不是字节码，消除了编译的开销。（有点牵强）
 - **可预测的成本**：和以太坊多年前确定的固定Gas价格不同，Solana使用了动态费用市场，交易成本反映了实际的网络需求和消耗的计算资源。
+
+
+
+## Solana简介
+
+
+
+### 账户
+
+存储在区块链上的数据容器。
+
+``` rust
+pub struct Account {
+    /// lamports in the account
+      /// 该账户的lamports
+    pub lamports: u64,
+    /// data held in this account
+  ///账户中拥有的数据
+    #[cfg_attr(feature = "serde", serde(with = "serde_bytes"))]
+    pub data: Vec<u8>,
+    /// the program that owns this account. If executable, the program that loads this account.
+  ///拥有该账户的程序，如果执行程序，程序加载该账户
+    pub owner: Pubkey,
+  ///
+    /// this account's data contains a loaded program (and is now read-only)
+  /// 该账户的数据包含已加载的程序（现在为只读）
+    pub executable: bool,
+    /// the epoch at which this account will next owe rent
+  /// 该账户将要在下一个 epoch 支付租金的 epoch
+    pub rent_epoch: Epoch,
+}
+```
+
+
+
+每个账户都拥有一个唯一的32字节地址（如：14grJpemFaf88c8tiVb77W7TYg2W3ir6pfkKz3YjhhZ5）。此地址是账户在区块链上的标识符，用来定位特定的数据。
+
+每个账户可以存储10M的数据，这些数据为可执行的程序代码或者特定程序的数据。
+
+所有账户都需要根据其数据大小存入一定数量的lamport押金以达到“免租”状态。
+
+每个账户都由一个程序拥有，只有拥有程序可以修改账户的数据或提取其lamport。
+
+
+
+#### 账户类型
+
+**系统账户**：存储lamports（SOL的最小单位）并由系统程序拥有。这些账户是基本的钱包账户，用户可以直接与其交互来发送和接收SOL。
+
+**代币账户**：用来存储SPL代币信息，包含所有权和代币元数据。这些账户由代币程序拥有，并管理Solana生态系统中的所有代币相关操作。<font color='red'>代币账户属于数据账户</font>
+
+**数据账户**：存储特定应用程序的信息，并由自定义程序拥有，这些账户保存应用程序的状态。
+
+**程序账户**：包含在Solana上运行的可执行代码，也就是只能合约所在的位置。这些账户被标记为executable: true，存储处理指令和管理状态的程序逻辑。
+
+
+
+#### 使用账户数据
+
+``` rust
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct UserAccount {
+    pub name: String,
+    pub balance: u64,
+    pub posts: Vec<u32>,
+}
+
+pub fn update_user_data(accounts: &[AccountInfo], new_name: String) -> ProgramResult {
+    let user_account = &accounts[0];
+    
+    // Deserialize existing data，反序列化
+    let mut user_data = UserAccount::try_from_slice(&user_account.data.borrow())?;
+    
+    // Modify the data，修改用户数据
+    user_data.name = new_name;
+    
+    // Serialize back to account，序列化数据
+    user_data.serialize(&mut &mut user_account.data.borrow_mut()[..])?;
+    
+    Ok(())
+}
+```
+
+
+
+### 交易
+
+Solana的交易是原子操作，可以有多个指令，要么全部成功，要么全部失败。
+
+一笔交易包含：
+
+1. **指令**：要执行的单个操作
+2. **账户**：每个指令要读取或写入特定的账户
+3. **签名者**：授权交易的账户
+
+``` rust
+Transaction {
+    instructions: [
+        // Instruction 1: Transfer SOL，指令1：转账
+        system_program::transfer(from_wallet, to_wallet, amount),
+        
+        // Instruction 2: Update user profile ，指令2更新用户资料 
+        my_program::update_profile(user_account, new_name),
+        
+        // Instruction 3: Log activity，指令3：记录本次交易日志
+        my_program::log_activity(activity_account, "transfer", amount),
+    ],
+  /// 账户，操作的账户，来源账户，目标账户，用户资料账户，日志记录账户
+    accounts: [from_wallet, to_wallet, user_account, activity_account]
+  ///授权的账户
+    signers: [user_keypair],
+}
+```
+
+
+
+#### 交易要求和费用
+
+> 每次交易总大小最大为1232字节，限制了可以执行的指令和账户的数量。
+
+每个指令都需要包含：要调用的程序地址、指令将读取和写入的所有账户，以及任何附加的数据。
+
+指令会按照交易中指定的顺序依次执行。
+
+**手续费**：每笔交易需每个签名5000lamports的基础费用。（用来补偿验证者处理交易）
+
+> 可以额外支付优先费用，来提交本次交易的验证的优先级。
+
+
+
+### Solana上的程序
+
+> Solana上的程序本身是无状态的，这意味着它们在函数调用之间不维护任何内部状态。他们接收账户作为输入，然后把处理后的结果写入到账户中。
+
+
+
+程序代码保存在 标记为*executable: true*的特殊账户中，其中包含了在调用执行时的已经编译的二进制代码。
+
+
+
+
+
