@@ -1,0 +1,3304 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Book on 韩永发的博客</title><link>https://thecoolboyhan.github.io/tags/book/</link><description>Recent content in Book on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 18 Nov 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/tags/book/index.xml" rel="self" type="application/rss+xml"/><item><title>读《Kafka权威指南》有感</title><link>https://thecoolboyhan.github.io/p/%E8%AF%BBkafka%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E6%9C%89%E6%84%9F/</link><pubDate>Tue, 18 Nov 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/%E8%AF%BBkafka%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E6%9C%89%E6%84%9F/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/%E8%AF%BBkafka%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E6%9C%89%E6%84%9F/1.png" alt="Featured image of post 读《Kafka权威指南》有感" /&gt;&lt;h1 id="kafka权威指南"&gt;《kafka权威指南》
+&lt;/h1&gt;&lt;h2 id="第一章初识kafka"&gt;第一章、初识Kafka
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;一个分布式的、可分区的、可复制的提交日志服务。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="11-发布与订阅消息系统"&gt;1.1 发布与订阅消息系统
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;传统的发布订阅消息系统&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1762999538762_1762999538774.png"
+loading="lazy"
+alt="1762999538762.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;一个独立的应用程序，用于接收所有其他应用程序的指标，并为其他系统提供一个查询接口。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1762999732109_1762999732147.png"
+loading="lazy"
+alt="1762999732109.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;在传统发布订阅的基础上，增加发布与订阅日志和发布与订阅跟踪。这样又新增了2个独立的应用程序单独负责。&lt;/p&gt;
+&lt;p&gt;三个独立的应用程序，有太多重复的部分，且各自之间也存在缺陷和不足。所以需要一个单一的集中式系统的需求就应孕而生。（公司业务规模越大，此需求越大）&lt;/p&gt;
+&lt;h3 id="12-kafka登场简介"&gt;1.2 Kafka登场（简介）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;kafka就是统一上面三个独立应用程序而创造的消息系统。一般被称为“分布式提交日志”或者“分布式流平台”。文件系统或数据库来提供所有事务的持久记录，通过重放日志可以重建系统的状态。Kafka的日志是按照顺序持久化保存的，可以按需读取。kafka的数据分布在整个传统里，具备数据故障保护和性能伸缩能力。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;消息和批次&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;消息：&lt;/p&gt;
+&lt;p&gt;kafka的数据单元被称为&lt;strong&gt;消息&lt;/strong&gt;，类似于mysql中的数行或一条记录。消息由byte数组组成，消息里的数据没有特别的格式和含义。消息可以有一个可选的元数据（key），key也是一个字节数组，和消息一样没有格式和特殊含义。消息根据key存入一个一致性散列值（hash表），根据散列值把消息存入不同的分区。这样可以保证具有相同key的消息总被分配到相同的分区上。&lt;/p&gt;
+&lt;p&gt;批次：&lt;/p&gt;
+&lt;p&gt;为了提高效率，消息被分批次写入kafka。&lt;strong&gt;批次&lt;/strong&gt;就是一组消息，这些消息属于同一个主题和分区。如果消息不按照批次处理，大量消息将导致网络开销巨大。不过批次越大，单位时间内处理的消息就越多，单个消息传输的时间就越长。&lt;font color='red'&gt;(吞吐量越大，时间延迟越高)&lt;/font&gt; 批次内的消息会被压缩。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;主题和分区&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;kafka的消息通过主题进行分类，主题就好比数据库的表。一个主题可以被分为若干个&lt;strong&gt;分区&lt;/strong&gt;，一个消息就是一个提交日志，消息以追加的方式写入分区，然后以先入先出的顺序读取。&lt;font color='red'&gt;一个主题一般包含多个分区，因此无法在整个主题范围内保证消息的顺序，但可以保证单个分区内的顺序。&lt;/font&gt; 每个分区可以分布在不同的服务器上，一个主题可以横跨多个服务器，以此来提供更强大的性能。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763001993571_1763001993608.png"
+loading="lazy"
+alt="1763001993571.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;流&lt;/strong&gt;指一组从生产者移动到消费者的数据。框架以实时的方式处理消息，也就是所谓的流式处理。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;生产者和消费者&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;生产者&lt;/strong&gt;创建消息，生产者把消息均衡地分布到主题的所有分区上，而并不关心特定消息会被写到哪个分区。（消息会根据key来决定会被分布到哪个分区）&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;消费者&lt;/strong&gt;读取消息，消费者订阅一个或多个主题，并按照消息生成的顺序读取他们，消费者通过偏移量来确定消息是否已经读取过。&lt;strong&gt;偏移量&lt;/strong&gt;是一个不断递增的元数据，在消息被创建时，kafka会把它添加到消息里，在给定的分区内，每个消息的偏移量都是唯一的。消费者把每个分区最后读取的偏移量保存在ZooKeeper或者kafka上，如果消费者服务器重启，它的读取状态不会丢失。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763002943557_1763002943602.png"
+loading="lazy"
+alt="1763002943557.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;broker和集群&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个独立的kafka服务器被称为 &lt;strong&gt;broker&lt;/strong&gt;，broker接收来自生产者的消息，为消息设置偏移量，并把消息保存到磁盘。broker为消费者提供服务，对读取分区的请求做出响应。&lt;/p&gt;
+&lt;p&gt;broker是 &lt;strong&gt;集群&lt;/strong&gt;的组成部分，每个集群都有一个&lt;strong&gt;broker&lt;/strong&gt;同时充当集群控制器的角色（leader）。控制器负责管理工作，包括将分区分配给broker和监视broker。一个分区可以被分配给一个或多个broker，（分区复制）。这种复制机制为分区提供了消息冗余，如果一个broker失效，其他broker可以接管。不过相关的生产者消费者要连接到新的接管broker上。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763003433977_1763003434014.png"
+loading="lazy"
+alt="1763003433977.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;消息保留&lt;/strong&gt;，kafka可以保留一段时间（7天）或者保留到消息达到一定大小的字节数（1GB）。当消息达到上限时，旧的消息会过期并删除。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;多集群&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果kafka数量众多，可以基于一下几点原因，使用多个集群。&lt;/p&gt;
+&lt;p&gt;数据类型分离、安全需求隔离、多数据中心（灾备）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;如果使用了多个集群，则需要在它们之间复制消息。这样才可以保证应用程序可以多个站点中访问到相同的数据。&lt;font color='red'&gt;kafka基于broker的消息复制机制，只能在单个集群中进行。&lt;/font&gt; 为了让消息在多个集群间复制，kafka提供了一个叫做&lt;strong&gt;MirrorMaker&lt;/strong&gt;的工具。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763003900782_1763003900805.png"
+loading="lazy"
+alt="1763003900782.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;中心A生产者发布一个消息到中心A，中心B中的mirrorMaker读取中心A中的消息，传递给中心C中的mirrorMaker，中心C的maker把消息发布到中心C中。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="13-why-kafka"&gt;1.3 Why kafka
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;kafka的优势&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;多生产者：可以同时接收多个生产者产生的数据，帮助统一格式。&lt;/li&gt;
+&lt;li&gt;多消费者：可已让多个消费者组成一个群组，保证每个群组一个消息只被处理一次（同一个消息被多个消费者处理）&lt;/li&gt;
+&lt;li&gt;基于磁盘的数据存储：消息被提交到磁盘，可以有效的错峰，或灾备。&lt;/li&gt;
+&lt;li&gt;伸缩性：kafka是一个灵活伸缩的系统，可以随着业务的发展来动态调整kafka应用数量。&lt;/li&gt;
+&lt;li&gt;高性能：kafka可以轻松处理巨大的消息流，可以保证亚秒级的消息延迟。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="第三章向kafka写入数据生产者"&gt;第三章、向kafka写入数据（生产者）
+&lt;/h2&gt;&lt;h3 id="生产者概览"&gt;生产者概览
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763105117507_1763105117600.png"
+loading="lazy"
+alt="1763105117507.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;生产者先创建一个ProducerRecord对象，对象中包含目标主题，发送的内容。（同时可以指定键或分区）在发送对象时，生产者把键和值序列化成字节数组。&lt;/li&gt;
+&lt;li&gt;数据被传递给分区器，如果之前ProducerRecord对象指定了分区，分区器不会做任何事；如果没有，分区器会根据ProducerRecord对象的键来选择一个分区。选择好分区后，生产者可以得知该往哪个主题的哪个分区发送这条记录。此记录会被添加到一个记录批次里，这个批次里的所有消息都会被发送到相同的主题和分区上。（一个单独的线程负责把这些记录批次发送到相应的broker上）&lt;/li&gt;
+&lt;li&gt;服务器在收到消息后。如果消息成功写入kafka，就返回包含主题和分区信息的响应对象，以及记录在分区里的偏移量。如果写入失败就返回一个报错。生产者可以时情况重试或者失败。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="发送消息到kafka"&gt;发送消息到kafka
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;发送并忘记（fire-and-forget）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;把消息发送到服务器，并不关心是否正常到达。因为kafka是高可用的，而且生产者会自动尝试重发，但还有可能会丢失一部份消息。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;同步发送&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;使用send（）方法后，会返回一个Future对象，调用get（）方法进行等待，可以得知消息是否发送成功。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;异步发送&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;使用send（）方法时，指定一个回调函数，服务器在返回响应时调用该函数。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763106126189_1763106126227.png"
+loading="lazy"
+alt="1763106126189.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;结果返回时，会调用Demo类中的onCompletion方法&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="生产者配置"&gt;生产者配置
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;acks&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;指定有多少个分区副本收到消息，生产者才会认为消息写入成功。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;acks=0&lt;/strong&gt;：生产者不会等待任何来自服务器的响应。（如果中间出现了问题，生产者无从得知，消息也会丢失）&lt;font color='red'&gt;发送消息速度最快，吞吐量大&lt;/font&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;acks=1&lt;/strong&gt;：只要集群的首领节点收到消息，生产者就会收到来自服务器的成功响应。如果消息无法到达首领节点，生产者会收到一个错误响应，并重试。在重试期间，如果集群选出了一个新的首领。会时新首领有没有收到消息的情况来判断消息是否会丢失。（收到就不丢失，没收到则丢失）&lt;strong&gt;由于存在消息重试，如果是同步发送消息模式，则可能会影响性能和吞吐量&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;acks=All&lt;/strong&gt;：所有参与复制的节点都收到消息时，生产者才会收到一个服务器的成功响应。此模式最安全，它可以保证就算所有服务器都发生了崩溃，整个集群仍可以正常运行。&lt;font color='red'&gt;吞吐量最差，最安全&lt;/font&gt;&lt;/p&gt;
+&lt;h2 id="第四章从kafka读取数据消费者"&gt;第四章、从kafka读取数据（消费者）
+&lt;/h2&gt;&lt;h3 id="kafkaconsumer概念"&gt;kafkaConsumer概念
+&lt;/h3&gt;&lt;p&gt;kafka可以视消息生产消费的速度，来动态的调整同一主题下，消息的生产者和消费者数量。（多个生产者向同一个主题写入消息，多个消费者从同一个主题中读取消息）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763108784023_1763108784060.png"
+loading="lazy"
+alt="1763108784023.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;一个分区只能给同一消费者群组中的一个消费来消费。多个分区可以同时给一个消费者消费。如果同一消费者群体中，消费者大于分区数，则会导致一个消费者闲置&lt;/font&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763109012314_1763109012353.png"
+loading="lazy"
+alt="1763109012314.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;两个消费者群体读取同一主题的消息，两个消费者群体互不影响（相互隔离）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="提交和偏移量"&gt;提交和偏移量
+&lt;/h3&gt;&lt;p&gt;消费者每次调用poll（）方法，会返回由生产者写入但没有被消费者读取过的记录。&lt;/p&gt;
+&lt;p&gt;消费者向_consumer_offerSet的特殊主题发送消息，消息中包含每个分区的偏移量。如果消费者发生崩溃，或者有新的消费者加入群组，就会发生 &lt;strong&gt;再均衡&lt;/strong&gt;，每个消费者可能会被分配到新的分区，而不是之前处理的那个。消费者根据偏移量来获取每个分区最后一次提交的偏移量，然后从偏移量指定的地方继续消费。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;提交的偏移量小于客户端处理的最后一个消息的偏移量：导致消息被重复消费&lt;/li&gt;
+&lt;li&gt;提交的偏移量大于客户端处理的最后一个消息的偏移量：导致消息丢失。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;消息的几种提交方式：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;自动提交&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;处理方便，但可能会导致重复消费&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;每隔一段时候（默认5s），消费者自动把最大的偏移量提交。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果在最后一次提交的3s后发生了再均衡，新的消费者从最后一次提交的偏移量开始读取消息，会导致在这3s内到达的消息被重复消费。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;提交当期偏移量(同步)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;开发者自定义，消息重复程度视每次提交间隔的数据&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;由开发者自己控制偏移量的提交，通过commitSync（）方法主动提交。（&lt;font color='red'&gt;返回结果前，会阻塞程序&lt;/font&gt;）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果在主动提交之前程序崩溃，会导致上次提交前的消息都被重复消费。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;异步提交偏移量&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;开发者自定义，无重试，只会异步发送一次提交，不管提交是否成功。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;还是开发者自己控制提交偏移量操作，通过commitAsync（）方法。但提交线程不会等待返回结果，直接继续执行。&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;需要注意，因为异步可能会产生各种延迟问题。可能后发先至，先发后至。开发者应在回调时，自己维护目前最大偏移量，避免出现较小偏移量覆盖较大偏移量的情况。&lt;/font&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;同步和异步组合提交&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;同步提交速度慢，但可靠。异步提交速度快，但可能会出现问题。程序正常运行时，可采用异步提交，就算某次提交失败，也可以在下次提交时，记录最新偏移量。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;程序关闭，或最后一次提交时，应严格采用同步提交。保证偏移量的最终准确性。&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;提交特定的偏移量&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;上述提交的方式，都是按照“整批”为维度来提交偏移量的。如果一个批次很大，但消费者想在处理到一半时提交偏移量。就需要使用提交本地map的方式来处理。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ConsumerRecords&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;records&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;consumer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;poll&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;100&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ConsumerRecords&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;record&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;records&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;如果处理达到1000条&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;consumer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;commitAsyc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;当前偏移量的map&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="kc"&gt;null&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="第五章深入kafka"&gt;第五章、深入kafka
+&lt;/h2&gt;&lt;h3 id="分区和节点管理"&gt;分区和节点管理
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;如何注册和退出&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;kafka通过订阅ZooKeeper的/brokers/ids路径下的节点来管理broker的加入集群或者退出集群。（&lt;strong&gt;ZooKeeper当做kafka的注册中心&lt;/strong&gt;）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何选择集群leader&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;成为leader：集群里的每个broker都会尝试在ZooKeeper目录下创建一个临时节点/controller，只会有一个成功， 其他的创建失败。&lt;/p&gt;
+&lt;p&gt;重新选举：通过ZooKeeper的watch机制，当发现之前leader节点下线后，每个broker都会尝试在ZooKeeper中创建临时节点/controller来让自己当选leader。&lt;/p&gt;
+&lt;p&gt;离群分区分配：上面成为leader的broker发现某个分区的broker离开了集群，leader的broker会遍历这些分区，并选出一个新的broker来消费当前分区。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;kafka通过ZooKeeper的临时节点来选举控制器，并在节点加入集群或退出集群时通知控制器。控制器负责在节点加入或离开集群时进行分区首领选举。控制器通过版本号来避免脑裂&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="复制"&gt;复制
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;在个别节点失效时，仍能保证kafka的可用性和持久性。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;主从复制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;首领副本：每个分区的主副本，所有生产者和消费者请求都会经过这个副本。&lt;/p&gt;
+&lt;p&gt;跟随者副本：首领副本之外的都是跟随者副本，跟随者副本不处理用户请求，只从首领副本复制消息。（在首领部分失效后，成为新的首领副本）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;同步状态检测&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;首领副本下线后，只有 &lt;strong&gt;同步的跟随者&lt;/strong&gt;副本才有可能被选择为新的首领副本。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;进度：跟随者副本通过偏移量来向首领副本复制消息，这些偏移量都是有序获取的（1、2、3、4.。。）首领副本通过获取的偏移量，可以得知每个跟随者复制的进度。&lt;/p&gt;
+&lt;p&gt;超时：如果跟随者副本10秒内没有请求任何消息，则被认为是不同步的。不同步的跟随者不能成为新的首领。&lt;/p&gt;
+&lt;h3 id="请求处理"&gt;请求处理
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763359503504_1763359503534.png"
+loading="lazy"
+alt="1763359503504.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;生产请求和获取请求（生产者和消费者）都必须发送请求给分区的首领副本，如果broker收到的特定分区的请求，而该分区的首领在另一个broker上，则broker会返回一个非分区首领的错误响应。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;客户端需要自己负责把请求发送到正确的broker上。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763360924683_1763360924725.png"
+loading="lazy"
+alt="1763360924683.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;客户端通过元数据请求获取最新的分区请求，把不同分区的请求发送给正确的broker。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;生产请求&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;首领副本的broker收到生产请求后：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;发送数据的用户是否有主题的写入权限&lt;/li&gt;
+&lt;li&gt;请求中的acks值是否有效（0、1、all）&lt;/li&gt;
+&lt;li&gt;如果acks=all，判断是否有足够多的同步副本保证消息已经被安全写入&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;acks为0或1时：broker会立刻返回响应&lt;/p&gt;
+&lt;p&gt;acks=all：请求被保存在缓冲区（炼狱），知道首领副本发现所有跟随者副本都复制了消息，才把响应返回给客户端。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;获取请求&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;kafka的broker使用零拷贝技术向客户端发送消息，&lt;strong&gt;kafka直接把消息从文件（Linux文件系统缓存）里发送到网络通道，不需要经过任何中间缓冲区。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;避免了字节复制，也不需要管理内存缓冲区，从而获得更好的性能。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763361582440_1763361582478.png"
+loading="lazy"
+alt="1763361582440.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763361658504_1763361658557.png"
+loading="lazy"
+alt="1763361658504.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;分区领主只会给消费者返回已经同步过的消息，还没有完全同步的消息会被认为时不安全的。&lt;/p&gt;
+&lt;h3 id="数据存储"&gt;数据存储
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;分区分配&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;kafka会在broker间平均的分布分区副本。&lt;/li&gt;
+&lt;li&gt;kafka会确保每个分区的每个副本分布在不同的broker上。（为了保证高可用）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763364138311_1763364138351.png"
+loading="lazy"
+alt="1763364138311.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;kafka在存储消息时，直接按照返回给消费者的格式来存储。（这样才能利用CPU零拷贝技术）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-11/1763364299983_1763364299998.png"
+loading="lazy"
+alt="1763364299983.png"
+&gt;&lt;/p&gt;
+&lt;h2 id="第六章可靠的数据传递"&gt;第六章、可靠的数据传递
+&lt;/h2&gt;&lt;h3 id="可靠性保证"&gt;可靠性保证
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;**保证：**确保系统在各种不同的环境下能够发生一致的行为。&lt;font color='red'&gt;一致性&lt;/font&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;ACID是关系型数据库普遍支持的标准可靠性保证。&lt;/p&gt;
+&lt;p&gt;如果一个供应商说他们的数据库遵循 &lt;strong&gt;原子性、一致性、隔离性和持久性&lt;/strong&gt;规范，其实就是说他的数据库支持与事务相关的行为。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;kafka可以保证分区消息的顺序。先写入的消息一定先被读到。&lt;/li&gt;
+&lt;li&gt;只有消息被写入分区的所有同步副本时（不一定是写入磁盘时），此消息才会被认为是“已提交”。（&lt;strong&gt;原子性&lt;/strong&gt;）&lt;/li&gt;
+&lt;li&gt;只要有一个副本是活跃的，那么已经提交的消息就不会被丢失。（高可用）&lt;/li&gt;
+&lt;li&gt;消费者只能读取已提交的事务。（隔离性的表现）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;以上几个机制可以用来构建可靠的系统，但仅依赖他们不能保证系统的完全可靠。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="broker配置"&gt;broker配置
+&lt;/h3&gt;&lt;p&gt;管理员可以通过broker配置，来让主题变成可靠的或非可靠的。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;复制系数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;每个分区应该有多少个不同的broker了保存副本。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;系数越高，系统越可靠。但性能消耗和空间也会成几何倍数增长。&lt;/p&gt;
+&lt;p&gt;如果系数为1：下线后只能等原broker上线才能使用系统。&lt;/p&gt;
+&lt;p&gt;如果系数为2：理论系统仍可正常提供服务，但一个broker出现问题，可能会导致另一个broker也需要重启，可能仍不能一致提供服务。&lt;/p&gt;
+&lt;p&gt;因此，默认推荐复制系数为3。保证一个broker下线后，系统仍能正常提供服务。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不完全的首领选举&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;分区首领下线后，默认会让一个 &lt;strong&gt;完全同步&lt;/strong&gt;过的副本上线，但如果所有副本都不是完全同步的，则会触发不完全选举。&lt;/p&gt;
+&lt;p&gt;如果允许不完全同步选举，随可以保证系统可用，但可能会丢失部分消息。&lt;/p&gt;
+&lt;p&gt;如果不允许不完全同步选举，分区需等待原首领上线后才能提供服务，无法保证系统可用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;最少同步副本&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;决定一个消息需要同步到几个副本上，就认为消息被提交了。推荐为3个。如果过少，会导致分区不可用。（在可用性和一致性之间做决策）&lt;/p&gt;
+&lt;h3 id="可靠的生产者"&gt;可靠的生产者
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;发送确认&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;acks=0&lt;/strong&gt;：生产这发送消息，就认为消息写入成功。性能最好，但可能会丢失消息。只要此过程中分区发生了选举，就一定会丢失消息。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;acks=1&lt;/strong&gt;：只要分区首领接收到了消息，就认为写入成功。为了保证消息可靠，需要在生产者添加消息重试机制。如果此次发生选举，仍可能会丢失部分消息。如分区首领在向分区副本同步时下线。相对丢失消息数量少。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;acks=ALL&lt;/strong&gt;：所有副本同步，才算收到消息。同时生成者也需要添加消息重试机制，性能最差，但最保险。&lt;/p&gt;
+&lt;h3 id="可靠的消费者如何提交偏移量"&gt;可靠的消费者（如何提交偏移量）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;为了达到可靠的目标，如何提交偏移量可以让出问题的影响最小。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;总是在处理完成事件后再提交偏移量&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在一批次处理结束后提交（自动提交或者手动提交）偏移量。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;可能会导致一批次数据的错误，需要做好事务，如果提交时系统宕机，则导致批次数据被重复消费。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;提交操作报错后重试&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;由于kafka的消息是按照顺序排好的，如果一批次读取到30和31两条数据，30处理失败，31处理成功。如果只提交31偏移量，会让其他消费者认为31之前的数据全部处理成功。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;对于上述场景，有两种处理方式：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;提交最后一个处理成功的偏移量（31），把没有处理好的消息保存到缓冲区中（30），调用消费者的pause（）方法让其他的轮询不返回数据，然后尝试30的消息，知道重试成功。成功后调用resume（）方法，让消费者继续获取新数据。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;暂停现有消费，先提交处理进度，最大努力重试失败的交易。如果系统宕机，可以从缓冲中获取到失败的交易，继续重试。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;把错误写入一个独立的kafka主题，然后继续。由一个独立的消费者负责记录错误的主题，最大努力重试。（dead-letter-queue）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;dead-letter-queue &lt;strong&gt;死信队列&lt;/strong&gt;：把错误或失败的数据，单独记录，不影响主流程的正常工作。但对于状态机等依赖前置状态的操作不可用。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;消费者需根据处理进度维护状态 （&lt;strong&gt;记忆化搜索&lt;/strong&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于根据处理情况，来维护或统计状态的情况，要在上述处理后提交偏移量的基础上，并把每次处理的新状态写入一个单独的主题，让状态和偏移量对应。这样系统也方便重启或者从某个节点续跑。（有点类似于大数据的拉链表）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;存在一个问题，就是kafka两个主题的提交并不存在事务，可能会导致一个主题提交成功，偏移量主题出错。所以要考虑两者的提交顺序。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;长时间任务处理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果有一个耗时长久的任务，会阻塞消费者线程，导致客户端长时间不能向broker发送心跳，broker可能会任务当前消费者下线。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;建议使用一个线程池来处理任务，就算任务线程被阻塞，也会一直有线程轮询broker（但不获取新任务）。这样可以保持心跳。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;保证消息仅被消费一次（幂等性）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;利用第三方键值存储引擎，每次消费kafka消息时，生成唯一的键存入。&lt;/p&gt;
+&lt;h2 id="第七章构建数据管道"&gt;第七章、构建数据管道
+&lt;/h2&gt;&lt;h3 id="构建数据管道时需要考虑的问题kafka的优势"&gt;构建数据管道时需要考虑的问题（kafka的优势）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;及时性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于消息kafka充当了一个超大型的缓冲区&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;实时处理&lt;/strong&gt;：消费者可以通过轮询broker的方式，达到接近实时的数据处理。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;批处理&lt;/strong&gt;：消费者可以向kafka发送请求来读取自定义批次大小的数据。（可视业务情况动态调整）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;可靠性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;系统可靠性&lt;/strong&gt;： kafka的高可用可以有效的避免单点故障问题，而且动态扩容分区副本，可以让kafka集群达到大规模的高可用。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;消息可靠性&lt;/strong&gt;：写入时有同步写入或回调，可以保证写入的可靠性。消费者需要配合唯一键值存储引擎来实现读取的可靠性。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;高吞吐量和动态吞吐量&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;卡夫卡支持动态的伸缩，可以试情况动态的调整生产者和消费者的数量。如果处理不了的消息，也可以以极低的成本缓存在kafka中慢慢处理。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;数据格式问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;kafka本身并不在意数据内容的格式，生产者和消费者可以使用各种不同的序列化器来进行格式转换。所以可以用kafka来实现各种跨不同格式系统的数据传输。&lt;/p&gt;
+&lt;h3 id="kafka-connect"&gt;kafka Connect
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;为在kafka和外部数据存储系统之间移动数据提供了一种可靠且可伸缩的方式。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;连接器&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;决定需要运行多少个任务&lt;/li&gt;
+&lt;li&gt;按照任务来拆分数据复制&lt;/li&gt;
+&lt;li&gt;从worker进程获取任务配置并将其传递下去。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;任务&lt;/p&gt;
+&lt;p&gt;任务只把数据移出或移入kafka。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;worker进程&lt;/p&gt;
+&lt;p&gt;worker进程是连接器和任务的”容器“。连接器和任务负责”数据的移动“，worker进程负责REST API、配置管理、可靠性、高可用性、伸缩性和负载均衡。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;</description></item><item><title>读《mysql是怎样运行的》有感</title><link>https://thecoolboyhan.github.io/p/%E8%AF%BBmysql%E6%98%AF%E6%80%8E%E6%A0%B7%E8%BF%90%E8%A1%8C%E7%9A%84%E6%9C%89%E6%84%9F/</link><pubDate>Thu, 17 Apr 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/%E8%AF%BBmysql%E6%98%AF%E6%80%8E%E6%A0%B7%E8%BF%90%E8%A1%8C%E7%9A%84%E6%9C%89%E6%84%9F/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/%E8%AF%BBmysql%E6%98%AF%E6%80%8E%E6%A0%B7%E8%BF%90%E8%A1%8C%E7%9A%84%E6%9C%89%E6%84%9F/1.png" alt="Featured image of post 读《mysql是怎样运行的》有感" /&gt;&lt;blockquote&gt;
+&lt;p&gt;1111&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id="读mysql是怎样运行的有感"&gt;读《mysql是怎样运行的》有感
+&lt;/h1&gt;&lt;blockquote&gt;
+&lt;p&gt;粗略了解mysql， 模拟一条查询的过程。&lt;/p&gt;
+&lt;p&gt;介绍主流的存储引擎&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第一章重新认识mysql"&gt;第一章、重新认识mysql
+&lt;/h2&gt;&lt;h3 id="一条sql会经历的阶段"&gt;一条sql会经历的阶段
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;查询缓存：（8.0后删除）是否可以从缓存中直接得到答案&lt;/li&gt;
+&lt;li&gt;语法解析：（编译过程）翻译sql语句&lt;/li&gt;
+&lt;li&gt;查询优化：转换sql，生成执行计划（是否走索引等）&lt;/li&gt;
+&lt;li&gt;存储引擎：交给存储引擎去真正执行查询&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;查询缓存在什么时候会失效？(mysql 8.0之后删除查询缓存)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果两个查询请求在任何字符上的不同（如：空格、注释、大小写），都会导致缓存不会命中。如果查询请求中包含某些系统函数、用户自定义变量和函数、一些系统表，如mysql 、information_schema、performance_schema 数据库中的表，那这个请求就不会被缓存。&lt;/p&gt;
+&lt;h3 id="常见的存储引擎"&gt;常见的存储引擎
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;常见的存储引擎&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;存储引擎&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;ARCHIVE&lt;/td&gt;
+&lt;td&gt;用于数据存档（行被插入后不能再修改）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;BLACKHOLE&lt;/td&gt;
+&lt;td&gt;丢弃写操作，读操作会返回空内容&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;CSV&lt;/td&gt;
+&lt;td&gt;在存储数据时，以逗号分隔各个数据项&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FEDERATED&lt;/td&gt;
+&lt;td&gt;用来访问远程表&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;InnoDB&lt;/td&gt;
+&lt;td&gt;具备外键支持功能的事务存储引擎&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MEMORY&lt;/td&gt;
+&lt;td&gt;置于内存的表&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MERGE&lt;/td&gt;
+&lt;td&gt;用来管理多个MyISAM表构成的表集合&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MyISAM&lt;/td&gt;
+&lt;td&gt;主要的非事务处理存储引擎&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;NDB&lt;/td&gt;
+&lt;td&gt;MySQL集群专用存储引擎&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;各功能支持情况&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;feature&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;MyISAM&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;Memory&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;InnoDB&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;Archive&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;NDB&lt;/strong&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;B-tree indexes 索引&lt;/td&gt;
+&lt;td&gt;Yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Backup/point-in-time recovery 时间镜像备份&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Cluster database support 集群&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;Yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Clustered indexes 聚簇索引&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Compressed data 数据压缩&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Data caches 数据缓存&lt;/td&gt;
+&lt;td&gt;No&lt;/td&gt;
+&lt;td&gt;N/A&lt;/td&gt;
+&lt;td&gt;Yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Encrypted data 数据加密&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Foreign key support 外键&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Full-text search indexes 全文搜索索引&lt;/td&gt;
+&lt;td&gt;Yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Geospatial data type support 空间数据类型支持&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Geospatial indexing support 空间索引支持&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Hash indexes 哈希索引&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Index caches 索引缓存&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;N/A&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Locking granularity 锁粒度&lt;/td&gt;
+&lt;td&gt;Table&lt;/td&gt;
+&lt;td&gt;Table&lt;/td&gt;
+&lt;td&gt;Row&lt;/td&gt;
+&lt;td&gt;Row&lt;/td&gt;
+&lt;td&gt;Row&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MVCC 多版本并发控制&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Query cache support 查询缓存&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Replication support 主从复制&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Limited&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Storage limits 存储限制&lt;/td&gt;
+&lt;td&gt;256TB&lt;/td&gt;
+&lt;td&gt;RAM&lt;/td&gt;
+&lt;td&gt;64TB&lt;/td&gt;
+&lt;td&gt;None&lt;/td&gt;
+&lt;td&gt;384EB&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;T-tree indexes T-tree索引&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Transactions 事务&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Update statistics for data dictionary 更新数据字典&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;blockquote&gt;
+&lt;p&gt;可以为不同的表设置不同的存储引擎&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;从InnoDB行记录的角度理解一行数据是如何存储的&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第四章innodb记录结构"&gt;第四章、InnoDB记录结构
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;InnoDB的存储方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;将数据划分成若干个页，以页作为磁盘和内存之间交互的基本单位，InnoDB中页的大小一般为16KB。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;四种行格式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;行格式&lt;/th&gt;
+&lt;th&gt;紧凑的存储特性&lt;/th&gt;
+&lt;th&gt;增强的可变长度列存储&lt;/th&gt;
+&lt;th&gt;大型索引键前缀支持&lt;/th&gt;
+&lt;th&gt;压缩支持&lt;/th&gt;
+&lt;th&gt;支持的表空间类型&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;REDUNDANT&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;系统，每个表的文件，一般&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;COMPACT&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;系统，每个表的文件，一般&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DYNAMIC&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;否&lt;/td&gt;
+&lt;td&gt;系统，每个表的文件，一般&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;COMPRESSED&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;是的&lt;/td&gt;
+&lt;td&gt;文件每表，一般&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="compact行格式"&gt;&lt;strong&gt;COMPACT&lt;/strong&gt;行格式
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855104065_1744855104091.png"
+loading="lazy"
+alt="1744855104065.png"
+&gt;&lt;/p&gt;
+&lt;h4 id="记录的额外信息"&gt;记录的额外信息
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;服务器为了描述这条记录而不得不额外添加的信息。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="变长字段长度列表"&gt;变长字段长度列表
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;变长字段的长度不是固定的，所以在存储时，需要占用两部分空间&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;真正的数据内容&lt;/li&gt;
+&lt;li&gt;占用的字节数&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;把所有变长字段的真实数据数据占用的字节长度都存放在记录的开头部位，从而形成一个变长字段长度列表，各变长字段占用的字节数按照列的顺序 &lt;font color='red'&gt;**逆序 **&lt;/font&gt; 存放。&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt; &lt;strong&gt;如果该可变字段允许存储的最大字节数（ M×W ）超过255字节并且真实存储的字节数（ L ）超过127字节，则使用2个字节，否则使用1个字节。&lt;/strong&gt;&lt;/font&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;变长字段长度列表中只存储值为非NULL的列内容占用的长度，值为NULL的列的长度是不需要存储的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="null值列表"&gt;NULL值列表
+&lt;/h4&gt;&lt;p&gt;COMPACT行格式会把这些值为NULL的列统一管理起来。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;首先统计表中允许存储NULL的列有哪些&lt;/li&gt;
+&lt;li&gt;如果表中没有允许存储NULL的列，则NULL值列表也不存在了&lt;/li&gt;
+&lt;li&gt;mysql规定NUll列表必须用整数个字节的位表示，如果使用的二进制位个数不是整数个字节，则字节的高位补0.（8bit）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="记录头信息"&gt;记录头信息
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;用于描述记录的记录头信息&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;大小（单位：bit）&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;预留位1&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;没有使用&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;预留位2&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;没有使用&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;delete_mask&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;标记该记录是否被删除&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;min_rec_mask&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;B+树的每层非叶子节点中的最小记录都会添加该标记&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;n_owned&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;表示当前记录拥有的记录数&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;heap_no&lt;/td&gt;
+&lt;td&gt;13&lt;/td&gt;
+&lt;td&gt;表示当前记录在记录堆的位置信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;record_type&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;表示当前记录的类型，0 表示普通记录，1 表示B+树非叶子节点记录，2 表示最小记录，3 表示最大记录&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;next_record&lt;/td&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;td&gt;表示下一条记录的相对位置&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h4 id="记录的真实数据"&gt;记录的真实数据
+&lt;/h4&gt;&lt;p&gt;真实存储的数据，除了这些数据外，mysql还会默认生成以下列：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;mysql隐藏列&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;列名&lt;/th&gt;
+&lt;th&gt;是否必须&lt;/th&gt;
+&lt;th&gt;占用空间&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;row_id&lt;/td&gt;
+&lt;td&gt;否（InnoDB指定主键时才存在）&lt;/td&gt;
+&lt;td&gt;6 字节&lt;/td&gt;
+&lt;td&gt;行ID，唯一标识一条记录&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;transaction_id&lt;/td&gt;
+&lt;td&gt;是&lt;/td&gt;
+&lt;td&gt;6 字节&lt;/td&gt;
+&lt;td&gt;事务ID&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;roll_pointer&lt;/td&gt;
+&lt;td&gt;是&lt;/td&gt;
+&lt;td&gt;7 字节&lt;/td&gt;
+&lt;td&gt;回滚指针&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;font color='red'&gt;mysql主键的生成策略&lt;/font&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;优先使用用户自定义主键作为主键，如果用户没有定义主键，则选取一个Unique键作为主键，如果连Unique键都没有，则InnoDB会为表添加一个名为row_id的隐藏列作为主键。&lt;/p&gt;
+&lt;h3 id="行溢出数据"&gt;行溢出数据
+&lt;/h3&gt;&lt;p&gt;varchar最多可以占用65535个字节，除了BLOB或者TEXT类型的列之外，其他所有的列占用字节长度加起来不能超过65535个字节。&lt;/p&gt;
+&lt;p&gt;mysql一页大小为16kb，也就是16384字节。对于占用空间非常大的也，真实数据区域只会存储该列的一部分数据，把剩余数据分散存储到其他的也中。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不只是 &lt;em&gt;&lt;strong&gt;VARCHAR(M)&lt;/strong&gt;&lt;/em&gt; 类型的列，其他的 &lt;em&gt;&lt;strong&gt;TEXT&lt;/strong&gt;&lt;/em&gt;、&lt;em&gt;&lt;strong&gt;BLOB&lt;/strong&gt;&lt;/em&gt; 类型的列在存储数据非常多的时候也会发生 行溢出&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;解释InnoDB一页数据是如何存放的&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第五章innodb数据页结构"&gt;第五章、InnoDB数据页结构
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855192735_1744855192753.png"
+loading="lazy"
+alt="1744855192735.png"
+&gt;&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;中文名&lt;/th&gt;
+&lt;th&gt;占用空间大小&lt;/th&gt;
+&lt;th&gt;简单描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;File Header&lt;/td&gt;
+&lt;td&gt;文件头部&lt;/td&gt;
+&lt;td&gt;38 字节&lt;/td&gt;
+&lt;td&gt;页的一些通用信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Page Header&lt;/td&gt;
+&lt;td&gt;页面头部&lt;/td&gt;
+&lt;td&gt;56 字节&lt;/td&gt;
+&lt;td&gt;数据页专有的一些信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Infimum + Supremum&lt;/td&gt;
+&lt;td&gt;最小记录和最大记录&lt;/td&gt;
+&lt;td&gt;26 字节&lt;/td&gt;
+&lt;td&gt;两个虚拟的行记录&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;User Records&lt;/td&gt;
+&lt;td&gt;用户记录&lt;/td&gt;
+&lt;td&gt;不确定&lt;/td&gt;
+&lt;td&gt;实际存储的行记录内容&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Free Space&lt;/td&gt;
+&lt;td&gt;空闲空间&lt;/td&gt;
+&lt;td&gt;不确定&lt;/td&gt;
+&lt;td&gt;页中尚未使用的空间&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Page Directory&lt;/td&gt;
+&lt;td&gt;页面目录&lt;/td&gt;
+&lt;td&gt;不确定&lt;/td&gt;
+&lt;td&gt;页中的某些记录的相对位置&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;File Trailer&lt;/td&gt;
+&lt;td&gt;文件尾部&lt;/td&gt;
+&lt;td&gt;8 字节&lt;/td&gt;
+&lt;td&gt;校验页是否完整&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="记录头信息-1"&gt;记录头信息
+&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;大小 (单位: bit)&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;预留位1&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;没有使用&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;预留位2&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;没有使用&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;delete_mask&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;标记该记录是否被删除&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;min_rec_mask&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;B+树的每层非叶子节点中的最小记录都会添加该标记&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;n_owned&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;表示当前记录拥有的记录数&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;heap_no&lt;/td&gt;
+&lt;td&gt;13&lt;/td&gt;
+&lt;td&gt;表示当前记录在记录堆的位置信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;record_type&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;表示当前记录的类型：0-普通记录，1-B+树非叶节点记录，2-最小记录，3-最大记录&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;next_record&lt;/td&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;td&gt;表示下一条记录的相对位置&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;delete_mask&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;标记当前记录是否被删除&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;被删除的数据会被标记，并放入一个&lt;em&gt;垃圾链表&lt;/em&gt; ，链表中的记录占用的空间是可重用空间。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;next_record&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;从当前记录的真实数据到下一条记录的真实数据地址偏移量。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;font color='red'&gt;下一条记录： &lt;/font&gt;&lt;/p&gt;
+&lt;p&gt;指得并不是按照我们插入顺序的下一条记录，而是按照主键值由小到大的顺序的下一条记录。&lt;/p&gt;
+&lt;p&gt;***Infimum***&lt;strong&gt;记录（也就是最小记录）&lt;/strong&gt; 的下一条记录就是本页中主键值最小的用户记录，而本页中主键值最大的用户记录的下一条记录就是 *&lt;strong&gt;Supremum*****记录（也就是最大记录）&lt;/strong&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;模拟删除一条记录&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;原记录：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855231499_1744855231519.png"
+loading="lazy"
+alt="1744855231499.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;删除第二条数据：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855254240_1744855254257.png"
+loading="lazy"
+alt="1744855254240.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;不论我们怎样对页中的记录做增删改操作，InnoDB始终维护一条记录的单链表，链表中的各个节点是按照主键值由小到大连接起来的。&lt;/p&gt;
+&lt;p&gt;再插入一条记录：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855310294_1744855310312.png"
+loading="lazy"
+alt="1744855310294.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="蛇足"&gt;蛇足
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;查询&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;InnoDB会把页中的记录划分为若干个组，每个组的最后一个记录的地址偏移量作为一个槽，存放在page Directory中，所以在一页中根据主键去查找记录非常快：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;通过二分查找确定记录所在的槽&lt;/li&gt;
+&lt;li&gt;通过记录的next_rocord属性遍历该槽所在的组中的各个记录。（通过偏移量直接定位地址）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;存储方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;每个数据页的fileHeader部分都有上一个和下一个页的编号，所以所有的数据页会组成一个双链表。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何确保数据完整&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;为了保证数据的完整性，页的首部和尾部都会存储页中数据的校验和，和页面最后修改时的LSN值。如果两个校验不通过，表示数据同步过程中出现了问题。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;InnoDB的索引结构&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第六章b树索引"&gt;第六章B+树索引
+&lt;/h2&gt;&lt;h3 id="索引方案"&gt;索引方案
+&lt;/h3&gt;&lt;p&gt;复用存储用户记录的数据页来存储目录项。通过record_type来区分。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855340206_1744855340223.png"
+loading="lazy"
+alt="1744855340206.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;索引页的record_type值为1，用户记录的record_type值为0&lt;/li&gt;
+&lt;li&gt;索引页记录只有主键值和页的编号两列，用户记录是用户自己定义的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;如何根据主键值查找&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;先到存储索引记录的页，通过二分查找快速定位到对应的目录项。如定位到记录在页9&lt;/li&gt;
+&lt;li&gt;通过偏移量找到页9，在通过二分查找找到对应的记录。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;数据结构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855362514_1744855362530.png"
+loading="lazy"
+alt="1744855362514.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;用户的记录都存放在B+树的最底层的节点上，其他的非叶子节点用来存储目录（索引页）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;我们大概需要多少层数据？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;1、如果 B+ 树只有1层，也就是只有1个用于存放用户记录的节点，最多能存放 100 条记录。&lt;/p&gt;
+&lt;p&gt;2、如果 B+ 树有2层，最多能存放 1000×100=100000 条记录。&lt;/p&gt;
+&lt;p&gt;3、如果 B+ 树有3层，最多能存放 1000×1000×100=100000000 条记录。&lt;/p&gt;
+&lt;p&gt;4、如果 B+ 树有4层，最多能存放 1000×1000×1000×100=100000000000 条记录。&lt;/p&gt;
+&lt;h3 id="聚簇索引"&gt;聚簇索引
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;InnoDB的数据默认使用聚簇索引来存储。&lt;font color='red'&gt;索引即数据，数据即索引&lt;/font&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="聚簇索引的特点"&gt;聚簇索引的特点：
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;使用记录主键值的大小进行记录和页的排序
+&lt;ul&gt;
+&lt;li&gt;页内的记录按照主键的大小顺序排成一个单向链表&lt;/li&gt;
+&lt;li&gt;存放用户记录的页是根据也中用户记录的主键大小排成一个双向链表&lt;/li&gt;
+&lt;li&gt;存放目录项记录的页分为不同的层次，同一层中的页是根据目录项页中的主键大小顺序排成的一个双向链表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;B+树的叶子节点存储完整的用户记录&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="二级索引"&gt;二级索引
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;用户根据自己的规则给非主键值建立的索引。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;同样使用B+树来存储，不过叶子节点用来存储的是主键值，而不是完整的用户记录。&lt;/p&gt;
+&lt;p&gt;所以想要通过二级索引来查询一条记录，需要先在二级索引上搜索出主键值。&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;再根据主键值去聚簇索引中再查找一遍完整的用户记录（回表）&lt;/font&gt;&lt;/p&gt;
+&lt;h3 id="总结"&gt;总结
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;每个索引都对应一棵 B+ 树， B+ 树分为好多层，最下边一层是叶子节点，其余的是内节点。所有 用户记录都存储在 B+ 树的叶子节点，所有 目录项记录 都存储在内节点。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;InnoDB 存储引擎会自动为主键（如果没有它会自动帮我们添加）建立 聚簇索引 ，聚簇索引的叶子节点包含完整的用户记录。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;我们可以为自己感兴趣的列建立 二级索引 ， 二级索引 的叶子节点包含的用户记录由 索引列 + 主键 组成，所以如果想通过 二级索引 来查找完整的用户记录的话，需要通过 回表 操作，也就是在通过 二级索引找到主键值之后再到 聚簇索引 中查找完整的用户记录。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;B+ 树中每层节点都是按照索引列值从小到大的顺序排序而组成了双向链表，而且每个页内的记录（不论是用户记录还是目录项记录）都是按照索引列的值从小到大的顺序而形成了一个单链表。如果是 联合索引 的话，则页面和记录先按照 联合索引 前边的列排序，如果该列值相同，再按照 联合索引 后边的列排序。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通过索引查找记录是从 B+ 树的根节点开始，一层一层向下搜索。由于每个页面都按照索引列的值建立了Page Directory （页目录），所以在这些页面中的查找非常快。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;font color='red'&gt;一个表上索引建的越多，就会占用越多的存储空间，在增删改记录的时候性能就越差。&lt;/font&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在使用索引时需要注意下边这些事项：
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;只为用于搜索、排序或分组的列创建索引&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为列的基数大的列创建索引&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;索引列的类型尽量小&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;可以只对字符串值的前缀建立索引&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;只有索引列在比较表达式中单独出现才可以适用索引&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为了尽可能少的让 聚簇索引 发生页面分裂和记录移位的情况，建议让主键拥有 AUTO_INCREMENT 属性。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;定位并删除表中的重复和冗余索引&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;尽量使用 覆盖索引 进行查询，避免 回表 带来的性能损耗。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;数据是如何在mysql中存储的，默认的数据库大概有哪些&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第八章mysql的数据目录"&gt;第八章、mysql的数据目录
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;数据目录：用来存储mysql在运行过程中产生的数据&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="数据库在文件系统"&gt;数据库在文件系统
+&lt;/h3&gt;&lt;p&gt;每个数据库都对应数据目录下的一个子文件夹，当我们创建数据库时，mysql会：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在数据目录下创建一个和数据库同名的子目录&lt;/li&gt;
+&lt;li&gt;在与数据库同名的子目录下创建一个名为db.opt的文件，这文件中包含了该数据库的各种属性。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="表在文件系统中"&gt;表在文件系统中
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;表结构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在数据目录下对应的数据库子目录下创建一个专门描述表结构的文件。（表名.frm）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;这个frm文件是以二进制的形式存储的&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="innodb的表数据"&gt;InnoDB的表数据
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;表空间（table space）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;文件系统上一个或多个真实的文件，每个表空间可以被划分为很多个页，表数据就存在表空间下的某些页里。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;系统表空间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;在数据目录下名为ibdata1，大小为12M的文件。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;5.5.7到5.6.6(不包括)之间的版本，数据都会默认被存储到系统表空间中。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;独立表空间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;5.6.6及以后得版本，每一个表都会建立独立表空间（表名.ibd）&lt;/p&gt;
+&lt;h4 id="myisam表数据"&gt;MyISAM表数据
+&lt;/h4&gt;&lt;p&gt;表数据都存放到对应的数据库子目录下。共三个文件：&lt;/p&gt;
+&lt;p&gt;test.frm：表结构&lt;/p&gt;
+&lt;p&gt;test.MYD：表的数据文件&lt;/p&gt;
+&lt;p&gt;test.MYI：表的索引&lt;/p&gt;
+&lt;h3 id="mysql默认的系统数据库"&gt;mysql默认的系统数据库
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;mysql&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;存储了MySQL的用户账户和权限信息，一些存储过程、事件的定义信息，一些运行过程中产生的日志信息，一些帮助信息以及时区信息等。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;information_schema&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;保存着MySQL服务器维护的所有其他数据库的信息，比如有哪些表、哪些视图、哪些触发器、哪些列、哪些索引，这些信息不是用户的真实数据，而是一些描述信息。也被成为元数据。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;performance_schema&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;主要保存MySQL服务器运行过程中的一些状态信息，算是对MySQL服务器的一个性能监控。&lt;/p&gt;
+&lt;p&gt;包括统计最近执行了哪些语句，在执行过程的每个阶段都花费了多长时间，内存的使用情况等等信息。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;sys&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;主要是通过视图的形式把 information_schema 和 performance_schema 结合起来，让程序员可以更方便的了解MySQL服务器的一些性能信息。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;详细描述表空间的数据结构&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第九章innodb表空间"&gt;第九章、InnoDB表空间
+&lt;/h2&gt;&lt;h3 id="一个数据页"&gt;一个数据页
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;每个页通用的结构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855397911_1744855397927.png"
+loading="lazy"
+alt="1744855397911.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;file Header：记录一些通用信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;占用空间大小&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_SPACE_OR_CHKSUM&lt;/td&gt;
+&lt;td&gt;4 字节&lt;/td&gt;
+&lt;td&gt;页的校验和（checksum 值）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_OFFSET&lt;/td&gt;
+&lt;td&gt;4 字节&lt;/td&gt;
+&lt;td&gt;页号&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_PREV&lt;/td&gt;
+&lt;td&gt;4 字节&lt;/td&gt;
+&lt;td&gt;上一个页的页号&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_NEXT&lt;/td&gt;
+&lt;td&gt;4 字节&lt;/td&gt;
+&lt;td&gt;下一个页的页号&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_LSN&lt;/td&gt;
+&lt;td&gt;8 字节&lt;/td&gt;
+&lt;td&gt;页面被最后修改时对应的日志序列位置 (Log Sequence Number)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_TYPE&lt;/td&gt;
+&lt;td&gt;2 字节&lt;/td&gt;
+&lt;td&gt;该页的类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_FILE_FLUSH_LSN&lt;/td&gt;
+&lt;td&gt;8 字节&lt;/td&gt;
+&lt;td&gt;仅在系统表空间的一个页中定义，代表文件至少被刷新到了对应的 LSN 值&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID&lt;/td&gt;
+&lt;td&gt;4 字节&lt;/td&gt;
+&lt;td&gt;页属于哪个表空间&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;File Trailer：检查页是否完整，保证从内存到磁盘刷新时内容的一致性。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一个表空间最多支持64TB的数据。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="独立表空间"&gt;独立表空间
+&lt;/h3&gt;&lt;h4 id="区extent"&gt;区（extent）
+&lt;/h4&gt;&lt;p&gt;表空间中的页实在太多了，为了更好的管理这些页，提出了区的概念。&lt;/p&gt;
+&lt;p&gt;对于默认16k的页来说，连续64页就是一个区（1MB左右）。每个256个区就被划分成一组。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855427995_1744855462433.png"
+loading="lazy"
+alt="1744855427995.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;区0到区255是第一组，256~511是第二组&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;表空间被划分为许多连续的区 ，每个区默认由64个页组成，每256个区划分为一组。&lt;/p&gt;
+&lt;h4 id="段segment"&gt;段（segment）
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;为什么要引入区？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;font color='red'&gt;没有区的情况&lt;/font&gt;：存放数据的多个页其实是双向链表，上一个页和它的下一个页之间，在磁盘上可能不是连续的。这样在不同的页之间扫描，会触发磁盘的&lt;font color='red'&gt;随机IO&lt;/font&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;有区之后&lt;/font&gt;：当引入区之后，一个区内的页是顺序且连续的，每个逻辑相邻的页在物理磁盘上页也是相邻的。这样就可以&lt;font color='red'&gt;触发顺序IO。有效提高性能。&lt;/font&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;什么是段？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;段是用于区分不同类型区的概念。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;叶子节点有自己独有的区，非叶子节点也有自己独有的区。&lt;/p&gt;
+&lt;p&gt;存放叶子节点的多个区就算是一个段。&lt;/p&gt;
+&lt;p&gt;存放非叶子节点的多个区也算是一个段。&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;一个索引会产生2个段，一个叶子节点段。一个非叶子节点段。&lt;/font&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不止包含上面提到的两种段，还存在别的段（回滚段等）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;状态名&lt;/th&gt;
+&lt;th&gt;含义&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;FREE&lt;/td&gt;
+&lt;td&gt;空闲的区&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FREE_FRAG&lt;/td&gt;
+&lt;td&gt;有剩余空间的碎片区&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FULL_FRAG&lt;/td&gt;
+&lt;td&gt;没有剩余空间的碎片区&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;FSEG&lt;/td&gt;
+&lt;td&gt;附属于某个段的区&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;blockquote&gt;
+&lt;p&gt;以上表格中的区，只有FSEG属于段，其他的区都直接属于mysql，不属于某个段。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="模拟插入一条数据"&gt;模拟插入一条数据
+&lt;/h4&gt;&lt;pre class="mermaid"&gt;
+graph TD
+a[插入一条数据]--&amp;gt;b{判断是否有剩余空间的碎片区}
+b--&amp;gt;|yes|c[插入到碎片区]
+b--&amp;gt;|no|d[到表空间下申请一个状态为空闲的区,把数据插入到新申请区中的碎片页里.\n此区中零碎的页会为多个段服务,如果该区已满,此区就变为没有剩余空间的碎片区]
+&lt;/pre&gt;
+&lt;blockquote&gt;
+&lt;p&gt;讲解单表查询过程&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第10章单表查询"&gt;第10章、单表查询
+&lt;/h2&gt;&lt;h3 id="const"&gt;const
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;直接通过主键来确认记录&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;直接通过id查询&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855506669_1744855506684.png"
+loading="lazy"
+alt="1744855506669.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通过唯一二级索引可以确定到唯一的id，然后同上&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855581630_1744855581646.png"
+loading="lazy"
+alt="1744855581630.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="ref"&gt;ref
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;通过非唯一的二级索引&lt;font color='red'&gt;等值&lt;/font&gt;获取到多个id，然后回聚簇索引来查询&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855603236_1744855603253.png"
+loading="lazy"
+alt="1744855603236.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="range"&gt;range
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;通过索引进行的范围扫描&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;比如id大于10小于30&lt;/p&gt;
+&lt;h3 id="index"&gt;index
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;通过二级索引的全索引扫描可以确认当前值&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;假设二级索引是联合索引（a-b-c），查询的where条件只有b没有a，无法通过二级索引查询策略，但是可以在二级索引上扫描到当前数据。&lt;/p&gt;
+&lt;h3 id="all"&gt;all
+&lt;/h3&gt;&lt;p&gt;全表扫描，直接扫描聚簇索引。&lt;/p&gt;
+&lt;h3 id="回表"&gt;回表
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;步骤1：使用二级索引定位记录的阶段，也就是根据条件 key1 = &amp;lsquo;abc&amp;rsquo; 从 idx_key1 索引代表的 B+ 树中找到对应的二级索引记录。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;步骤2：回表阶段，也就是根据上一步骤中找到的记录的主键值进行 回表 操作，也就是到聚簇索引中找到对应的完整的用户记录，再根据条件 key2 &amp;gt; 1000 到完整的用户记录继续过滤。将最终符合过滤条件的记录返回给用户。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;font color='red'&gt;为什么要尽量避免出现回表操作？&lt;/font&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因为在二级索引扫描，之前提到都是顺序IO，扫描速度快。但如果回到局促索引中确定数据，需要进行随机IO，扫描速度慢。（慢很多）&lt;/p&gt;
+&lt;h3 id="索引合并"&gt;索引合并
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;查询条件会用到多个不同的二级索引，mysql可以组装两个二级索引查询出的数据的交集，然后在回表去聚簇索引中查询。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;合并索引是为了尽量避免回表操作，减少随机IO。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;会触发索引合并的条件：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;用到的两个不同索引的查询条件都是等值匹配时。（一个等值，一个范围则无法使用）&lt;/li&gt;
+&lt;li&gt;查询条件中有主键，且只有主键是范围查询，其他二级索引都是等值查询时开会生效&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;因为只有上面两个条件下从二级索引查出的数据都是按照主键排序的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;各种join查询&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第11章两表连接与基于成本的优化"&gt;第11章、两表连接与基于成本的优化
+&lt;/h2&gt;&lt;h3 id="连接的原理"&gt;连接的原理
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;两表join查询，驱动的表只会访问一遍，被去驱动的表要被访问多次。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;步骤1：选取驱动表，使用与驱动表相关的过滤条件，选取代价最低的单表访问方法来执行对驱动表的单表查询。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;步骤2：对上一步骤中查询驱动表得到的结果集中每一条记录，都分别到被驱动表中查找匹配的记录。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855639611_1744855639628.png"
+loading="lazy"
+alt="1744855639611.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;驱动表只访问一次，但被驱动表却可能被多次访问，访问次数取决于对驱动表执行单表查询后的结果集中的记录条数&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="成本"&gt;成本
+&lt;/h3&gt;&lt;p&gt;mysql有默认的成本常量，可以通过成本常量来计算出不同方案查询需要的成本。mysql再选择成本最低的方案来执行。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;成本常数名称&lt;/th&gt;
+&lt;th&gt;默认值&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;disk_temptable_create_cost&lt;/td&gt;
+&lt;td&gt;40.0&lt;/td&gt;
+&lt;td&gt;创建基于磁盘的临时表的成本，增大该值可减少磁盘临时表的创建&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;disk_temptable_row_cost&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;td&gt;向磁盘临时表写入或读取一条记录的成本，增大该值可减少磁盘临时表的创建&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;key_compare_cost&lt;/td&gt;
+&lt;td&gt;0.1&lt;/td&gt;
+&lt;td&gt;两条记录比较操作的成本，多用于排序，增大该值可提高 filesort 成本，使优化器更倾向于使用索引排序&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;memory_temptable_create_cost&lt;/td&gt;
+&lt;td&gt;2.0&lt;/td&gt;
+&lt;td&gt;创建基于内存的临时表的成本，增大该值可减少内存临时表的创建&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;memory_temptable_row_cost&lt;/td&gt;
+&lt;td&gt;0.2&lt;/td&gt;
+&lt;td&gt;向内存临时表写入或读取一条记录的成本，增大该值可减少内存临时表的创建&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;row_evaluate_cost&lt;/td&gt;
+&lt;td&gt;0.2&lt;/td&gt;
+&lt;td&gt;记录是否符合搜索条件的成本，增大该值可能让优化器更倾向于使用索引而非全表扫描&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;blockquote&gt;
+&lt;p&gt;InnoDB的表信息是不准确的估值&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;内外连接的区别？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;外连接驱动表的记录，无法被找到匹配on自居中的过滤条件的记录，该记录仍然会被加入到结果集中，对应的被驱动表记录的各个字段顺手NULL值填充。&lt;/p&gt;
+&lt;p&gt;内连接驱动表的记录无法在被驱动表中找到的匹配on语句中过滤条件的记录，该记录会被舍弃。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855661461_1744855661476.png"
+loading="lazy"
+alt="1744855661461.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="in查询"&gt;in查询
+&lt;/h3&gt;&lt;p&gt;不直接将不相关子查询的结果集当作外层查询的参数，而是将该结果集写入一个临时表里。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;详细介绍Explain&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第15章explain详解"&gt;第15章、Explain详解
+&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;列名&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;id&lt;/td&gt;
+&lt;td&gt;在一个大的查询语句中每个 SELECT 关键字都对应一个唯一的 id&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;select_type&lt;/td&gt;
+&lt;td&gt;SELECT 关键字对应的那个查询的类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;table&lt;/td&gt;
+&lt;td&gt;表名&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;partitions&lt;/td&gt;
+&lt;td&gt;匹配的分区信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;type&lt;/td&gt;
+&lt;td&gt;针对单表的访问方法&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;possible_keys&lt;/td&gt;
+&lt;td&gt;可能用到的索引&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;key&lt;/td&gt;
+&lt;td&gt;实际上使用的索引&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;key_len&lt;/td&gt;
+&lt;td&gt;实际使用到的索引长度&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;ref&lt;/td&gt;
+&lt;td&gt;当使用索引列等值查询时，与索引列进行等值匹配的对象信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;rows&lt;/td&gt;
+&lt;td&gt;预估的需要读取的记录条数&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;filtered&lt;/td&gt;
+&lt;td&gt;某个表经过搜索条件过滤后剩余记录条数的百分比&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Extra&lt;/td&gt;
+&lt;td&gt;一些额外的信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="各属性的介绍"&gt;各属性的介绍
+&lt;/h3&gt;&lt;h4 id="id"&gt;id
+&lt;/h4&gt;&lt;p&gt;每次查询都会生成一个id，如果一条查询需要查询多个表，就会生成多条id相同的记录。&lt;/p&gt;
+&lt;p&gt;如果有union子句需要把两个查询的结果合并起来，mysql会使用内部的临时表（临时表id为null）&lt;/p&gt;
+&lt;h4 id="select_type"&gt;Select_type
+&lt;/h4&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;SIMPLE&lt;/td&gt;
+&lt;td&gt;不包含union或者子查询的查询（连接查询也是simple）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;PRIMARY&lt;/td&gt;
+&lt;td&gt;union、union All或者子查询的大查询等，由多个小查询组成的，其中最左面的查询就是primary&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;UNION&lt;/td&gt;
+&lt;td&gt;UNION 中的第二个或更后续的 SELECT 是union&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;UNION RESULT&lt;/td&gt;
+&lt;td&gt;UNION 的结果&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;SUBQUERY&lt;/td&gt;
+&lt;td&gt;子查询中的第一个 SELECT&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEPENDENT SUBQUERY&lt;/td&gt;
+&lt;td&gt;依赖于外部查询的子查询中的第一个 SELECT&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEPENDENT UNION&lt;/td&gt;
+&lt;td&gt;依赖于外部查询的 UNION 中的第二个或更后续的 SELECT 语句&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DERIVED&lt;/td&gt;
+&lt;td&gt;派生表（需要临时表）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MATERIALIZED&lt;/td&gt;
+&lt;td&gt;物化子查询&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;UNCACHEABLE SUBQUERY&lt;/td&gt;
+&lt;td&gt;结果无法缓存并且必须针对外部查询的每一行重新评估的子查询&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;UNCACHEABLE UNION&lt;/td&gt;
+&lt;td&gt;属于不可缓存子查询的 UNION 中的第二个或更后续的 SELECT 语句 (见 UNCACHEABLE SUBQUERY)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h4 id="type"&gt;type
+&lt;/h4&gt;&lt;p&gt;前面文章提到的执行计划&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;type&lt;/th&gt;
+&lt;th&gt;备注&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;system&lt;/td&gt;
+&lt;td&gt;查询系统表，如myisam的数量（InnoDB的数量是不可靠的）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;const&lt;/td&gt;
+&lt;td&gt;主键等值匹配（通过唯一二级索引确定唯一id到也算）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eq_ref&lt;/td&gt;
+&lt;td&gt;非唯一的二级索引等值获取到多个id，会聚簇索引查询&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;index_merge&lt;/td&gt;
+&lt;td&gt;第十章中提到的索引合并&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Unique_subquery&lt;/td&gt;
+&lt;td&gt;两表连接中的eq_ref等值查询（经常出现在in id关联查询中）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;index_subquery&lt;/td&gt;
+&lt;td&gt;与上面类似，只是关联条键是普通索引&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;range&lt;/td&gt;
+&lt;td&gt;使用索引的范围扫描&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;index&lt;/td&gt;
+&lt;td&gt;全索引扫描&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;All&lt;/td&gt;
+&lt;td&gt;全表扫描&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h4 id="extra扩展信息"&gt;extra（扩展信息）
+&lt;/h4&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;解释&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;No tables used&lt;/td&gt;
+&lt;td&gt;没有from子句，不查表&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Impossible WHERE&lt;/td&gt;
+&lt;td&gt;where语句无效，永远不成立&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;No matching min/max row&lt;/td&gt;
+&lt;td&gt;使用min/max函数，但where条件过滤掉了所有数据（没有数据）时&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Using index&lt;/td&gt;
+&lt;td&gt;只需要使用索引数据，不需要回表&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Using index condition&lt;/td&gt;
+&lt;td&gt;where条件中有索引，但不能使用索引（新版本表示使用了索引下推）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Using where&lt;/td&gt;
+&lt;td&gt;使用where条件进行了全表扫描&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Using join buffer (Block Nested Loop)&lt;/td&gt;
+&lt;td&gt;无法使用索引的关联查询，mysql需要建立临时的buffer块来加快查询&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Using filesort&lt;/td&gt;
+&lt;td&gt;需要使用文件重排序，如果数据很多会非常慢&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Using temporary&lt;/td&gt;
+&lt;td&gt;多个查询的过程中，需要临时表，一般在排序、去重等查询中常见 DISTINCT 、 GROUP BY 、 UNION&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="蛇足-1"&gt;蛇足
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;查看成本&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果想看某个执行计划的成本，可以在explain后添加FORMAT=JSON&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;font color='red'&gt;查询优化器的过程&lt;/font&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;解析sql语句：把查询等转换成具体的语句，如select* 转换成查询具体字段&lt;/li&gt;
+&lt;li&gt;优化：计算各种成本，如是否可以走索引，直接查聚簇索引，索引合并，先在哪个条件再走哪个，是否可以用缓存，用之前提到的mysql成本概念来计算每种方式的成本，然后选择一个最优。&lt;/li&gt;
+&lt;li&gt;执行阶段：通过2中选出的最优方案来执行&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;详细介绍bufferPool&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第18章buffer-pool"&gt;第18章、Buffer Pool
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;缓存页&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;buffer pool中有多个大小为16k的缓存页（与mysql默认一页大小一样），用于缓存从磁盘读取的页数据。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;控制块&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用来存放缓存页控制信息的内存，&lt;font color='red'&gt;控制块和缓存页是一一对应的，它们都被存储在Buffer Pool中，控制块存储在前面，缓存页在后面。&lt;/font&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855692816_1744855692829.png"
+loading="lazy"
+alt="1744855692816.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="free链表"&gt;free链表
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855712630_1744855712645.png"
+loading="lazy"
+alt="1744855712630.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;用来存储空闲的缓存页和控制页，当需要读取时，就从free链表中读取缓存页和控制块&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;mysql把所有空闲的缓存页对应的控制块作为一个节点放到free链表中。&lt;/p&gt;
+&lt;h3 id="flush链表"&gt;flush链表
+&lt;/h3&gt;&lt;p&gt;&lt;font color='red'&gt; mysql不会立刻把修改的数据页同步到磁盘，而是采用flush链表方式来同步。&lt;/font&gt;&lt;/p&gt;
+&lt;p&gt;结构与free链表类似，flush链表会缓存一些已经修改过的缓存页，在到达同步的时间点时，mysql会从flush链表中读取缓存页来同步到磁盘。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855734142_1744855734160.png"
+loading="lazy"
+alt="1744855734142.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="lru链表"&gt;LRU链表
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;类似于垃圾回收链表，用来判断哪些缓存页可以清除&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855790805_1744855790820.png"
+loading="lazy"
+alt="1744855790805.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;所有首次被加载到Buffer Pool的缓存页，该缓存页会被放到old区域的头部&lt;/font&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;why？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果我们进行全表扫描，大量数据会被加载到buffer pool为了不使young区缓存的数据直接全部失效，就把新数据放到old区的头部。&lt;/p&gt;
+&lt;p&gt;全表扫描不断有数据会插入old区头部，超出的从old区尾部被淘汰，来保证不会由于无效数据的加载而是缓存失效。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;那么young区的数据是如何被添加的？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在LRU缓存中，数据首次进入进入缓存，会在old区的头部，并会在缓存控制块中记录添加的时间。如果又一次访问刚刚添加的缓存，就会计算本次访问的上次添加的间隔时间，如果时间少于mysql系统设定的缓存间隔时间（默认1秒），就把本缓存控制块从old区取出，并添加到young区的头部&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;事务&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第19章事务"&gt;第19章、事务
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;AICD&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;原子性、隔离性、一致性、持久性&lt;/p&gt;
+&lt;h3 id="事务的几种状态"&gt;事务的几种状态
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;活动的（active）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;事务对应的数据库正在执行过程中&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;部分提交（partially committed）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;事务在内存中的操作已经完成，还没有被写入到磁盘中（在buffer pool中，还没有被写入到磁盘页中）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;失败（failed）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;事务处于活动或者部分提交状态时，出现了错误，事务就会变成失败状态。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;中止（aborted）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;失败的事务被回滚后，就处于中止状态&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;已提交（committed）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;事务被修改的数据已经成功同步到磁盘上，就变为已提交状态。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744353227133_1744353227153.png"
+loading="lazy"
+alt="1744353227133.png"
+&gt;&lt;/p&gt;
+&lt;h2 id="第20章redo日志"&gt;第20章、redo日志
+&lt;/h2&gt;&lt;p&gt;mysql访问数据，需要把磁盘中对应的数据页加载到内存中的bufferpool中。每次加载和修改都是以页为单位，落盘刷新也是以页为单位。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;font color='red'&gt;存在的弊端&lt;/font&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;资源浪费：每次刷新都是一个完整的数据页，太浪费资源，即使只修改数据页中的一个字节，也要刷新16k的数据到磁盘。&lt;/li&gt;
+&lt;li&gt;随机IO：由于一条语句可能修改多个数据页的数据，而不同数据页在磁盘中可能不是连续的。会产生随机IO寻址（速度非常慢）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;redo log的做法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在事务提交完成之前，把修改了哪些东西的记录都落在磁盘中。如果系统中间崩溃，也可以从磁盘中恢复刚刚修改的内容。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;redo log 的优点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;redo log占用空间极小，只记录表空间id、页号、偏移量和需要更新的值&lt;/li&gt;
+&lt;li&gt;redo log是顺序写入磁盘的，使用顺序IO，速度快&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="redo-log的结构"&gt;redo log的结构
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744357032403_1744357032426.png"
+loading="lazy"
+alt="1744357032403.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;type：该redo log的类型&lt;/li&gt;
+&lt;li&gt;space id：表空间id&lt;/li&gt;
+&lt;li&gt;page number：页号&lt;/li&gt;
+&lt;li&gt;data：具体内容&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="logbuffer"&gt;logbuffer
+&lt;/h3&gt;&lt;p&gt;同样的，想要将redolog落入磁盘，也不是每次直接写到磁盘里。&lt;/p&gt;
+&lt;p&gt;InnoDB有一块专门缓存日志的缓存叫logbuffer。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何写入一条redolog&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;先将redolog的内容写入logbuffer中。&lt;/li&gt;
+&lt;li&gt;InnoDB每秒/每次事务提交之前都会将logbuffer中的内容写入到磁盘中。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;logbuffer如何垃圾回收&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;logbuffer几乎没有垃圾回收，固定的内存空间会记录一个脏点，有点类似于直接内存的概念，不会真的去删除内存中的数据，而是在下次写入时直接覆盖已经失效的内存空间。&lt;/p&gt;
+&lt;h2 id="第22章undo-log"&gt;第22章、undo log
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;用于回滚时的日志&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="事务id"&gt;事务id
+&lt;/h3&gt;&lt;p&gt;聚簇索引的记录中，存在名为trx_id(事务id)、roll_pointer的隐藏列。&lt;/p&gt;
+&lt;p&gt;当进行增删改操作时，InnoDB会自动生成对应的undo log和对应的事务id。&lt;/p&gt;
+&lt;h3 id="insert"&gt;insert
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744361675334_1744361675354.png"
+loading="lazy"
+alt="1744361675334.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;类似链表的形式，开头内存指向当前属性结尾的地址，结尾内存指向上一条结尾的地址，方便遍历，增删改。&lt;/p&gt;
+&lt;h3 id="roll_pointer"&gt;roll_pointer
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;一个指针，指向记录对应的undo日志。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744696670326_1744696670345.png"
+loading="lazy"
+alt="1744696670326.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="delete"&gt;DELETE
+&lt;/h3&gt;&lt;p&gt;之前提过，mysql在删除数据时，并不是直接删除数据，而是把需要删除的数据放入垃圾回收链表，等待系统来删除。&lt;/p&gt;
+&lt;p&gt;下面来详细解释删除的过程&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;阶段一（delete mark）事务提交前&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744697317539_1744697317578.png"
+loading="lazy"
+alt="1744697317539.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;mysql会修改记录的trx_id、roll_pointer这些隐藏列的值）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;删除操作是为了实现MVCC&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;阶段二（purge）事务提交后&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当上面删除语句的事务提交之后，会有专门的垃圾回收线程把记录删除掉。&lt;/p&gt;
+&lt;p&gt;删除过程就是把此记录加入垃圾回收链表，修改页面的其他信息（如数量、删除插入记录的位置，页面可重用的大小等）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744697597883_1744697597915.png"
+loading="lazy"
+alt="1744697597883.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="update"&gt;UPDATE
+&lt;/h3&gt;&lt;h4 id="不更新主键的情况"&gt;不更新主键的情况
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;原地更新（in-place update）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;更新前的列和更新后的列占用空间大小一样&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;会直接更新原来的数据，不做特殊操作&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;空间变化的情况&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;被修改的字段空间减小或者变大&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;mysql会先执行删除操作（这里是真正的删除）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;没有dlelete mark阶段，由用户线程来把此记录从正常记录链表移除，然后添加到垃圾回收链表里。并修改页面相关的信息（统计信息等）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;然后把新的值插入到正常记录链表里&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;font color='red'&gt;上述操作均由用户线程完成，所以一直流传着mysql更新速度会非常慢。&lt;/font&gt;&lt;/p&gt;
+&lt;h4 id="更新主键的情况"&gt;更新主键的情况
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;在局促索引中，mysql的记录是按照主键值的大小连成一个单向链表的，如果要修改主键的值，则可能要记录的移动。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;具体操作步骤：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;将旧记录进行delete mark操作：（主线程进行了delete mark，后续有专门的垃圾回收线程来把它加入到垃圾回收链表并回收）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;原因是为了适配MVCC，这样操作后，其他事务查询还是可以查到之前的值）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;根据更新后的值，再创建一条新的记录，重新定位位置并插入&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="回滚"&gt;回滚
+&lt;/h3&gt;&lt;p&gt;回滚过程中，需要从回滚段中找到Undo页面，把对应的记录恢复回来。（恢复过程中，正常表会产生回滚的redo日志，临时表不产生redo日志）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;从事务和undo 日志的角度详细介绍MVCC&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第24章mvcc"&gt;第24章、MVCC
+&lt;/h2&gt;&lt;h3 id="事务的隔离级别"&gt;事务的隔离级别
+&lt;/h3&gt;&lt;h4 id="事务并发执行遇到的问题重点"&gt;&lt;font color='red'&gt;事务并发执行遇到的问题（重点）&lt;/font&gt;
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;脏写&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个事务修改了另一个未提交事务修改过的数据&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;脏读&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个事务读到了另一个未提交事务修改过的数据&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不可重复读&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个事务只能读到另一个已经提交的事务修改过的数据，并且其他事务每对该数据进行一次修改并提交后，该事务都能查询得到最新值&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;幻读&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个事务先根据某些条件查询出一些记录，之后另一个事务又向表中插入了符合条件的记录，原先的事务再次按照该条件查询时，能把另一个事务插入的记录也读出来。&lt;/p&gt;
+&lt;h4 id="四种隔离级别"&gt;四种隔离级别
+&lt;/h4&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;隔离级别&lt;/th&gt;
+&lt;th&gt;脏读&lt;/th&gt;
+&lt;th&gt;不可重复读&lt;/th&gt;
+&lt;th&gt;幻读&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;读未提交 (READ UNCOMMITTED)&lt;/td&gt;
+&lt;td&gt;可能&lt;/td&gt;
+&lt;td&gt;可能&lt;/td&gt;
+&lt;td&gt;可能&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;读已提交 (READ COMMITTED)&lt;/td&gt;
+&lt;td&gt;不可能&lt;/td&gt;
+&lt;td&gt;可能&lt;/td&gt;
+&lt;td&gt;可能&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;可重复读 (REPEATABLE READ)（默认）&lt;/td&gt;
+&lt;td&gt;不可能&lt;/td&gt;
+&lt;td&gt;不可能&lt;/td&gt;
+&lt;td&gt;可能（有特殊方法，避免出现幻读）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;可串行化 (SERIALIZABLE)&lt;/td&gt;
+&lt;td&gt;不可能&lt;/td&gt;
+&lt;td&gt;不可能&lt;/td&gt;
+&lt;td&gt;不可能&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;blockquote&gt;
+&lt;p&gt;无论哪种事务隔离级别，都不允许出现脏写情况&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="mvcc"&gt;MVCC
+&lt;/h3&gt;&lt;h4 id="版本链"&gt;版本链
+&lt;/h4&gt;&lt;p&gt;mysql记录中有两个必要的隐藏列（row_id不是不要的，只有在没有主见的情况下才有）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;trx_id：每次事务对某条聚簇索引记录进行了修改，就把事务id赋值到trx_id列&lt;/li&gt;
+&lt;li&gt;roll_pointer：每次对聚簇索引记录进行修改时，都会把旧的版本写入到undo日志中，然后roll_pointer列就相当于一个指针，可以通过它找到修改前的信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744784304336_1744784304388.png"
+loading="lazy"
+alt="1744784304336.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;每次对记录进行修改，都会记录一条undo日志，每条undo日志都有一个roll_pointer属性，可以将这些undo连接起来，串成一个链表&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744784566914_1744784566950.png"
+loading="lazy"
+alt="1744784566914.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;每次记录被更新后，都会将旧值放到一条undo日志中，所有版本的roll_pointer连接成一个链表。&lt;font color='red'&gt;版本链的头节点就是当前记录最新的值。&lt;/font&gt;（每条版本的undo日志都有一个事务id trx_id）&lt;/p&gt;
+&lt;h4 id="readview"&gt;ReadView
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;判断版本链中哪个版本是当前事务可见的&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;ReadView的主要内容&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;m_ids：生成ReadView时当前系统活跃的读写事务的事务id列表&lt;/li&gt;
+&lt;li&gt;min_trx_id：活跃事务列表中的最小事务id&lt;/li&gt;
+&lt;li&gt;max_trx_id：生成ReadView时下一条事务id（不是只事务列表中的最大id，因为有可能较大的事务id在生成ReadView之前就已经被提交了）&lt;/li&gt;
+&lt;li&gt;creator_trx_id：生成该ReadView的事务id。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如何判断某个版本记录是否可见？&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;被访问版本的trx_id和ReadView中的creator_trx_id相同，（该事务在访问自己修改过的版本）当前版本可见。&lt;/li&gt;
+&lt;li&gt;如果被访问的版本trx_id小于ReadView的最小事务id，（生成该版本事务在ReadView生成前就已经提交了），当前版本可见。&lt;/li&gt;
+&lt;li&gt;如果访问版本的trx_id大于ReadView中max_trx_id下一条事务的id，（访问版本的事务在当前事务生成ReadView之后才开始），当前版本不可见。&lt;/li&gt;
+&lt;li&gt;访问版本的trx_id在ReadView的min_trx_id和max_trx_id之间，则判断访问版本的trx_id是否在ReadView活跃事务id列表中。如果在则不可见（生成ReadView时，事务还没有提交，还在修改数据），不在则可见(生成ReadView时，该事务已经被提交了)。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不同的事务隔离级别，生成ReadView的时机不同&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;隔离级别&lt;/th&gt;
+&lt;th&gt;生成ReadView的时机&lt;/th&gt;
+&lt;th&gt;影响&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;读已提交&lt;/td&gt;
+&lt;td&gt;每次读取数据前都生成一个ReadView&lt;/td&gt;
+&lt;td&gt;每次查询时都独立生成一个ReadView，这样每次查询都会读到本次ReadView之前已经提交的版本&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;可重复读&lt;/td&gt;
+&lt;td&gt;第一次读取数据时生成ReadView&lt;/td&gt;
+&lt;td&gt;第一次查询时才生成ReadView，这样即使ReadView事务列表中的其他事务后面提交了，当前事务也无法读到它的版本&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;串行化&lt;/td&gt;
+&lt;td&gt;用锁实现&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;blockquote&gt;
+&lt;p&gt;详细介绍mysql的各种锁&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="第25章锁"&gt;第25章、锁
+&lt;/h2&gt;&lt;h3 id="上锁"&gt;上锁
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;mysql聚簇索引记录上本身是没有锁的，但为什么常常说mysql是根据索引来上锁的呢？&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;mysql在查询或者增、删改时，都先会去锁结构中来获取当前记录的上锁状态。（锁结构只有在上锁时才有，且结构与聚簇索引类似）&lt;/p&gt;
+&lt;p&gt;由于需要通过聚簇索引去索结构中获取对应记录的上锁情况，所以常说mysql上锁是根据索引来上的。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744792329148_1744792329181.png"
+loading="lazy"
+alt="1744792329148.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;之前说过mysql在可重复读隔离级别就已经解决了幻读问题：具体的借据方案如下:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;读操作利用多版本并发控制（MVCC），写操作进行加锁&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;读：&lt;/p&gt;
+&lt;p&gt;由于可重复读只会在第一查询时来生成对应的ReadView，而此时之前提交的事务已经被快照了，本事务也只能查到历史的版本数据，就算有最新的事务修改并提交了新的版本。本事务也无法读到。&lt;/p&gt;
+&lt;p&gt;写：&lt;/p&gt;
+&lt;p&gt;所有的写操作都是修改最新的版本，修改时会上锁，多个事务不会冲突。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;读、写操作都加锁&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果有业务读取记录时不允许读取旧版本，每次查询都只能获取最新版本的记录，则需在要读写的时候都加锁。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;MVCC方式读写操作不冲突，性能更高&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="读锁"&gt;读锁
+&lt;/h3&gt;&lt;h4 id="共享锁和独占锁"&gt;共享锁和独占锁
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;共享锁：S锁，事务读取记录时，需要先获取该记录的S锁。&lt;/li&gt;
+&lt;li&gt;独占锁：排它锁，x锁，事务修改记录时，需要先获取该记录的X锁。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="写锁"&gt;写锁
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;delete&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;先在B+树中获取该记录的位置&lt;/li&gt;
+&lt;li&gt;获取这条记录的X锁&lt;/li&gt;
+&lt;li&gt;再执行delete mark操作&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;update&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;修改后空间没有变化的：
+&lt;ol&gt;
+&lt;li&gt;先在B+树中定位位置&lt;/li&gt;
+&lt;li&gt;获取X锁&lt;/li&gt;
+&lt;li&gt;原地修改&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;空间发生变化的
+&lt;ol&gt;
+&lt;li&gt;在B+树中定位位置&lt;/li&gt;
+&lt;li&gt;获取X锁&lt;/li&gt;
+&lt;li&gt;将该记录彻底删除掉（把此记录添加到垃圾链表）&lt;/li&gt;
+&lt;li&gt;插入一条新记录（新插入的记录被隐式锁保护）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;修改了主键
+&lt;ol&gt;
+&lt;li&gt;在原记录上执行Delete操作&lt;/li&gt;
+&lt;li&gt;在执行一条insert操作&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;insert&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一般情况插入不加锁，插入后InnoDB会添加隐式锁，来保护此记录不被别的事务访问&lt;/p&gt;
+&lt;h3 id="不同锁的粒度对齐颗粒度-"&gt;不同锁的粒度（对齐颗粒度:-)）
+&lt;/h3&gt;&lt;h4 id="表锁"&gt;表锁
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;在执行DDL语句时会上表锁，上锁方式时通过元数据锁来实现的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="行锁重点"&gt;行锁（重点）
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;Record Locks（记录锁）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;按记录的维度来上锁，一条记录一个锁&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Gap Locks（间隙锁）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;用来解决幻读问题&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;上锁范围为要锁的记录（可能有多条记录）的上一条记录结尾，和下一条记录的开始。&lt;/p&gt;
+&lt;p&gt;&lt;font color='red'&gt;保证锁定范围与上一条和下一条之间都不能插入数据&lt;/font&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744792054712_1744792054748.png"
+loading="lazy"
+alt="1744792054712.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Next-Key Locks：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;与Gap锁类似，只不过只是不允许在锁定记录与上一条之间插入数据。&lt;/p&gt;
+&lt;p&gt;锁定记录的后面允许插入数据。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;隐式锁&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;之前说ReadView时，会判断事务id，相当于上了隐式锁。&lt;/p&gt;
+&lt;h3 id="innodb锁的内存结构"&gt;InnoDB锁的内存结构
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744792681344_1744792681377.png"
+loading="lazy"
+alt="1744792681344.png"
+&gt;&lt;/p&gt;</description></item><item><title>redis5之前</title><link>https://thecoolboyhan.github.io/p/redis5%E4%B9%8B%E5%89%8D/</link><pubDate>Tue, 03 Oct 2023 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/redis5%E4%B9%8B%E5%89%8D/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/redis5%E4%B9%8B%E5%89%8D/1.png" alt="Featured image of post redis5之前" /&gt;&lt;h2 id="拉钩的redis"&gt;拉钩的redis
+&lt;/h2&gt;&lt;h3 id="数据结构"&gt;数据结构
+&lt;/h3&gt;&lt;h4 id="基本数据类型"&gt;基本数据类型
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;string字符串&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;list&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;set集合&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;sortedset有序集合&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;hash类型（散列表）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;bitmap位图类型&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;geo地理位置类型&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;stream数据流类型&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="redisdb结构"&gt;redisDB结构
+&lt;/h4&gt;&lt;p&gt;redis会在初始化时，会预先分配16个数据库&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;redisDB的具体结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c++" data-lang="c++"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;redisDb&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//id数据库序号，为0-15（默认redis有16个数据库）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;avg_ttl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储数据库对象的平均ttl（time to live），用于统计
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;dict&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储所有的key-value
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;blocking_keys&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//blpop存储阻塞key和客户端对象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;ready_keys&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//阻塞后push响应阻塞客户端，存储阻塞后push的key和客户端对象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;wathced_keys&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储watch监控的key和客户端对象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h4 id="redis的7种type"&gt;redis的7种type
+&lt;/h4&gt;&lt;h5 id="字符串-sds"&gt;字符串 SDS
+&lt;/h5&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-412:55:27-1693803326815.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;sdshdr&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//记录buf数据中已使用字节的数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;len&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//记录buf数组中未使用字节的数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;free&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//字符数组，用于保存字符串
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;[];&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;优势：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;通过len和free可以用O（1）的时间复杂度来获取字符串的长度（c语言是O(n)）&lt;/li&gt;
+&lt;li&gt;因为已经记录了长度，所以可以在可能会发生缓冲区溢出时自动重新分配内存。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id="跳跃表重点"&gt;跳跃表（重点)
+&lt;/h5&gt;&lt;p&gt;跳跃表是有序集合（sorted-set）的底层实现，效率高，实现简单。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;思想：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;将有序链表中的部分节点分层，每层都是一个有序链表。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;查找：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;优先从最高层开始向后查找，当到达某个节点时，如果next节点值大于要查找的值或next指针指向null，则从当前节点下降一层继续向后查找。&lt;/p&gt;
+&lt;p&gt;举例：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-512:17:01-1693887420857.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;类似于2分查找&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;插入和删除：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;先从最下层开始构建，除开始和结束节点，每向上一层，都要有1/2的几率解决是否构建当前元素。&lt;/p&gt;
+&lt;p&gt;删除：&lt;/p&gt;
+&lt;p&gt;在每一层都找到指定元素，删除需要删除的元素。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;跳表的特点：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;每层都是一个有序链表&lt;/li&gt;
+&lt;li&gt;查找次数近似于层数的1/2&lt;/li&gt;
+&lt;li&gt;最底层包含所有元素&lt;/li&gt;
+&lt;li&gt;空间复杂度O(n)扩充了一倍&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;Redis的跳表实现：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;span class="lnt"&gt;18
+&lt;/span&gt;&lt;span class="lnt"&gt;19
+&lt;/span&gt;&lt;span class="lnt"&gt;20
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;sds&lt;/span&gt; &lt;span class="n"&gt;ele&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储字符串类型数据
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;double&lt;/span&gt; &lt;span class="n"&gt;score&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储排序的分值
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;backward&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//后退指针，指向当前节点最底层的前一个节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//层，柔性数组，随机生成1-64的值
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistLevel&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;forward&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//指向本层下一个节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;span&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//本层下一个节点到本层的元素个数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;level&lt;/span&gt;&lt;span class="p"&gt;[];&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;//链表
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplist&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//表头节点和为节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;header&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;tail&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//表中节点的数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//表中层数最大的节点的层数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;level&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;zskiplist&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;结构示意图：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-512:30:46-1693888245130.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h5 id="字典重点难点"&gt;字典（重点+难点）
+&lt;/h5&gt;&lt;p&gt;字典dict又称散列表（hash），用来存储键值对的一种数据结构。&lt;/p&gt;
+&lt;p&gt;Redis整个数据库是用字典来存储的。&lt;/p&gt;
+&lt;p&gt;对redis进行curd其实就是对字典数据进行curd。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;数组：数据量少时，使用数组加偏移量的方式来存储对象，可以O(1）时间复杂度来获取对象。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果数据变多时，还是需要使用到hash表&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;hash：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;redis解决hash冲突时，采用拉链法来处理。&lt;/p&gt;
+&lt;p&gt;情况类似于java的hashmap（没有树化）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;渐进式rehash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;扩容时需要rehash，但当数据特别大时，rehash是一个非常缓慢的过程，所以需要进行优化。&lt;/p&gt;
+&lt;p&gt;服务器忙，则只对一个节点进行rehash。&lt;/p&gt;
+&lt;p&gt;服务器闲，可批量rehash（100个节点）&lt;/p&gt;
+&lt;p&gt;字典的应用场景：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;数据库存储数据&lt;/li&gt;
+&lt;li&gt;散列表对象&lt;/li&gt;
+&lt;li&gt;哨兵模式的主从节点管理&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id="压缩列表"&gt;压缩列表
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;由一系列特殊编码的连续内存块组成的顺序型数据结构。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-613:26:19-1693977978141.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;zibytes:压缩列表的字节长度&lt;/p&gt;
+&lt;p&gt;zltail：压缩列表的尾元素相对于起始地址的偏移量&lt;/p&gt;
+&lt;p&gt;zlien：压缩列表的元素个数&lt;/p&gt;
+&lt;p&gt;entry1..entryx：压缩列表的各个节点&lt;/p&gt;
+&lt;p&gt;zlend：压缩列表的结尾，占一个字节，恒为0xFF（255）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;entry的编码结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-614:13:54-1693980833194.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;previous_entry_length：前一个元素的字节长度&lt;/p&gt;
+&lt;p&gt;encoding：表示当前元素的编码&lt;/p&gt;
+&lt;p&gt;content：数据内容&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;span class="lnt"&gt;9
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zlentry&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;prevrawlensize&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//previous_entry_length字段的长度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;prevrawlen&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//previous_entry_length字段存储的内容
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;lensize&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//encoding字段的长度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;len&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//数据内容长度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;headersize&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//当前元素的首部长度，即previous_entry_length字段长度与encoding字段长度之和。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="n"&gt;encoding&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//数据类型
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//当前元素首地址
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;zlentry&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;应用场景：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;sroted-set和hash元素个数少且是小整数或短字符串（直接使用）&lt;/p&gt;
+&lt;p&gt;list用快速链表（quicklist）数据结构存储，而快速链表是双向列表和压缩列表的组合（间接使用）&lt;/p&gt;
+&lt;h5 id="整数集合intset"&gt;整数集合（intset)
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;有序的（整数升序），存储整数的连续存储结构。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;当Redis集合类型的元素都是整数并且都处在64位有效符号整数范围内，就使用该结构存储。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-1516:11:05-1694765465742.png"
+loading="lazy"
+alt="2023-9-1516:11:05-1694765465742.png"
+&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;intset&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;encoding&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//编码方式
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//集合包含的元素数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int8_t&lt;/span&gt; &lt;span class="n"&gt;contents&lt;/span&gt;&lt;span class="p"&gt;[];&lt;/span&gt; &lt;span class="c1"&gt;//保存元素的数组
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;应用场景：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;可以存储整数值，并且保证集合中不会出现重复元素。&lt;/p&gt;
+&lt;h5 id="快速列表重点"&gt;快速列表（重点）
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;快速列表（quicklist）是Redis底层重要的数据结构。是列表的底层实现。（Redis 3.2之前，Redis采用双向链表和压缩列表实现）。在Redis 3.2 之后，结合双向链表和压缩列表的优点，设计出了qucklist。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;快速列表是一个双向链表，链表中的每个节点是一个压缩列表结构。每个节点的压缩列表都可以存储多个数据元素。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-1516:26:51-1694766411320.png"
+loading="lazy"
+alt="2023-9-1516:26:51-1694766411320.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;数据结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;quicklist&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向quicklist的头部
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;tail&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向quicklist的尾部
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//列表中所有元素项个数的总和
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;len&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//quicklist节点的个数，即ziplist的个数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;fill&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//ziplist大小限定，由list-max-ziplist-size 给定（Redis设定）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;compress&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//节点压缩深度设置，由list-compress-depth给定（redis设定）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;quicklist&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="n"&gt;struck&lt;/span&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;prev&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向上一个ziplist节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;next&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向下一个ziplist节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;zl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//数据指针，如果没有被压缩，就指向ziplist结构，反之指向qucklistLZF结构。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;sz&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向ziplist结构的总长度（内存占用长度）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;count&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//表示ziplist中数据项个数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;encoding&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//编码方式，1--ziplist，2--quicklistLZF
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;container&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//预留字段，存放数据的方式，1--NONE，2--ziplist
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;recompress&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//解压标记，当查看一个被压缩的数据时，需要暂时解压缩，标记此参数为1之后再重新进行压缩。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;attempted_compress&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//测试相关
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;extra&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//扩展字段，暂时没用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;quicklistNode&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;数据压缩&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;quicklist每个节点的实际数据存储结构为ziplist，这种结构的优势在于节省存储空间。为了进一步降低ziplist的存储空间。还可以对ziplist进行压缩。Redis采用的压缩算法是LZF。其基本思想是：数据与前面重复的记录重复位置及长度。不重复的记录原始数据。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;压缩过后的数据可以分成多个片段，每个片段有两个部分，&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="过期和淘汰策略"&gt;过期和淘汰策略
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;maxmemory&lt;/p&gt;
+&lt;p&gt;redis服务器物理内存的最大值，如果达到maxmemory设定的值，通过缓存淘汰策略，从内存中删除对象&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;删除策略&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;redis默认采用惰性删除+主动删除的方式。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;定时删除&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在设置key的同时，创建一个定时器，让定时器在key的过期时间来临时，立刻执行对key删除操作。&lt;/p&gt;
+&lt;p&gt;需要创建定时器，而且消耗CPU，一般不推荐。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;惰性删除&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在key被访问时，如果发现他已经失效，那么就删除它。&lt;/p&gt;
+&lt;p&gt;调用expirelfNeeded函数，该函数的意义是：读取数据之前先检查它有没有失效，如果失效了就删除它。&lt;/p&gt;
+&lt;p&gt;代码实现：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;expireIfNeeded&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;redisDb&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;db&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;robj&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//获取主键的失效时间， get当前时间-创建时间&amp;gt;ttl
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;when&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nf"&gt;getExpire&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;db&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//假如失效时间为负数，说明该主键未设置失效时间（失效时间默认为-1）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="redis高可用方案"&gt;redis高可用方案
+&lt;/h2&gt;&lt;h3 id="主从同步"&gt;主从同步
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;redis2.8之前&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;从服务器发送SYNC命令给主服务器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;主服务器生成RDB文件给从服务器，同时发送所有写命令给从服务器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;从服务器清空之前的数据，读取RDB文件&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通过命令传播的形式保持数据一致性&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果同步过程中断掉，主服务器重新生成RDB文件和mast命令给从服务器，从服务器重新恢复&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;redis 2.8之后&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;redis主从同步，分为全量同步和增量同步&lt;/li&gt;
+&lt;li&gt;从服务器第一次连接上主机是全量同步&lt;/li&gt;
+&lt;li&gt;断线重连可能触发全量同步也可能是增量同步&lt;/li&gt;
+&lt;li&gt;除此之外的情况都是增量同步&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="哨兵模式"&gt;哨兵模式
+&lt;/h3&gt;&lt;p&gt;Sentinel是一个特殊的Redis服务器&lt;/p&gt;
+&lt;p&gt;不会进行持久化&lt;/p&gt;
+&lt;p&gt;每个Sentinel启动后，会创建两个连向主服务器的网络连接&lt;/p&gt;
+&lt;p&gt;命令连接：用于向主服务器发送命令，并接收相应&lt;/p&gt;
+&lt;p&gt;订阅连接：用于订阅主服务器的&amp;ndash;Sentinel&amp;mdash;-Hello频道&lt;/p&gt;
+&lt;p&gt;Sentinel默认每十秒向主服务器发送info命令获取redis的信息&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Sentinel之间只创建命令连接，不创建订阅连接，因为Sentinel在通过订阅主服务器或者从服务器，就可以感知到新的Sentinel的加入。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;检测主观下线状态&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果一个哨兵检测到主服务器没在down-after-milliseconds未响应&lt;/p&gt;
+&lt;p&gt;哨兵就认为该实例主观下线&lt;/p&gt;
+&lt;p&gt;向其他哨兵发送消息确认是否主观下线&lt;/p&gt;
+&lt;p&gt;当哨兵集群的选举数半数以上，该主就客观下线&lt;/p&gt;
+&lt;h4 id="故障转移"&gt;故障转移
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;哨兵leader选举&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当一个主服务器被判断为客观下线后，监视这个主服务器的所有Sentinel会通过选举算法（raft），选出一个Leader 哨兵去执行故障转移操作&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;Raft&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Raft一般有三种身份，主，跟随者，候选人。&lt;/p&gt;
+&lt;p&gt;Raft协议将时间分为一个一个任期（term），可以认为是一种逻辑时间&lt;/p&gt;
+&lt;p&gt;选举流程：&lt;/p&gt;
+&lt;p&gt;Raft采用心跳检测触发Leader选举&lt;/p&gt;
+&lt;p&gt;系统启动后，全部节点初始化为跟随者。term为0&lt;/p&gt;
+&lt;p&gt;节点如果接收到了请求投票命令或者附录命令，就会保持自己的跟随者身份&lt;/p&gt;
+&lt;p&gt;节点如果一段时间内没有收到附录消息，在该节点的超时时间内还没有发现Leader，跟随者会自动转换为候选人，开始竞选leader&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;竞选：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;增加自己的term&lt;/li&gt;
+&lt;li&gt;启动新的定时器&lt;/li&gt;
+&lt;li&gt;给自己投一票（每个节点只能投一票，候选人投给自己，跟随者投给收到的第一个发送投票命令的节点）&lt;/li&gt;
+&lt;li&gt;向 所有其他节点发送投票命令，并等待其他节点回复&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果在计时超时前，节点收到多数节点的同意投票，就转换为Leader，同时向其他所有节点发送附录命令，告知自己成为Leader&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;故障转移&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;把失效的主其中的一个从升级为新的主，并将原失效主和其他的从都改为复制新的主。&lt;/li&gt;
+&lt;li&gt;当客户端连接原失效主失败时，集群会给客户端返回新的master，让客户端重新连接新的master&lt;/li&gt;
+&lt;li&gt;主和从服务器切换后，原主和从的配置文件都会发生改变，也就是原主中会多一行复制新主服务器。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="集群与分区"&gt;集群与分区
+&lt;/h3&gt;&lt;h4 id="客户端分区"&gt;客户端分区
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;普通hash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;客户端在存放数据的时候先做一个hash计算，根据结果来决定存到哪台redis服务器上&lt;/p&gt;
+&lt;p&gt;优点：&lt;/p&gt;
+&lt;p&gt;存放的数据key可以是中文或者字符串&lt;/p&gt;
+&lt;p&gt;热点数据分布均匀，不会存在哪一台机器上key特别多的情况&lt;/p&gt;
+&lt;p&gt;缺点：&lt;/p&gt;
+&lt;p&gt;扩展成本高，添加新redis服务器的时候，所有的数据都需要重新hash计算&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一致性hash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;普通的hash是对主机数取模，而一致性hash是对2^32^取模。我们把2^32^想象成一个圆，就像钟表一样。&lt;/p&gt;
+&lt;p&gt;再把redis服务器的hash（ip）对2^32取模， 确定redis服务器在这个圆上的位置。&lt;/p&gt;
+&lt;p&gt;存入的数据经过hash%2^32^之后，在圆上确定一个位置，当前点向右的第一个服务器就是存放此key 的位置。&lt;/p&gt;
+&lt;p&gt;当有新的redis服务器添加时，取圆上的位置。&lt;/p&gt;
+&lt;p&gt;服务器数据只需要修改新服务器圆上位置向右的第一个服务器的数据重新hash即可。&lt;/p&gt;
+&lt;p&gt;优点：&lt;/p&gt;
+&lt;p&gt;添加或移除节点时，数据只需要进行部分的迁移，其他服务器保持不变。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;虚拟映射&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果上述hash环之后，数据还是分布不均匀，可以在圆上取服务器节点的对角，来映射重排数据，使数据分布均匀。&lt;/p&gt;
+&lt;p&gt;缺点：&lt;/p&gt;
+&lt;p&gt;复杂度高&lt;/p&gt;
+&lt;h4 id="proxy端分区"&gt;proxy端分区
+&lt;/h4&gt;&lt;p&gt;codis豌豆荚提供的redis分区管理工具，推特也有一个叫TwemProxy。&lt;/p&gt;
+&lt;p&gt;codis在redis的基础上做了一层包装，引入了槽的概念。代理提供redis的分区功能。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缺点：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;redis更新后，proxy也要跟着维护&lt;/p&gt;
+&lt;h4 id="官方cluster分区"&gt;官方cluster分区
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;redis-cluster把所有的物理节点映射到（0-26383）个slot上，基本上采用平均分配和连续分配的方式。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;添加一个新的节点时，会自动进行槽迁移，槽中的数据也会跟着移动。&lt;/p&gt;
+&lt;p&gt;cluster采用去中心化设计，每个主节点间都会互相通讯，就算客户端连接到错误的主节点，redis会转发到正确的节点。&lt;/p&gt;
+&lt;h3 id="容灾"&gt;容灾
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;故障检测&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;redis中每个节点都会给其他节点发送ping命令，如果一个节点ping另一个节点超时，他会给其他节点发送pfile命令，当有半数以上的节点都投出pfail票数后，则认为此节点故障。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;cluster失效的判断&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;集群中半数以上的主节点都宕机（无法投票）&lt;/li&gt;
+&lt;li&gt;宕机的主节点的从节点也宕机了（sloct槽分配不连续）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;副本飘逸&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果一个master宕机，它只有一个从节点，从节点成为新的主节点，它没有从节点，会从其他从节点最多的一个主机点那移动一个从节点成为自己的从节点。&lt;/p&gt;
+&lt;h2 id="企业实战"&gt;企业实战
+&lt;/h2&gt;&lt;h3 id="缓存问题"&gt;缓存问题
+&lt;/h3&gt;&lt;h4 id="缓存穿透"&gt;缓存穿透
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;一般的缓存系统，都是按照key去缓存查询，如果不存在对应的value，就应该去后端系统查询（不如DB）。&lt;/p&gt;
+&lt;p&gt;缓存穿透是指在高并发下查询key不存在的数据（不存在的key），会穿过缓存查询数据库。导致数据库压力过大而宕机。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;对查询结果为空的情况也设置缓存，缓存事件设置短一点，或者该key对应的数据insert了之后清除缓存。&lt;/p&gt;
+&lt;p&gt;问题：缓存太多空值，占用了更多空间&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用布隆过滤器，在缓存之前再加一层布隆过滤器，在查询的时候先去布隆过滤器查询key是否存在，如果不存在就直接返回，存在再查询缓存和DB。（一个大数组，对key多次不同hash计算，记录此key分别出现在数组哪个位置，来判断缓存和数据库中是否有此key）&lt;/p&gt;
+&lt;p&gt;如果数据库更新，布隆过滤器一定要添加&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="缓存雪崩"&gt;缓存雪崩
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;当缓存服务器重启或者大量缓存集中在某一时间段失效，这样在失效的时候，也会给后端系统带来很大的压力。（数据库崩溃）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;key的失效期分散开，不同的key设置不同的有效期&lt;/li&gt;
+&lt;li&gt;设置二级缓存（数据库不一定一致）&lt;/li&gt;
+&lt;li&gt;高可用（脏读）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="缓存击穿"&gt;缓存击穿
+&lt;/h4&gt;&lt;p&gt;对于一些设置了过期时间的key，如果这些key可能会在某些事件点被超高并发的访问，是一种非常“热点”的数据。这个时候需要考虑一个问题，缓存被“击穿”的问题，这个和缓存雪崩的区别在于这里针对某一key缓存，前者则是很多key。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;缓存的某个时间点过期的时候，恰好在这个时间点对这个key有大量的并发请求过来，这些请求发现缓存过期一般都会从后端DB加载数据并回设到缓存，这个时候大并发的缓存可能会瞬间把DB压垮。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;用分布式锁控制访问的线程&lt;/p&gt;
+&lt;p&gt;使用redis的setnx互斥锁进行判断，这样其他线程就处于等待状态，保证不会有大并发操作去操作数据库&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;不设置超时时间，volatile-lru但会造成写一致问题&lt;/p&gt;
+&lt;p&gt;当数据库数据发生更新时，缓存中的数据不会及时更新，这样会造成数据库中的数据和缓存中的数据的不一致，应用会从缓存中读取到脏数据，可采用延时双删策略处理。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="数据不一致"&gt;数据不一致
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;保持数据最终一致性（延时双删）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;先更新数据库同时删除缓存项（Key），等读的时候再填充缓存。&lt;/li&gt;
+&lt;li&gt;2秒后再删除一次缓存项（key）&lt;/li&gt;
+&lt;li&gt;设置缓存过期时间比如十秒或者1小时&lt;/li&gt;
+&lt;li&gt;将缓存删除失败记录到日志中，利用脚本提取失败记录再次删除（缓存失效期过长7＊24）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;升级方案&lt;/p&gt;
+&lt;p&gt;通过数据库的binlog来异步淘汰key，利用工具（canal）将binlog日志采集发送到mq中，然后通过ACK机制确认处理删除缓存&lt;/p&gt;
+&lt;h4 id="hot-key"&gt;Hot Key
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;当有大量的请求访问某个Redis某个Key时，由于流量集中达到网络上限，从而导致这个redis的服务器宕机。造成缓存击穿，接下来对这个key的访问将直接访问数据库造成数据库崩溃，或者访问数据库回填Redis再访问redis，继续崩溃。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;如何处理热Key：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;变分布式缓存为本地缓存&lt;/p&gt;
+&lt;p&gt;发现热key之后，把缓存取出后，直接加载到本地缓存中，可以采用Ehcache、Guava Cache都可以，这样系统在访问热key数据时就可以直接访问自己的缓存了。（数据不要求实时一致）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在每个redis主节点上备份热Jey数据，这样可以在读取时采用随机读取的方式，将访问压力负载到每个redis上。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;利用对热点数据的限流，熔断保护措施&lt;/p&gt;
+&lt;p&gt;每个系统实例每秒最多请求缓存集群读操作不超过400次，一超过就可以熔断掉，不让请求缓存集群，直接返回一个空白信息，然后用户稍后会自行再次重新刷新页面之类的。（首页不行，系统友好性差）&lt;/p&gt;
+&lt;p&gt;通过系统层自己直接加限流熔断保护措施，可以很好的保护后面的缓存集群。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="big-key"&gt;Big Key
+&lt;/h4&gt;&lt;p&gt;大key指的是存储的值（Value）非常大，常见场景：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;热门话题下的讨论&lt;/li&gt;
+&lt;li&gt;大v的粉丝列表&lt;/li&gt;
+&lt;li&gt;序列化后的图片&lt;/li&gt;
+&lt;li&gt;没有及时处理的垃圾数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;大Key 的影响：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;大key会大量占用内存，在集群中无法均衡&lt;/li&gt;
+&lt;li&gt;Redis的性能下降，主从复制异常&lt;/li&gt;
+&lt;li&gt;在主动删除或过期删除时会操作时间过长而引起服务阻塞&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如何发现大key：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;redis-cli &amp;ndash;bigkeys命令。可以找到某个实例5种数据类型（String,hash,list,set,zset）的最大Key。&lt;/p&gt;
+&lt;p&gt;但如果redis的key比较多，执行该命令会比较慢。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;获取生产redis的RDB文件，通过rdbtools分析rdb生成csv文件，在导入MySQL或其他数据库中进行分析统计，根据size_in_bytes统计bigKey。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;大key的处理：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;String 类型的big Key，尽量不要存入Redis中，可以使用文档型数据库MongoDB或缓存到CDN上。&lt;/p&gt;
+&lt;p&gt;如果必须redis存储，最好单独存储，不要和其他的key一起存储，采用一主一从或多从。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;单个简单的key存储的value很大，可以尝试将对象分拆成几个key-value，使用mget获取值，这样分拆的意义在于分拆单次操作的压力，将单次操作压力平摊到多次操作中，降低对redis的IO影响。&lt;/p&gt;
+&lt;p&gt;hash、set、zset、list中存储过多的元素，可以将这些元素分拆（分页）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;删除大Key时 不要使用del，因为del是阻塞命令，删除时会影响性能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用lazy delete（unlink命令）undel&lt;/p&gt;
+&lt;p&gt;删除指定的key（s），若key不存在则该key被跳过。但是，相比DEl会会产生阻塞，该命令会在另一个线程中回收内存，应为它是非阻塞的。这也是该命令名字的由来，仅将keys从key空间中删除，真正的数据删除会在后续异步操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="分布式锁"&gt;分布式锁
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;分布式锁是控制系统之间的同步访问共享资源的一种方式。&lt;/p&gt;
+&lt;p&gt;利用redis的单线程特性对共享资源进行串行化处理。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="利用watch实现redis乐观锁"&gt;利用Watch实现redis乐观锁
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;利用redis的watch功能，监控这个rediskey 的状态值&lt;/li&gt;
+&lt;li&gt;获取rediskey的值&lt;/li&gt;
+&lt;li&gt;创建redis事务&lt;/li&gt;
+&lt;li&gt;给这个key的值+1&lt;/li&gt;
+&lt;li&gt;然后去执行 这个事务，如果key的值被修改过则回滚。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="实现方式"&gt;实现方式
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;使用set命令实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;span class="lnt"&gt;9
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;getLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;expireTime&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//setnx:查询是否有这个key存在，如果没有就设置成功，如果有就不能设置&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//ex：过期时间，如果上面设置的key没有被当前线程手动删除，到达过期时间此key自动失效（删除）&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;set&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;NX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;EX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;expireTime&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;OK&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;equals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;释放锁：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;releaseLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;equals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;))){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;del&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;blockquote&gt;
+&lt;p&gt;问题在于如果调用jedis.del()方法的时候，这把锁已经不属于当前客户端的时候会解除他人家的锁。比如客户端A加锁，一段时间后客户端A解锁，在执行jedis.del()之前，锁突然过期了，客户端B尝试加锁成功。然后客户端A在执行del方法，则将客户端B的锁解锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;redis+lua脚本实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;因为lua脚本是原子性的，不存在拿到锁，再误删别人锁的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;releasLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;script&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;if redis.call(&amp;#39;get&amp;#39;,KEYS[1]) == ARGV[1] then return redis.call(&amp;#39;del&amp;#39;,KEYS[1]) else return 0 end&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Object&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;eval&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;script&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Collections&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;singletonList&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="n"&gt;Collections&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;singletonList&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;equals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;1L&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h4 id="存在的问题"&gt;存在的问题
+&lt;/h4&gt;&lt;p&gt;无法保证强一致性，在主机宕机的情况下会造成锁的重复获取。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;A在主获得锁，setnx，此时还没有触发主从同步，redis主节点挂了，从变为主，b在新主节点上又获得锁，此时就有两个线程同时获得了同一把锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;redLock&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不要只在一个主节点上获取锁setnx，至少在半数以上的节点通过setnx成功后才能获取锁。&lt;/p&gt;
+&lt;h5 id="redission分布式锁的使用"&gt;Redission分布式锁的使用
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;Redission是架设在Redis基础上的一个java驻内存数据网络。&lt;/p&gt;
+&lt;p&gt;Redission在基于NIO的Netty框架上，生产环境使用分布式锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://www.helloimg.com/images/2022/04/29/RMp24A.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;watch dog&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;后台有一个线程，会每隔10秒检查一下，如果客户端1还持有锁key，那么就会不断的延长锁key的生存时间。&lt;/p&gt;
+&lt;h2 id="大厂面试提"&gt;大厂面试提
+&lt;/h2&gt;&lt;h3 id="缓存雪崩缓存穿透缓存击穿"&gt;缓存雪崩，缓存穿透，缓存击穿
+&lt;/h3&gt;&lt;p&gt;穿透： 不存在的key&lt;/p&gt;
+&lt;p&gt;雪崩：大量的key失效&lt;/p&gt;
+&lt;p&gt;击穿： 一个key或一些key 热点数据&lt;/p&gt;
+&lt;h3 id="数据一致性问题"&gt;数据一致性问题
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;延时双删&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不是实时一直，而是最终一致。&lt;/p&gt;
+&lt;p&gt;如果延时双删不成功，就等key失效。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;热点数据和冷数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;热点数据怎么处理&lt;/p&gt;
+&lt;p&gt;冷数据如果淘汰过期&lt;/p&gt;
+&lt;h3 id="redis为什么这么快"&gt;redis为什么这么快
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;redis在内存中操作，正常情况下和硬盘不会频繁swap&lt;/li&gt;
+&lt;li&gt;maxmemory的设置+淘汰策略&lt;/li&gt;
+&lt;li&gt;数据结构简单，有压缩处理，专门设计的&lt;/li&gt;
+&lt;li&gt;单线程没有锁，没有多线程的切换和调度，不会死锁，没有性能消耗&lt;/li&gt;
+&lt;li&gt;使用i/o多路复用模型，非阻塞io&lt;/li&gt;
+&lt;li&gt;构建了多种通讯模式，进一步提升了性能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="如何在多个核心的cpu上利用redis的性能"&gt;如何在多个核心的CPU上利用redis的性能
+&lt;/h3&gt;&lt;p&gt;redis是单线程的，如果想在多个CPU或者多个核心上充分利用redis性能，&lt;/p&gt;
+&lt;p&gt;在单个机器上部署多个redis实例，然后使用taskset指令将不同的redis绑定到不同的核心上。&lt;/p&gt;</description></item><item><title>读《并发编程的艺术》有感</title><link>https://thecoolboyhan.github.io/p/%E8%AF%BB%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E7%9A%84%E8%89%BA%E6%9C%AF%E6%9C%89%E6%84%9F/</link><pubDate>Wed, 01 Mar 2023 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/%E8%AF%BB%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E7%9A%84%E8%89%BA%E6%9C%AF%E6%9C%89%E6%84%9F/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/%E8%AF%BB%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E7%9A%84%E8%89%BA%E6%9C%AF%E6%9C%89%E6%84%9F/1.png" alt="Featured image of post 读《并发编程的艺术》有感" /&gt;&lt;h2 id="并发编程的挑战"&gt;并发编程的挑战
+&lt;/h2&gt;&lt;h3 id="上下文切换"&gt;上下文切换
+&lt;/h3&gt;&lt;p&gt;在并发量不超过百万次时，并行速度要比串行慢，因为线程有创建和上下文切换的开销&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何减少上下文切换&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;无锁并发编程：多线程竞争锁时，会引起上下文切换，所以多线程处理数据时，可以用一些办法来避免使用锁，如将数据的ID按照Hash算法取模分段，不同的线程处理不同段的数据。&lt;/li&gt;
+&lt;li&gt;CAS算法，java的Atomic包使用CAS来更新数据，而不是加锁&lt;/li&gt;
+&lt;li&gt;使用最少线程。避免创建不需要的线程，比如任务很少，但是创建了很多线程来处理，这样会造成大量线程都处于等待状态&lt;/li&gt;
+&lt;li&gt;协程：在单线程里实现多任务的调度，并在单线程里维持多个任务的切换&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;避免死锁的方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;避免一个线程同时获取多个锁&lt;/li&gt;
+&lt;li&gt;避免一个线程在锁内同时占用多个资源，尽量保证每个线程只占用一个资源&lt;/li&gt;
+&lt;li&gt;尝试使用定时锁，使用lock.tryLock(timeout)来代替使用内部锁机制。&lt;/li&gt;
+&lt;li&gt;对于数据库锁，加锁和解锁必须在同一个数据库连接里，否则会出现解锁失败的情况。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;资源限制引发的问题
+在并发编程中，将代码速度执行变快的原则是讲串行的部分改成并行，但是如果将某段串行的代码并发执行，因为受限于资源，仍然在串行执行，程序不仅不会加快，甚至会变慢，因为产生了上下文切换和资源调度的时间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如何解决资源受限的问题
+如果是硬件资源受限，可以考虑使用集群并行执行程序。既然单机执行受限，那么就让程序在多机上运行。
+如果软件资源受限，那么可以考虑使用资源池将资源复用。比如使用连接池来使数据库和Socket连接复用，或者在调用对方web-Service接口时，只建立一个连接&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="java并发机制的底层实现原理"&gt;java并发机制的底层实现原理
+&lt;/h2&gt;&lt;h3 id="volatile"&gt;volatile
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;volatile是轻量级的synchronized，它在多处理器并发中保证了共享变量的“可见性”。（它不会引起线程上下文的切换和调度）
+volatile对单个变量的读写具有原子性，但类似于volatile++这类复合操作不具有原子性。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;volatile的原理
+对volatile修饰的变量进行写操作时，会多加一条Lock前缀的指令，将当前处理器缓存行的数据写回到系统内存，这个写回内存的操作会导致其他CPU里缓存了该内存地址的数据无效。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;volatile的优化
+64位的CPU会一次读取64个字节的数据，所以可以通过追加字节来保证一次读取只会读到一个共享变量，来保证多个cpu同时操作不会互相锁定。
+JDK7会自动优化去除无用的对象引用，JDK8提供了@Contended注解来实现套接字&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="synchronized"&gt;synchronized
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;JVM基于进入和退出Monitor对象来实现方法同步和代码块同步。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Mark Word的几种情况
+| 锁状态 | 是否是偏向锁 | 锁标志位 |
+| 无锁 | 0 | 01 |
+| 偏向锁 | 1 | 01 |
+| 轻量级锁 | 0 | 00 |
+| 重量级锁 | 0 | 10 |
+| GC | 0 | 11 |&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;偏向锁
+偏向锁会在程序启动几秒后才会开启，可以通过JVM参数设置来关闭延迟。当加锁代码被执行时，会获取偏向锁，当偏向锁代码被多个CPU竞争时，会释放偏向锁，升级为轻量级锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;优点：
+加锁和解锁不需要额外的消耗，和串行执行相比只存在纳米级别的差距。
+缺点：
+如果线程间存在竞争，会带来额外的锁撤销的消耗
+场景：
+只有一个线程访问同步块的场景。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;轻量级锁
+同步块执行时，JVM会在当前线程的栈帧中创建一块用于存储锁记录的空间，并把MarkWord复制到里面，线程会使用CAS尝试将对象头中的MarkWord替换为指向锁记录的指针。如果成功，当前线程获得锁，如果失败会产生竞争，通过自旋来尝试获得锁。
+轻量级锁解锁的时候，会用CAS操作把MarkWord替换回对象头，如果成功，表示没有竞争。如果失败，表示当前锁存在竞争，锁就会膨胀为重量级锁。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;优点：
+竞争的线程不会阻塞，提高了程序的响应速度
+缺点：
+如果始终得不到锁竞争的线程，使用自旋会消耗CPU
+场景：
+追求响应时间，同步块执行速度非常快。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;重量级锁
+优点：
+线程竞争不使用自旋，不会消耗CPU
+缺点：
+线程阻塞，响应时间缓慢
+场景：
+追求吞吐量，响应时间缓慢&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;院子操作的锁定
+Lock前缀指令，在新的CPU中不再加总线锁（总线锁会导致其他CPU无法获取到新的指令），而是采用缓存锁的形式来加锁，如果修改了缓存行的数据，其他线程读取了缓存行的数据，其他CPU读取的数据会失效，让他们去重新读取缓存行。如果被锁定的缓存行被修改，多个CPU就不能同时缓存此缓存行。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;两种不会使用缓存锁定的情况
+1.如果被锁定的数据不能被缓存到处理内部或者操作的数据跨多个缓存行，CPU会采用总线锁。
+2.有些CPU不支持缓存锁定。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CAS三大问题
+1.ABA问题：给数据加版本号
+2.循环时长，开销大：给每次自旋循环加一个等待时间。
+3.多个对象被CAS，无法保证一个对象同时CAS所有对象：可以将对象封装成一个对象，一次CAS完成所有操作。（类似数据库事务）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="线程"&gt;线程：
+&lt;/h2&gt;&lt;p&gt;线程的状态：
+初始化（NEW）,运行状态（RUNABLE），阻塞状态（blocked），等待状态（waiting），超时等待状态（time waiting），终止状态。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;初始化（NEW）不占用CPU
+进入运行指令：Thread.start()&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;运行（RUNNING 和READY）占用CPU
+java将操作系统中的运行和就绪合并称为运行状态。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;等待（WAITING）不占用CPU
+需要其他线程通知才能返回运行状态，阻塞在Lock接口的线程状态是等待状态，因为Lock接口对于阻塞的实现均使用了LockSupport类中的相关方法。
+进入：Object.wait() ,Object.jion(), LockSupport.park()
+离开：Object.notify(), Object.notifyAll(), LockSupport.unpark(Thread)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;超时等待(TIMED_WAITING) 不占用CPU
+在等待的状态上加了超时限制，达到超时时间自动返回运行状态
+进入：Thread.sleep(long), Object.wait(long), Thread.jion(long), LockSupport.parkNanos(),LockSupport.parkUntil()
+离开：Object.notify(), Object.notifyAll(), LockSupport.unpark(Thread), 超时时间到&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;阻塞(BLOCKED)：不占用CPU
+当线程调用同步方法时，在没有获得锁的情况下，线程就会进入阻塞状态。
+进入：等待进入synchronized方法，等待进入synachronized代码块
+离开：获取到锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;终止（TERMINATED）不占用CPU
+线程执行完成进入终止状态。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;wait,sleep,yield
+wait：会释放CPU资源和锁释放monitor对象，wait只能在synachronized同步环境中调用，wait是针对同步代码块，让某个资源的锁被释放，退出CPU，wait后能够被notify(),和notifyAll()唤醒。
+sleep：会释放CPU但不释放锁不释放monitor对象，sleep是针对线程的静态方法，sleep不能被notify方法唤醒
+yield仅仅是释放CPU，来和其他线程一起争抢CPU。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;个人用jstack分析分析的线程状态：
+运行：RUNNABLE，备注：runnable
+在等待获取锁的阻塞:BLOCKED，备注：waiting for monitor entry
+调用sleep方法：TIME_WAITING，备注：waiting on condition
+调用wait方法：WAITING，备注：in Object.wait()&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;线程过期的暂停，恢复，停止方法
+暂停不会释放资源，不会释放锁等，只释放CPU进入sleep，停止也可能会导致线程占用的资源没有被正确释放，而强制停止。类似于linux的kill -9&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如何优雅的关闭线程
+可以通过标识位或者中断操作的方式使线程在终止时有机会去清理资源。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;等待/通知机制
+细节：
+1.调用wait（），notify(),notifyAll()需要先给对象加锁
+2.调用wait()后，线程由RUNNING变成WAITING并将线程放到对象的等待队列
+3.notify()或notifyAll()方法调用后，等待线程依旧不会从wait()返回，需要调用notify()或notifAll()的线程释放锁之后，等待线程才有机会从wait()返回。
+4.notify()方法将等待队列中的一个等待线程从等待队列中移到同步队列中，而notifyAll()方法则是将等待队列中所有的线程全部移到同步队列，被移动的线程状态由WAITING变为BLOCKED。
+从上述细节中可以看到，等待/通知机制依托于同步机制，其目的就是确保等待线程从wait()方法返回时能够感知到通知线程对变量做出的修改。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;ThreadLocal（可以在单个线程上传递值）
+是一个以ThreadLocal为键，任意对象为值得存储结构。这个结构被附带在线程上，一个线程可以根据一个ThreadLocal查询到绑定在这个线程上的值。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="队列同步器aqs"&gt;队列同步器（AQS）
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;常用的方法：
+getState():获取当前同步状态
+setState（int newState）：设置当前同步状态
+compareAndSetState（int expect,int update）：使用CAS设置当前状态，该方法能够保证设置状态的原子性&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;可重写的方法
+protected boolean tryAcquire（int arg）:独占式获取同步状态，实现该方法需要查询当前状态并判断同步状态是否符合预期
+protected boolean tryRelease（int arg）:独占时释放同步状态，等待获取同步状态的线程将有机会获取同步状态
+protected int tryAcquireShared（int arg）:共享式获取同步状态，返回大于等于0的值，表示获取成功，反之获取失败。
+protected int tryReleaseShared（int arg）:共享式释放同步状态
+protected boolean isHeldExclusively（）:当前同步器是否在独占模式下被线程占用，一般该方法表示是否被当前线程所独占&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;同步器提供的模板方法
+void acquire（int arg）:独占式获取同步状态，如果当前线程获取同步状态成功，则由该方法返回，否则，将进入同步队列等待，该方法将会调用重写的tryAcquire（int arg）方法
+void AcquireInterruptibly（int arg）:与acquire(int arg)相同，但是该方法响应中断，当前线程未获取到同步状态而进入同步队列中，如果当前线程被中断，则该方法会抛出InterruptedException并返回
+boolean tryAcquireNanos（int arg,long nanos）:在AcquireInterruptibly（int arg）基础上增加了超时限制，如果当前线程在超时时间内没有获取到同步状态，就返回false，如果获取到返回true。
+void acquireShared（int arg）:共享式的获取同步状态，如果当前线程未获取到同步状态，将会进入同步队列等待，与独占式获取的主要区别时在同一时间可以有多个线程获取到同步状态
+void acquireSharedInterruptibly（int arg）:该方法响应中断
+boolean tryAcquireSharedNanos(int arg,long nanos)：在acquireSharedInterruptibly（int arg）基础上增加了超时限制
+boolean release(int arg)：独占式释放同步状态，该方法会在释放同步状态之后，将同步队列中第一个节点包含的线程唤醒
+boolean releaseShared(int arg)：共享式的释放同步状态
+Collection&lt;Thread&gt; getQueuedThreads(）:获取等待在同步队列上的线程集合&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;同步器依赖内部的同步队列（一个FIFO双向队列）来完成同步状态的管理，当前线程获取同步状态失败时，同步器会将当前线程以及等待状态等信息构造成为一个节点（Node）并将其加入同步队列，同时会阻塞当前线程，当同步状态释放时，会把首节点中的线程唤醒，使其再次尝试获取同步状态。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;独占式同步状态获取和释放：
+在获取同步状态时，同步器维护一个同步队列，获取状态失败的线程都会被加入到队列中进行自旋，移除队列（或停止自旋）的条件是前驱节点是头节点且成功获取了同步状态。在释放同步状态时，同步器调用tryReiease(int arg)方法释放同步状态，然后唤醒头节点的后继节点&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;共享式同步状态获取与释放
+同步器先调用tryAcquireShared(int arg)方法尝试获取同步状态，返回值大于等于0，表示能够获取到同步状态。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;LockSupport
+构建同步组件的基础工具，定义了park（）阻塞当前线程，unpark（Thread thread）唤醒一个被阻塞的线程，lock接口上锁和解锁就是用此工具实现的。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Condition接口
+Condition是AQS工具的一个内部类，可以实现类似Object的通知/等待模型。await（）当前线程进入等待状态，直到被通知signal或被中断。signal（）唤醒一个等待的线程，signalAll（）唤醒所有等待的线程。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="并发工具和集合"&gt;并发工具和集合
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;ConcurrentLinkedQueue ：非阻塞队列
+由head节点和tail节点组成，入队时的条件，如果tail节点的next节点不为空，则新入队的节点为tail节点。入队时先定位出尾节点，然后使用CAS算法将新入队的节点设置为尾节点的next节点，如果不成功则重试。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="阻塞队列"&gt;阻塞队列
+&lt;/h3&gt;&lt;p&gt;阻塞队列java提供了四种处理方式：
+抛出异常：当队列满时，再插入元素，会抛出异常，当队列空时，再取出元素会抛出异常
+返回特殊值：当插入元素时，如果插入成功，就返回true，取出元素时，如果没有就返回null
+一直阻塞：如果生产者线程往队列里put元素，如果队列满，生产者线程会一直处于阻塞状态，知道队列可用或者响应中断退出。take元素，如果队列空，就一直阻塞，直到队列中有元素。
+超时退出：当队列满，如果生产者插入元素，队列会阻塞生产者一段时间，如果超出等待时间，生产者线程就退出。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;七种阻塞队列
+ArarryBlockingQueue:一个由数组组成的有界阻塞队列。
+LinkedBlockingQueue：一个由链表组成的有界阻塞队列。
+PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列。可以实现compareTo（）方法来指定元素排序规则。
+DelayQueue：一个由优先级队列实现的无界阻塞队列。创建的元素指定多久才能从队列中获取到。
+SynchronousQueue：一个存储元素的无界阻塞队列。一个不存储元素的队列，每个put必须等待take，否则无法继续put。
+·LinkedTransferQueue：一个由链表结构组成的无界阻塞队列。可以进行插队，通过特定api将新插入的元素直接给消费者。
+·LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列。可以从队列的两端来插入和取出元素的队列。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;阻塞队列的实现
+多数阻塞队列是由Condition实现的，上锁过程由LockSupport的park方法实现，LockSupport调用unsafe的park方法来上锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="java中的并发工具类"&gt;java中的并发工具类
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;CountDownLatch（只能用一次）
+计数器，允许一个或多个线程等待其他线程结束再操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CyclicBarrier（可重复使用）
+一个可循环使用的屏障，当指定的线程都到达屏障后，屏障才会开门，所有被拦截的线程才会继续运行。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Semaphore（信号量）
+用来控制并发数量。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Exchager
+线程间数据交换的工具。它提供了一个同步点，当两个线程都到达同步点后，交换数据，线程继续运行。如果一个先到达同步点，会一直等到另一个也到达然后交换再运行。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="线程池"&gt;线程池
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;核心线程数:先来的任务由核心线程执行，如果核心线程满，把任务放入等待队列&lt;/li&gt;
+&lt;li&gt;任务队列：存储即将执行的任务，如果满，把任务交给最大线程。&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;ArrayBlockingQueue&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;LinkedBlockingQueue&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;SynchronousQueue&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;PriorityBlockingQueue&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;最大线程数：如果等待队列满，会临时创建一个线程来执行新的任务，如果线程创建数量达到最大值，执行拒绝策略&lt;/li&gt;
+&lt;li&gt;创建线程的工厂&lt;/li&gt;
+&lt;li&gt;拒绝策略&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;直接抛异常&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;用调用者所在线程来执行任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;丢掉队列里最近的一个任务，并执行当前任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;不处理，丢弃掉&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;线程的等待时间：如果任务超过等待时间，抛弃任务&lt;/li&gt;
+&lt;li&gt;超时时间的单位&lt;/li&gt;
+&lt;/ul&gt;</description></item></channel></rss>
