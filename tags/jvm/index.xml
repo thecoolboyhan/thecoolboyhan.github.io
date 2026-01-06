@@ -1,0 +1,2261 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>JVM on 韩永发的博客</title><link>https://thecoolboyhan.github.io/tags/jvm/</link><description>Recent content in JVM on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 10 Jun 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/tags/jvm/index.xml" rel="self" type="application/rss+xml"/><item><title>备战JDK25--垃圾回收器</title><link>https://thecoolboyhan.github.io/p/jdk25-1/</link><pubDate>Tue, 10 Jun 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/jdk25-1/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/jdk25-1/1.png" alt="Featured image of post 备战JDK25--垃圾回收器" /&gt;&lt;blockquote&gt;
+&lt;p&gt;阅读本文前，强烈建议先看看我之前的&lt;a class="link" href="https://thecoolboyhan.github.io/p/jvm%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" target="_blank" rel="noopener"
+&gt;关于各种垃圾回收的介绍文章&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="垃圾回收部分"&gt;垃圾回收部分
+&lt;/h2&gt;&lt;p&gt;由于JDK25会将Shenandoah最为默认垃圾回收器，本次将再次详细研究一下本时代的垃圾回收器。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本次只提目前仍可能存活在市场上的三种垃圾回收器（G1，ZGC，Shenandoah GC）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="g1高吞吐量"&gt;G1(高吞吐量)
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;现在看来G1已经是老古董了，当初的出现只是为了取代CMS。但后续两种垃圾回收器都是基于G1的思想来做的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="简介"&gt;简介
+&lt;/h3&gt;&lt;p&gt;从JDK9开始，成为默认的垃圾回收器，低延迟、高吞吐，适用于10G以上的大内存。只优先回收垃圾最多的区，因此叫做&lt;strong&gt;Garbage-First&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;引入了区（Region）的概念，区在创建时没有定义属性。在程序的运行过程中，会被分成不同的类型。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;区分类&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;区类型&lt;/th&gt;
+&lt;th&gt;作用&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Eden Regions&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;存放新创建的对象&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Survivor Regions&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;存放从 Eden 晋升的对象&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Old Regions&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;存放长期存活的对象&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Humongous Regions&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;存放大对象（超过 Region 一半大小）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Free Regions&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;未被使用、等待分配&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="垃圾回收过程"&gt;垃圾回收过程
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2319_13_12-1677150791924_1749448480478.png"
+loading="lazy"
+alt="2023-2-2319_13_12-1677150791924.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;初始标记&lt;/strong&gt;（Short STW）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;标记所有可以直接从GC Roots可达的对象。此阶段只对新生代Eden区进行标记。&lt;/p&gt;
+&lt;ol start="2"&gt;
+&lt;li&gt;&lt;strong&gt;并发标记&lt;/strong&gt;（与用户线程并行）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;从初始标记的结果出发，遍历整个堆，并标记所有可达对象。&lt;/p&gt;
+&lt;p&gt;创建一份全堆的对象存活快照。&lt;/p&gt;
+&lt;ol start="3"&gt;
+&lt;li&gt;&lt;strong&gt;重新标记&lt;/strong&gt;（也叫最终标记，较短的STW）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;纠正并发标记期间因修改产生的不一致。确保垃圾回收器有准确的存活集信息。&lt;/p&gt;
+&lt;ol start="4"&gt;
+&lt;li&gt;&lt;strong&gt;混合回收&lt;/strong&gt;（并行）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;完整的回收（年轻代和老年代都回收）。调度器会选择垃圾最多的区来进行清理。&lt;/p&gt;
+&lt;ol start="5"&gt;
+&lt;li&gt;清理&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;重新构建各区块的元素，更新各区的分类，更新记忆集，管理跨区之间的引用。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/b47f048fb6844ecc90b80aff88117a04_1749519287352.png"
+loading="lazy"
+alt="b47f048fb6844ecc90b80aff88117a04.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="特性"&gt;特性
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;卡表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用来记录哪些区发生了修改。每个区都有对应的卡表，当需要写入对象时，写入屏障会把对应的卡表标记为脏，GC遍历时只需要遍历脏卡表。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;但是会占用额外的空间，而且写操作受到了影响。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;记忆集&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在区之间进行回收时，记忆集用来记录跨区的引用，这样每个区只需要扫描局部被修改的部分。跨区部分信息记录在记忆集中。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;也会占用额外的空间&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;动态调整区类型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;动态的调整区类型，来避免full GC&lt;/p&gt;
+&lt;h3 id="对比"&gt;对比
+&lt;/h3&gt;&lt;p&gt;G1是在垃圾回收效率和停顿延迟上取平衡的回收器。&lt;/p&gt;
+&lt;h4 id="缺点"&gt;缺点
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;垃圾回收仍然STW&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当堆内存特别大时（上T级别），初始标记和remark阶段的STW会非常明显。&lt;/p&gt;
+&lt;p&gt;ZGC和Shenandoah更优&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;大内存支持不好（T级别内存）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;回收调度和标记开销&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于在写入时会向卡表写入数据，且还维护着记忆集，都会带来大量内存开销和算法开销。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调优难&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于可以预先设置区大小等，且区是动态变化的，各方面想找到平衡难。&lt;/p&gt;
+&lt;h2 id="zgc低延迟"&gt;ZGC（低延迟）
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;又一个CMS，一直在优化，一直很nb，但没有当过真正的默认垃圾回收器&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;JDK11被引入。主打极低的停顿时间（一般停顿时间都小于10毫米）&lt;/p&gt;
+&lt;p&gt;同时支持多TB级别的堆内存&lt;/p&gt;
+&lt;p&gt;完全取消了年轻代老年代的划分，直接根据分区来管理内存。&lt;/p&gt;
+&lt;h3 id="垃圾回收过程-1"&gt;垃圾回收过程
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/c84674f0f2f94702af64b7dd51f99e1d_1749541261705.png"
+loading="lazy"
+alt="c84674f0f2f94702af64b7dd51f99e1d.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;初始标记&lt;/strong&gt;（极短的STW）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;扫描所有GC Roots可达对象&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;只处理直接引用，工作十分轻量，STW时间非常短&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol start="2"&gt;
+&lt;li&gt;&lt;strong&gt;并发标记&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在初始标记的基础上，并发遍历整个堆，从根出发标记所有可达的存活对象&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;load barrier协议来准确的标记对象状态&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;通过 load barrier的协议，使得对象状态可以被准确的确定，同时不影响应用程序的执行&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol start="3"&gt;
+&lt;li&gt;&lt;strong&gt;并发迁移&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;根据标记的结果，将存活对象从原区域搬迁到新的区域&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;通过虚拟内存地址更换迁移&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;利用虚拟内存重映射技术，通过调整对象的虚拟地址完成迁移，不需要做大量的复制&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;彩色指针来实现引用升级&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;利用加载屏障和彩色指针，实现用户线程加载对象时，判断彩色指针去迁移后的地址读取对象，同时更新对象的引用&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol start="4"&gt;
+&lt;li&gt;&lt;strong&gt;最终更新/修正阶段（Final Update）STW&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;快速修改遗漏或不一致的引用，确保整个堆中所有对象引用都正确的指向了新地址&lt;/p&gt;
+&lt;h3 id="特性-1"&gt;特性
+&lt;/h3&gt;&lt;h4 id="彩色指针"&gt;彩色指针
+&lt;/h4&gt;&lt;p&gt;64位操作系统中的对象空间是64位，但实际对象的有效地址位数远低于64位。ZGC利用未使用的高位，将部分位“涂色”，用来存储额外的元数据信息。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;避免额外的数据结构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;与G1标记对象是否可以回收（通过卡表）不同，不需要占用额外的空间，且不需要进行多余的随机读写，直接通过对象的地址来判断对象是否有效。&lt;/p&gt;
+&lt;h4 id="加载屏障load-barrier"&gt;加载屏障（load barrier）
+&lt;/h4&gt;&lt;p&gt;在对象引用加载时，自动插入一段代码（有点类似于AOP的概念）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;动态的检测颜色&lt;/p&gt;
+&lt;p&gt;判断上面的彩色指针位的颜色，来判断对象是否被移动。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;透明指针重定向&lt;/p&gt;
+&lt;p&gt;检测到对象已迁移，主动修改元数据中的新地址（新地址通过内部的转发表或基于虚拟内存映射的信息来确认）。并加载重定位的新地址。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发容忍性&lt;/p&gt;
+&lt;p&gt;通过上面两项，可以保证用户线程看到的总是最新且正确的对象引用。从而实现了无暂停的迁移与回收。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="虚拟内存重映射同时也是cpu零拷贝的重要手段之一"&gt;虚拟内存重映射（同时也是CPU零拷贝的重要手段之一）
+&lt;/h4&gt;&lt;p&gt;ZGC降低复制开销的主要手段&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通过修改操作数据页表项，来改变虚拟地址与物理内存之间的映射关系。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="对比-1"&gt;对比
+&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;垃圾回收器&lt;/th&gt;
+&lt;th&gt;目标&lt;/th&gt;
+&lt;th&gt;实现手段&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;ZGC&lt;/td&gt;
+&lt;td&gt;极低停顿（10毫秒）&lt;br /&gt;支持大内存（TB）超级大内存支持情况比Shenandoah好&lt;/td&gt;
+&lt;td&gt;并发执行&lt;br /&gt;彩色指针&lt;br /&gt;加载屏障&lt;br /&gt;虚拟内存映射&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;G1&lt;/td&gt;
+&lt;td&gt;均衡的吞吐量与停顿时间&lt;br /&gt;可以通过修改最大停顿时间参数来动态分配区&lt;/td&gt;
+&lt;td&gt;利用区来划分堆&lt;br /&gt;按垃圾率决定优先回收的区&lt;br /&gt;采用复制算法减少内存碎片&lt;br /&gt;部分场景STW，但STW时间可预测&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Shenandoah&lt;/td&gt;
+&lt;td&gt;极低停顿时间（几毫秒内）&lt;br /&gt;支持大堆内存&lt;/td&gt;
+&lt;td&gt;与ZGC类似，并发压缩&lt;br /&gt;大部分垃圾回收工作与应用内存并发执行&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h5 id="优点"&gt;优点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;极低暂停时间（10毫秒）&lt;/li&gt;
+&lt;li&gt;高扩展性：可以适配超大堆，停顿时间与堆大小无关&lt;/li&gt;
+&lt;li&gt;并发对象搬迁与透明更新：极大的降低了实时数据迁移产生不一致的风险&lt;/li&gt;
+&lt;li&gt;较低的内存复制开销：利用虚拟内存映射减少内存复制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id="缺点-1"&gt;缺点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;加载屏障需要额外开销：每次对象被访问时，都需要通过加载屏障，会带来额外的开销&lt;/li&gt;
+&lt;li&gt;平台支持有限：ZGC主要是为64为Linux操作系统设计，对其他平台支持不成熟&lt;/li&gt;
+&lt;li&gt;吞吐量有限：由于设计之初是为了更低的停顿时间，因此在极端吞吐量的场景下，效果不如传统垃圾回收器（Parallel GC）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;ZGC为了提高CPU利用率而放弃了部分吞吐量&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;为什么放弃ZGC？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;个人认为，ZGC的延迟和大堆表现真的很棒。但大部分企业根据没有几十TB的堆。且ZGC需要太多的CPU开销，牺牲了部分的吞吐量（相当于没有高效的利用内存空间）这些部份甚至开了倒车。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;总结就是有点偏科，且擅长的方向现实生活还没有跟上。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="shenandoah非分代"&gt;Shenandoah（非分代）
+&lt;/h2&gt;&lt;p&gt;JDK12开始引入（社区可以支持到JDK8），通用采取分区概念，全堆并发标记、并发搬迁、并发更新引用。&lt;/p&gt;
+&lt;p&gt;只有几毫秒的STW，不区分新生代、老年代。所有对象都是同一套并发处理流程。&lt;/p&gt;
+&lt;h3 id="垃圾回收过程-2"&gt;垃圾回收过程
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1751436527413_1751436527436.png"
+loading="lazy"
+alt="1751436527413.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;初始标记（STW）&lt;/p&gt;
+&lt;p&gt;扫描GC Roots中直接引用的对象&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发标记&lt;/p&gt;
+&lt;p&gt;遍历整个堆，从根对象出发将所有可达对象标记出来。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;此过程中类似G1，使用了卡表、记忆集技术，来限制每次扫描的范围。避免出现全堆扫描&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;重新标记（STW）&lt;/p&gt;
+&lt;p&gt;几毫秒的STW，重新扫描并发标记中的引用变化&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发整理/搬迁&lt;/p&gt;
+&lt;p&gt;和ZGC类似，采用“彩色指针”、“加载屏障”、“虚拟内存映射”技术来实现并发的对象整理&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;最终引用更新（STW）&lt;/p&gt;
+&lt;p&gt;更新上一步中未更新的引用&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="对比-2"&gt;对比
+&lt;/h3&gt;&lt;p&gt;非分代Shenandoah和ZGC大部分场景都是相同的，不同点很少&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;阶段&lt;/th&gt;
+&lt;th&gt;ZGC&lt;/th&gt;
+&lt;th&gt;非分代Shenandoah&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;并发标记&lt;/td&gt;
+&lt;td&gt;利用加载屏障，实现标记过程中实时捕获对象状态，在超大堆上支持更好（TB）&lt;/td&gt;
+&lt;td&gt;利用卡表、记忆集来并发标记，最后有短暂的暂停（再标记阶段），支持上百G的内存&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;迁移过程&lt;/td&gt;
+&lt;td&gt;利用虚拟内存映射，强调零拷贝，几乎无复制&lt;/td&gt;
+&lt;td&gt;虽然同样采用了彩色指针、加载屏障来保证迁移的准确，但还是存在部分的实际对象复制，所以效率不如ZGC&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1751436709608_1751436709649.png"
+loading="lazy"
+alt="1751436709608.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;为什么选择Shenandoah而不是ZGC？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从上面的比较感觉，好像ZGC要比Shenandoah更好，但这只是部份场景的比较。&lt;/p&gt;
+&lt;p&gt;选择Shenandoah主要原因是&lt;strong&gt;CPU开销&lt;/strong&gt;和&lt;strong&gt;成熟的应用&lt;/strong&gt;经验，ZGC强调的零拷贝，但可能带来更大的CPU开销。&lt;/p&gt;
+&lt;h2 id="分代shenandoah"&gt;分代Shenandoah
+&lt;/h2&gt;&lt;p&gt;JDK21引入，又重新引入了分代思想，利用对象年轻即死的假设，把堆重新分成了新生代和老年代。不同代采用不同的回收策略&lt;/p&gt;
+&lt;h3 id="新生代gcminor-gc"&gt;新生代GC(Minor GC)
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;分配&lt;/p&gt;
+&lt;p&gt;对象首先在新生代Eden区分配。由于新生代区域小、生命周期短，分配速度块。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;复制收集&lt;/p&gt;
+&lt;p&gt;当Eden区达到一定阈值，会触发STW，针对新生代单独回收。&lt;/p&gt;
+&lt;p&gt;回收方式采用复制法，把存活的对象复制到幸存者区（Survivor），如果达到一定标准，会直接晋升到老年代。&lt;/p&gt;
+&lt;p&gt;复制过程采用加载屏障，保证数据不会在搬迁过程中不可用。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;晋升标准&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;普通对象晋升到幸存者区。&lt;/p&gt;
+&lt;p&gt;如果幸存者区内存不足时，就会直接晋升到老年代。&lt;/p&gt;
+&lt;h3 id="老年代gcmajor-gc"&gt;老年代GC（Major GC）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;老年代GC是全堆的GC&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;初始标记&lt;/strong&gt;（STW，非常短）：类似非分代模式，标记GC Roots直接可达的对象。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;并发标记&lt;/strong&gt;：然后多个线程遍历整个老年代。利用记忆集和卡表来减少扫描范围。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;并发整理（搬迁）&lt;/strong&gt;：把存活的对象搬迁到连续的区域。利用彩色指针记录搬迁的信息，利用加载屏障并行搬迁。（有可能会用到虚拟内存映射）&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;最终更新&lt;/strong&gt;（STW)：对未完全更新的引用做最后的修正，保证全堆一致。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="特点"&gt;特点
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;新生代的轻量复制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;所谓的轻量复制，只新生代空间小。GC频繁，且只复制存活的对象。复制过程中有加载屏障。只会在初始标记GC Roots阶段产生短暂的STW。&lt;/p&gt;
+&lt;p&gt;这样提高GC频率，从而快速回收大部分垃圾。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通过记忆集实现跨代引用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于存在分代晋升，当新生代对象进入老年代时，回收规则发生变化。&lt;/p&gt;
+&lt;p&gt;通过记忆集来传递这样的引用信息。每次进入老年代更新记忆集。这样就不用每次扫描整个堆来确认老年代新增的对象。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;为什么选择分代 Shenandoah GC&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;目前看来，分代 Shenandoah GC 是垃圾回收效率，STW时间，吞吐量上保证了平衡。&lt;/p&gt;
+&lt;p&gt;新生代采用”G1 PRO“的方式来保证大部分垃圾可以被快速的回收。（吞吐量）&lt;/p&gt;
+&lt;p&gt;老年代采用传统Shenandoah来保证大内存（小于等于TB）的STW时间缩短。属于低延迟和高吞吐的融合。&lt;/p&gt;</description></item><item><title>GraalVM调研</title><link>https://thecoolboyhan.github.io/p/graalvm%E8%B0%83%E7%A0%94/</link><pubDate>Fri, 07 Feb 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/graalvm%E8%B0%83%E7%A0%94/</guid><description>&lt;blockquote&gt;
+&lt;p&gt;原创内容，请勿搬运，本次调研参考官方文档，和网络公开资料&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="什么是graalvm"&gt;什么是GraalVM
+&lt;/h2&gt;&lt;p&gt;GraalVM 是一个高性能 JDK，可提高基于 Java 和 JVM 的应用的性能并简化 Java 云原生服务的构建和运行。它提供优化的编译器，可以更快地生成代码并降低计算资源消耗，实现微服务即时启动。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;架构图&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/67a5ce5d5448d_1747202696526.png"
+loading="lazy"
+alt="67a5ce5d5448d.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;可提前将java应用编译成独立的二进制文件。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;体积小，启动速度提高100倍，无需预热就可以到达峰值性能。与java虚拟机相比，占用内存和cpu更小。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;更安全&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;排除了未使用的类、方法和字段。将反射和其他动态java语言功能限制为仅在构建时。不会在运行时加载任何未知代码。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;高可用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;支持Spring Boot、Micronaut、Helidon 和 Quarkus 等常用微服务框架&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;使用 Python 和其他语言扩展 Java 应用程序&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;借助 GraalVM，您以嵌入 Python、JavaScript 等语言来扩展 Java 应用程序。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="试用"&gt;试用
+&lt;/h3&gt;&lt;p&gt;构建可帮助 Java 应用快速启动、减少内存使用并节省托管成本的原生可执行文件。您可以在 Oracle Cloud Infrastructure (OCI) 上免费使用。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;在https://luna.oracle.com/试用GraalVM的特性&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;a class="link" href="https://www.helloimg.com/i/2025/02/08/67a6c40f75b5d.png" target="_blank" rel="noopener"
+&gt;&lt;img src="https://www.helloimg.com/i/2025/02/08/67a6c40f75b5d.png"
+loading="lazy"
+alt="1738982800334.png"
+&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class="link" href="https://github.com/graalvm/graalvm-demos" target="_blank" rel="noopener"
+&gt;官方性能演示项目&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;编译&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;从类文件创建为可执行文件&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="原生镜像"&gt;原生镜像
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Native Image 是一种将 Java 代码提前编译为二进制文件（&lt;strong&gt;本机可执行文件&lt;/strong&gt;）的技术。 本机可执行文件仅包含运行时所需的代码，即应用程序类、标准库类、语言运行时以及 JDK 中静态链接的本机代码。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="优点"&gt;优点
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;使用的资源只是 Java 虚拟机所需资源的一小部分，因此运行成本更低&lt;/li&gt;
+&lt;li&gt;以毫秒为单位启动&lt;/li&gt;
+&lt;li&gt;立即提供峰值性能，无需预热&lt;/li&gt;
+&lt;li&gt;可以打包到轻量级容器映像中，以实现快速高效的部署&lt;/li&gt;
+&lt;li&gt;减少攻击&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="gc"&gt;GC
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;串行 GC&lt;/strong&gt; 是 GraalVM 中的默认 GC。它针对低内存占用和较小的 Java 堆大小进行了优化。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;G1 GC&lt;/strong&gt; 是一种多线程 GC，经过优化，可以减少停止世界暂停，从而改善延迟，同时实现高吞吐量。要启用它，请将选项传递给生成器。目前，G1 垃圾回收器可以与 Linux AMD64 和 AArch64 架构上的原生映像一起使用。（在 GraalVM 社区版中不可用。&lt;code&gt;--gc=G1native-image&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Epsilon GC&lt;/strong&gt;（适用于 GraalVM 21.2 或更高版本）是一种无作垃圾回收器，不执行任何垃圾回收，因此永远不会释放任何分配的内存。此 GC 的主要用例是运行时间非常短的应用程序，这些应用程序仅分配少量内存。要启用 Epsilon GC，请在映像构建时指定选项。&lt;code&gt;--gc=epsilon&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>读《深入理解java虚拟机2019版》有感</title><link>https://thecoolboyhan.github.io/p/%E8%AF%BB%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BA2019%E7%89%88%E6%9C%89%E6%84%9F/</link><pubDate>Tue, 10 Sep 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/%E8%AF%BB%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BA2019%E7%89%88%E6%9C%89%E6%84%9F/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/%E8%AF%BB%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BA2019%E7%89%88%E6%9C%89%E6%84%9F/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BAv3.png" alt="Featured image of post 读《深入理解java虚拟机2019版》有感" /&gt;&lt;h2 id="类加载器子系统"&gt;类加载器子系统
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;类加载子系统负责从文件系统或者网络中加载class文件，class文件在文件的开头有特定的文件标识。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CLassLoader只负责classs文件的加载，至于它是否可以运行，则由Execution Engine（执行引擎）决定。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;加载的类信息存放于一块称为方法区的内存空间，除了类的信息外， 方法区中还会存放运行时常量池信息，可能还包含字符串字面量和数字常量（这部分常量信息是lass文件中常量池部分的内存映射）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="类加载的过程"&gt;类加载的过程
+&lt;/h3&gt;&lt;h4 id="加载"&gt;加载
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;通过一个类的全限定名获取定义此类的二进制字节流。&lt;/li&gt;
+&lt;li&gt;将这个字节流所代表的静态存储结构转化为方法区的运行时结构&lt;/li&gt;
+&lt;li&gt;在内存中生成一个代表这个类的class对象，作为方法区这个类的各种数据的访问入口&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="链接"&gt;链接
+&lt;/h4&gt;&lt;h5 id="验证"&gt;验证
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;目的在于确保class文件的字节流中包含的信息符合当前虚拟机的要求，保证被加载类的正确性，不会危害虚拟机自身的安全。&lt;/li&gt;
+&lt;li&gt;主要包括四种验证：文件格式验证，元数据验证，字节码验证，符号引用验证。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id="准备"&gt;准备
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;为类变量分配内存并且设置该类变量的默认初始值，即零值。&lt;/li&gt;
+&lt;li&gt;这里不包含用final修饰的static，因为final在编译的时候就分配了，准备阶段会显式初始化。&lt;/li&gt;
+&lt;li&gt;这里不会实例变量分配初始化，类变量会分配在方法区中，而实例变量是会随着对象一起分配到java堆中。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;此环境只给变量分配内存，和默认初始值，没赋值。&lt;/p&gt;
+&lt;p&gt;final 修饰的static会赋值。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h5 id="解析"&gt;解析
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;常量池内的符号引用转换为直接引用的过程。&lt;/li&gt;
+&lt;li&gt;事实上，解析操作往往会伴随着jvm在执行完初始化之后再执行。&lt;/li&gt;
+&lt;li&gt;符号引用就是一组符号来描述所引用的目标，符号引用的字面量形式明确定义在（java虚拟机规范）的class文件格式中，直接引用就是直接指向目标的指针，相对偏移量或一个间接定位到目标的句柄。&lt;/li&gt;
+&lt;li&gt;解析动作主要针对类或接口、字段 、类方法、接口方法、方法类型等。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="初始化"&gt;初始化
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;初始化阶段就是执行类构造器方法&lt;clinit&gt;()的过程。&lt;/li&gt;
+&lt;li&gt;此方法不需要定义，是javac编译器自动收集类中的所有类变量的赋值动作和静态代码块中的语句合并而来。&lt;/li&gt;
+&lt;li&gt;构造器方法中指令按语句在源文件中出现的顺序执行。&lt;/li&gt;
+&lt;li&gt;&lt;clinit&gt;()不同于类的构造器。（关联：构造器是虚拟机视角下的&lt;init&gt;()）&lt;/li&gt;
+&lt;li&gt;若该类具有父类，jvm会保证子类的&lt;clinit&gt;()方法执行前，父类的&lt;clinit&gt;()方法已经执行完毕。&lt;/li&gt;
+&lt;li&gt;虚拟机会保证一个类的&lt;clinit&gt;()方法在多线程下被同步加锁。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="类加载器"&gt;类加载器
+&lt;/h3&gt;&lt;h4 id="启动类加载器引导类加载器bootstrap-classloader"&gt;启动类加载器（引导类加载器、Bootstrap ClassLoader）
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;这个类加载器使用c/c++实现的，嵌套在JVM内部。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;它用来加载java的核心库（JAVA_HOME/jre/lib/rt.jar，resources.jar或sun.boot.class.path路径下的内容），用于提供JVM自身需要的类&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并不继承自java.lang.ClassLoader,没有父加载器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;加载扩展类和应用程序类加载器，并指定为他们的父类加载器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;出于安全考虑，Bootstrap启动类加载器只加载包名为java、javax、sun等开头的类&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="双亲委派机制"&gt;双亲委派机制
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;原理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;如果一个类加载器收到了类加载请求，它并不会自己先去加载，而是把这个请求委托给父类的加载器去执行。&lt;/li&gt;
+&lt;li&gt;如果父类加载器还存在其父类加载器，则进一步向上委托，依次递归，请求最终将到达顶层的启动类加载器&lt;/li&gt;
+&lt;li&gt;如果父类加载器可以完成类加载任务，就成功返回，倘若父类加载器无法完成加载任务，子加载器才会尝试自己去加载，这就是双亲委派模式。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="沙箱安全机制"&gt;沙箱安全机制
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;由于双委派机制，用户直接私自篡改java核心包下的类，（如自定义一个String类），这种保护机制叫沙箱安全机制。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="运行时数据区"&gt;运行时数据区
+&lt;/h2&gt;&lt;h3 id="程序计数器pc寄存器"&gt;程序计数器（pc寄存器）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;JVM中的程序计数器，它的命名来源于cpu的寄存器，寄存器存储指令相关的现场信息，cpu只有把数据转载到寄存器才能运行。&lt;/p&gt;
+&lt;p&gt;程序计数器不是广义上的物理寄存器，JVM中的程序计数器是对cpu中的寄存器的一种抽象模拟。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;作用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;pc寄存器用来储存指向下一条指令的地址，也就是即将要执行的下一条指令，由执行引擎来读取下一条指令。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://ae01.alicdn.com/kf/U1651b01ab9de4497847316b52a39c466c.jpg"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;它是一块很小的内存空间，几乎可以忽略不计，也是运行速度最快的存储空间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在JVM规范中，每个线程都有自己的程序计数器，是线程私有的，它的生命周期和线程的生命周期保持一致。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;任何时间一个线程都只有一个方法在执行，也就是当前方法，程序计数器会存储当前正在执行的指令方法的jvm指令地址，如果执行的是navtive方法，它其中就是未指定值（ undefined）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;它是唯一一个jvm没有规定任何OOM的区域。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://ae01.alicdn.com/kf/U1651b01ab9de4497847316b52a39c466c.jpg"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h2 id="栈"&gt;栈
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;栈是运行时单位，而堆是存储的单位&lt;/p&gt;
+&lt;p&gt;栈解决程序的运行问题，（程序如何执行）或者如何处理数据，堆解决的是数据存储的问题，数据怎么放，放在哪儿。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;栈中 存放的东西&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;主管java的运行，保存方法的局部变量（八种基本数据类型的值，对象的引用地址），部分结果，并参与方法的调用和返回。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="栈的特点"&gt;栈的特点
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;栈是一种快速有效的分配存储方式，访问速度仅次于程序计数器。&lt;/li&gt;
+&lt;li&gt;JVM直接对java的操作有两种：
+&lt;ul&gt;
+&lt;li&gt;每个方法按执行，伴随着进栈（入栈，压栈）&lt;/li&gt;
+&lt;li&gt;执行结果后的出栈操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;对于栈来说不存在垃圾回收的问题。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;java默认的栈大小是动态的（不固定但是不是无限大），但是可以手动设置大小，如果超出后会报栈溢出&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;-Xss设置栈大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="栈的存储单位"&gt;栈的存储单位
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;栈的基本单位是栈帧，在一个线程中，一个时间节点只有一个活动的栈帧。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="栈帧的内部结构"&gt;栈帧的内部结构
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;局部变量表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;定义为一个数组，主要用于存储方法参数和定义在方法体内部的局部变量。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;局部变量表所需大小是在编译期就确定下来的，并保存在方法的Code属性的maximun local variables数据项中。在方法运行期间是不会改变局部变量表的大小的。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;Slot（槽）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;槽是局部变量表中的计量单位，32位以内的数据（byte，short，char，int）只占一个Slot槽位，64位类型的数据（long和double）占两个。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Slot是放在栈里的数组中，数据的大小是不会动态改变的，如果前面的槽位被释放，后面有新的slot可重新去用之前的空间，这就是slot的重复利用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;操作数栈（表达式栈）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果被调用的方法带有返回值的话，其返回值将会被压入当前栈帧的操作数栈中，并更新pc寄存器中下一条需要执行的字节码指令。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;操作数栈中元素的数据类型必须与字节码指令的序列严格匹配，这由编译器在编译期间进行验证，同时在类加载过程中的类检验阶段的数据流分析阶段要再次验证。&lt;/p&gt;
+&lt;p&gt;java虚拟机的解释引擎是基于栈的执行引擎，其中栈指的就是操作数栈。&lt;/p&gt;
+&lt;p&gt;用来临时存储操作过程的中间结果。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;动态链接&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;用来记录方法区常量池中对象的地址。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;关于静态链接和动态链接&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当一个字节码文件被装载进jvm内部时，如果被调用的方法在编译期可知，且运行期保持不变，这种情况下，被调用的方法的符号引用转换为直接引用的过程叫做静态链接。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;被调用的方法在编译期无法被确定下来，只能在程序的运行期间，被调用的方法的符号引用被转化为直接引用，这种转化过程具有动态性，就叫动态链接。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;方法返回地址&lt;/li&gt;
+&lt;li&gt;一些附加信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="关于操作数栈和局部变量表的举例和说明"&gt;关于操作数栈和局部变量表的举例和说明
+&lt;/h3&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;10&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//结果是0&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;局部变量表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个类中的变量其实都是局部变量表中的一个值。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;操作数栈&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用来临时存储操作过程的中间结果，就是一个值变化过程的临时存储。&lt;/p&gt;
+&lt;h4 id="操作数栈和局部变量表的联动"&gt;操作数栈和局部变量表的联动
+&lt;/h4&gt;&lt;p&gt;以x=x++为例：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;读取&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;首先从局部变量表中读取load对映hash槽里读取x的值，此时操作数栈中为0，局部变量表也为0&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;x++&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;x++操作是在局部变量表中进行的，所以局部变量表中的值加1，此时操作数栈中为0，局部变量表为0&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;赋值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;等于操作是把操作数栈中的值赋值到对应的局部变量表中，操作数栈的值为0，局部变量表中的为1，用操作数栈的0来覆盖局部变量表中的1，所以x重新变为0。&lt;/p&gt;
+&lt;h2 id="类加载过程"&gt;类加载过程
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1624503795185-1624503795168.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h3 id="loading-加载"&gt;loading 加载
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1624513152313-1624513152293.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;父加载器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;父加载器不是“类加载器的加载器”，也不是类加载器的父类加载器。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;父加载器只当前类加载器的parent对象指向的加载器。&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id="classloader的源码"&gt;ClassLoader的源码
+&lt;/h3&gt;&lt;p&gt;findInCache-&amp;gt; parentLoadClass -&amp;gt; findClass()&lt;/p&gt;
+&lt;h3 id="自定义类加载器"&gt;自定义类加载器
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;extends ClassLoader&lt;/li&gt;
+&lt;li&gt;overwrite findClass（）-》defineClass（bytep[]-&amp;gt;class clazz）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;混合执行，编译执行，解释执行&lt;/p&gt;
+&lt;h3 id="linking"&gt;linking
+&lt;/h3&gt;&lt;h4 id="校验"&gt;校验
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;验证文件是否符合jvm规定&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="赋值默认值"&gt;赋值（默认值）
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;静态成员变量赋默认值。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="解析-1"&gt;解析
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;将类。方法，属性等符号引用解析为直接引用，指向内存的详细地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="赋初始值"&gt;赋初始值
+&lt;/h3&gt;&lt;h4 id="总结"&gt;总结
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;load- 默认值- 初始值&lt;/p&gt;
+&lt;p&gt;new -申请内存- 默认值-初始值&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="一些常用的分析"&gt;一些常用的分析
+&lt;/h3&gt;&lt;h4 id="静态绑定和动态绑定"&gt;静态绑定和动态绑定
+&lt;/h4&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;Demo3_9&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;test1&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;final&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;test2&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;test3&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;test4&lt;/span&gt;&lt;span class="p"&gt;(){}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Demo3_9&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;demo3_9&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Demo3_9&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;demo3_9&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;test1&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;demo3_9&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;test2&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;demo3_9&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;test3&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Demo3_9&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;test4&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;test1,test2,test4都是可以直接确定要调用哪个方法，称为静态绑定。invokespecial（私有方法） invokestatic（静态方法）&lt;/p&gt;
+&lt;p&gt;test3是public的方法，可能会被重写，只有在运行的过程当中才能确定具体调用的哪个方法，被称为动态绑定。invokevirtual&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;静态绑定的运行效率要远远高于动态绑定的方法。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="多态的原理"&gt;多态的原理
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;虚方法表是在链接阶段生成的&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;虚方法表(vtable)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;动态绑定的方法会存在虚方法表中。静态方法，私有方法，final修饰的方法都不在虚方法表中。虚方法表在一个类的二进制文件的最后一行。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;虚方法中会记录此类中的方法具体是调用的哪个父类或自己的具体方法。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="finally"&gt;finally
+&lt;/h4&gt;&lt;p&gt;finally会捕获try中的异常，catch中的异常，会普通代码里的异常 ，拷贝三份一样的代码，来确保finally中的代码一定会被执行。&lt;/p&gt;
+&lt;p&gt;如果finally中有return，finally中的return会在代码中的return之后执行。finally中的return不会抛异常。&lt;/p&gt;
+&lt;h4 id="对于反射的优化"&gt;对于反射的优化
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;sun.reflect.noInfloation可以用来禁用膨胀（直接生成GeneratedMethodAccessorl，但首次生成比较耗时，如果仅反射调用一次，不划算）&lt;/li&gt;
+&lt;li&gt;sun.reflect.inflationThreshold可以修改膨胀阀值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="jmm"&gt;JMM
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;jvm分区&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1627032589921-1627032589890.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;padding（缓存一次读取64个字节的数据）&lt;/p&gt;
+&lt;p&gt;三级缓存&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;合并写（寄存器只能处理四个字节）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;每四个字节同时修改。&lt;/p&gt;
+&lt;p&gt;零拷贝&lt;/p&gt;
+&lt;p&gt;jvm直接去访问os管理的内存。不需要不复制到jvm内存中，就是直接内存的使用。&lt;/p&gt;
+&lt;h3 id="程序计数器"&gt;程序计数器
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;线程私有的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;记录下一条指令的执行地址&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;程序计数器不会存在内存溢出问题。&lt;/p&gt;
+&lt;h3 id="栈-1"&gt;栈
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;线程私有的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;线程运行需要的内存空间&lt;/p&gt;
+&lt;h3 id="本地方法栈"&gt;本地方法栈
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;线程私有的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;java代码调用native方法来调用c/c++的代码运行所用的空间。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="方法区"&gt;方法区
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;线程共享的区域&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;1.8之前&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;字符串常量存储在永久区（堆内存）&lt;/p&gt;
+&lt;p&gt;FGC不会清理&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;1.8之后（元数据区）（系统本地内存）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;字符串常量位于堆&lt;/p&gt;
+&lt;p&gt;会触发FGC清理&lt;/p&gt;
+&lt;h4 id="方法区内存结构图"&gt;方法区内存结构图
+&lt;/h4&gt;&lt;p&gt;&lt;img src="https://i.loli.net/2021/10/19/AbP1EDVZFyWgaxJ.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="方法区内存溢出问题"&gt;方法区内存溢出问题
+&lt;/h4&gt;&lt;p&gt;元空间默认使用的是系统内存，一般不会发生内存溢出问题，&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当类的加载器创建的类过多时，就会导致方法区内存溢出。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="运行时常量池"&gt;运行时常量池
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;运行时常量池，常量池是*.class 文件中的，当该类被加载，它的常量池&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;类基本信息&lt;/li&gt;
+&lt;li&gt;常量池&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;给指令提一些常量符合，让执行器根据这些符号来找到要去执行哪些方法。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;常量池，就是一张表，虚拟机指令根据这张表常量池表找到执行的类名，方法名，参数类型，字面量等信息&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;类方法定义&lt;/li&gt;
+&lt;li&gt;虚拟机指令&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="stringtable字符串池"&gt;stringTable（字符串池）
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;StringTable的底层实现类似hashtable，是hash表。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;常量池中的信息都会被加载到运行时常量池中，这时这些都是常量池中的符号，还没有变为java字符串对象。&lt;/p&gt;
+&lt;p&gt;所有字符串都是懒惰加载的，只有在使用时才会创建，字符串创建前先要去字符串池中判断当前字符串是否存在，如果不存在就创建。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;常量池中的字符串只是符号，第一次用到时才变为对象。&lt;/li&gt;
+&lt;li&gt;利用串池的机制，来避免重复创建字符串对象。&lt;/li&gt;
+&lt;li&gt;字符串变量拼接的原理是StringBuilder。（1.8）&lt;/li&gt;
+&lt;li&gt;字符串常量拼接的原理是编译器优化。&lt;/li&gt;
+&lt;li&gt;可以使用intern方法，主动将串池中还没有的字符串对象放串池中。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id="stringtable的垃圾回收"&gt;StringTable的垃圾回收
+&lt;/h5&gt;&lt;p&gt;当内存紧张时，且放入stringTable的字符串没有引用时，也会发生GC现象。&lt;/p&gt;
+&lt;h5 id="stringtable的性能调优"&gt;stringTable的性能调优
+&lt;/h5&gt;&lt;p&gt;&amp;ndash;XX StringTableSize=20000 修改stringTable单个桶大小，当stringtable中的字符串常量非常多时，可以调整桶大小减少hash冲突，来提升性能。&lt;/p&gt;
+&lt;p&gt;让字符串入池可以极大的减少堆内存的占用。&lt;/p&gt;
+&lt;h3 id="直接内存"&gt;直接内存
+&lt;/h3&gt;&lt;p&gt;直接内存属于操作系统内存。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;常见于NIO操作时，用于数据缓冲区&lt;/li&gt;
+&lt;li&gt;分配回收成本较高，但读写性能高&lt;/li&gt;
+&lt;li&gt;不受JVM内存回收管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="direct-memory-大文件拷贝"&gt;direct Memory 大文件拷贝
+&lt;/h4&gt;&lt;p&gt;byteBuffer可以使用直接内存来完成文件NIO操作，它的大文件拷贝效率要比传统的FileInputStream（IO流）高效很多。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;传统IO拷贝操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://i.loli.net/2021/11/05/XMEYhASzBukWe3v.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;文件要先被读取到系统内存中，后被拷贝到JVM堆内存中。&lt;/p&gt;
+&lt;p&gt;cpu从java用户态先切换到内核态，再切换回用户态来完成拷贝。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;使用直接内存来完成大文件拷贝&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://i.loli.net/2021/11/05/rHAD3pktg7YcFWV.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;会在系统内存中生成一块名为direct memory的内存空间，这块空间java可以直接访问。&lt;/p&gt;
+&lt;p&gt;cpu从用户态切换到内核态，将文件读取到此内存中，然后切换回用户态直接在这块内存进行操作。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;比传统方式少了一次缓冲区复制操作。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="直接内存释放原理"&gt;直接内存释放原理
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;通过unsafe分配直接内存和释放内存&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kt"&gt;long&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;base&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;unsafe&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;allocateMemory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;_1Gb&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;//分配内存&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;unsafe&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;setMemory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;base&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;_1Gb&lt;/span&gt;&lt;span class="p"&gt;,(&lt;/span&gt;&lt;span class="kt"&gt;byte&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;in&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;read&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;//释放内存&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;unsafe&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;freeMemory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;base&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;in&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;read&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;&lt;img src="https://i.loli.net/2021/11/05/2OX187sLqhSzIBA.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h2 id="gc"&gt;gc
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625217137382-1625217137375.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;这些不会被垃圾回收&lt;/p&gt;
+&lt;h4 id="四种引用"&gt;四种引用
+&lt;/h4&gt;&lt;p&gt;&lt;img src="https://i.loli.net/2021/11/05/HIXqKvshlSgfEjM.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;软引用和虚引用在被 gc时，要进入引用队列然后被gc回收所占用的空间。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;强&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只有所有GC Roots对象不通过（强引用）引用该对象，该对象才能被 垃圾回收。&lt;/p&gt;
+&lt;p&gt;只要能通过gc root找到，就不会被垃圾回收。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;软&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只要没有被强引用引用到，在gc时就可能会被回收&lt;/p&gt;
+&lt;p&gt;普通gc后，如果内存当内存不足时gc&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;弱&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只要没有被强引用引用到，在gc时就可能会被回收&lt;/p&gt;
+&lt;p&gt;只要发生gc就会被回收。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;虚&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;必须配合引用对象使用，主要配合ByteBuffer使用，被引用对象回收时，会将虚引用入队，由Reference Handler线程调用虚引用相关方法释放直接内存。&lt;/p&gt;
+&lt;p&gt;虚引用被回收时，就会被加入到引用队列中，当此引用不再被强引用引用时，会调用unsafe中的freeMemory方法回收。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;终结器引用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;终结方法被重写后，重写的终结方法就可以被gc回收。&lt;/p&gt;
+&lt;p&gt;无需手动编码，但其内部配合引用队列使用，在垃圾回收时，终结器引用入队（被引用对象暂时没有被回收），再由Finalizer线程通过终结器引用找到被引用对象并调用它的finalize方法，第二次GC时才能回收被引用对象。&lt;/p&gt;
+&lt;h3 id="一些常用参数"&gt;一些常用参数
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;堆初始大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-Xms&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;堆最大大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-Xmx或-XX:MaxHeapSize=size&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;新生代大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-Xnm或（-XX:NewSize=size + -XX:MaxNewSize=size）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;幸存区比例（动态）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:InitialSurvivorRatio=ratio和-XX:-UseAdptiveSizePolicy&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;幸存区比例&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:SurvivorRatio=ratio&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;晋升阀值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:MaxTenuringThreshold=threshold&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;晋升详情&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+PrintTemuringDistributtion&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;GC详情&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+PrintGCDetails -verbose:gc&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;FullGC 前MinorGC&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+ScavengeBeforeFullGC&lt;/p&gt;
+&lt;h4 id="usegcoverheadlimit"&gt;UseGCOverheadLimit
+&lt;/h4&gt;&lt;p&gt;当打开此开关后，如果gc花费98%的时间，也只能回收不到2%的堆空间时，就不再发生gc而是报出此错。&lt;/p&gt;
+&lt;h4 id="-xx-disableexplicitgc"&gt;-xx: +DisableExplicitGC
+&lt;/h4&gt;&lt;p&gt;禁用显示的垃圾回收，让代码中的System.gc()无效。&lt;/p&gt;
+&lt;p&gt;system.gc() 是一种Full GC&lt;/p&gt;
+&lt;h3 id="gc的常用算法"&gt;gc的常用算法
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;标记清除&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;存活对象比较多的话效率高。&lt;/p&gt;
+&lt;p&gt;需要两遍扫描，效率低。容易 产生碎片。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;拷贝&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;把内存一分为二，有用的拷贝，然后清除一边内存。&lt;/p&gt;
+&lt;p&gt;适合存活对象少的，只扫描一次，效率高。&lt;/p&gt;
+&lt;p&gt;需要移动对象，对象的引用也需要调整，&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;标记压缩&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;清理的同时压缩调整内存位置。&lt;/p&gt;
+&lt;p&gt;不会产生碎片，方便分配。&lt;/p&gt;
+&lt;p&gt;需要扫描两遍，需要移动对象，效率低。&lt;/p&gt;
+&lt;h3 id="常见的垃圾回收器"&gt;常见的垃圾回收器
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;Serial&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;单线程回收器&lt;/p&gt;
+&lt;p&gt;回收时所有线程都停止，单线程清除后继续。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;PS（默认的回收器）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;回收时所有线程停止，多线程清理后继续。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ParNew&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;回收时所有线程停止，可以配合CMS使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;垃圾回收器跟内存大小的关系&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;serial 几十兆&lt;/li&gt;
+&lt;li&gt;PS 上百兆-几个G（JDK默认的垃圾回收器）&lt;/li&gt;
+&lt;li&gt;CMS 20G&lt;/li&gt;
+&lt;li&gt;G1 上百G&lt;/li&gt;
+&lt;li&gt;ZGC 4T - 16T（JDK13）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;常见的垃圾回收器的组合参数设定（1.8）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625225994247-1625225994234.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内存泄露&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;有废对象占据内存空间，这块空间不被回收也无法使用，&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;内存溢出&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不断地有数据占据内存，最后把内存空间占满。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="g1和其他的垃圾回收器的区别"&gt;G1和其他的垃圾回收器的区别
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;G1之前的垃圾回收器，有逻辑上的分带，还有物理上的分带。&lt;/li&gt;
+&lt;li&gt;G1只有逻辑上的分带，没有物理上的分带。&lt;/li&gt;
+&lt;li&gt;ZGC没有逻辑分带和物理分带，只有内存。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="jvm调优"&gt;JVM调优
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625228423227-1625228423217.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;调优案例&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625449464803-1625449464792.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;系统cpu经常100%。如何调优？（面试高频）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;cpu 100%那么一定是有线程在占用系统资源。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;找出哪个进程cpu高（top）&lt;/li&gt;
+&lt;li&gt;该进程中的哪个线程cpu占用高（top -Hp）&lt;/li&gt;
+&lt;li&gt;导出该线程的堆栈（jstack）&lt;/li&gt;
+&lt;li&gt;查找哪个方法（栈帧）的消耗时间（jstack）&lt;/li&gt;
+&lt;li&gt;工作线程占比高|垃圾回收线程占比高&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="jvm调优经验"&gt;jvm调优经验
+&lt;/h3&gt;&lt;p&gt;jps 定位具体java进程&lt;/p&gt;
+&lt;p&gt;jstack 定位线程状态，重点关注 WAITING BOCKED&lt;/p&gt;
+&lt;p&gt;加入有一个进程中100个线程，很多线程都在waiting on&lt;xxx&gt;，一定要找到是哪个线程持有这把锁。&lt;/p&gt;
+&lt;p&gt;jinfo +线程名：显示进程详细信息。&lt;/p&gt;
+&lt;p&gt;jstat -gc 线程号： 显示gc信息。（不好看）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;利用JMX实现的图形化界面工具&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;利用 JMX会消耗服务器性能，还挺大。&lt;/p&gt;
+&lt;p&gt;jconsole ：jdk自带的可视化工具。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625463036770-1625463036755.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;jvisualvm： 新的可视化工具（JDK自带）&lt;/p&gt;
+&lt;p&gt;jprofiler最好用的图形化界面工具。（收费）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何定位OOM问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;cmdline: arthas&lt;/p&gt;
+&lt;p&gt;jmap -histo 1736 | head -20&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;显示前20行的占用cpu的对象。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625464536097-1625464536091.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;池线上系统，内存特别大，jmap转dump执行期间会对进程产生很大的影响，甚至卡顿，（电商系统不适合）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;设定参数HeapDump，OOM时会自动产生堆转储文件&lt;/li&gt;
+&lt;li&gt;&lt;font color="red"&gt;很多服务器备份（高可用），停一台服务器对其他的不影响。&lt;/font&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在线分析&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;arthas：阿里的在线jvm分析工具。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;heapdump导出堆内存的情况。（也会影响性嫩）&lt;/p&gt;
+&lt;p&gt;分析dump&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jhat（jdk自带的dump分析工具）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;默认是多大dump文件用多大的内存去分析，分析时最好指定最大内存。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625469300750-1625469300744.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;分析完成后它会返回一个port端口，我们可以通过远程连接这个端口来分析dump中的数据。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="g1jdk9的默认回收器"&gt;G1（JDK9的默认回收器）
+&lt;/h3&gt;&lt;h4 id="cms老年带回收器"&gt;&lt;strong&gt;CMS&lt;/strong&gt;（老年带回收器）
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;concurrent mark sweep&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;垃圾回收的线程和工作线程同时运行。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://i.loli.net/2021/11/08/PIS7chgOrfAF5N9.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625216803062-1625216803045.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS的缺点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当老年带满时（内存条碎片过多），会调用老年带单线程回收器来清理。（FGC）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;初始标记：通过GCroot找到根对象。（STW的）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625536953783-1625536953770.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发标记：不影响主线程的运行，在程序的运行当中来标记要回收的垃圾。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;重新标记：假如之前并发标记的垃圾被又被root重新连接了，（又不能回收）在STW的情况下重新标记一遍。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发清理：不影响程序运行的情况下清理。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="g1垃圾优先"&gt;G1（垃圾优先）
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;G1是一种服务端应用使用的垃圾回收器，目标是用在多核、大内存的机器上，它在大多数情况下可以实现指定的GC暂停时间，同时还能保持较高的吞吐量。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;特点&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;并发收集&lt;/li&gt;
+&lt;li&gt;压缩空闲空间不会延长GC的暂停时间&lt;/li&gt;
+&lt;li&gt;更易预测的GC暂停时间&lt;/li&gt;
+&lt;li&gt;适用不需要实现很高的吞吐量的场景&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;把内存分成多个不同的分区，每个分区都可能是年轻代也可能是老年代。同一时间一个分区只能属于一个代。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625553178210-1625553178204.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="三色标记算法"&gt;三色标记算法
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;白色：未被标记的对象&lt;/li&gt;
+&lt;li&gt;灰色：自身被标记，成员变量未被标记&lt;/li&gt;
+&lt;li&gt;黑色：自身和成员变量均已标记完成，&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625554564046-1625554563987.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;CMS解决三色标记问题&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625556799695-1625556799674.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;CMS使用增量更新&lt;/p&gt;
+&lt;p&gt;G1使用SATB&lt;/p&gt;
+&lt;h4 id="g1的优化"&gt;G1的优化
+&lt;/h4&gt;&lt;h5 id="jdk-8u20-字符串去重"&gt;JDK 8u20 字符串去重
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;优点：节省大量内存&lt;/li&gt;
+&lt;li&gt;缺点：略微多占用的cpu时间，新生代回收时间略微增加。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+UseStringDeduplication&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;s1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;hello&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;s2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;hello&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;将所有新分配的字符放入一个队列&lt;/li&gt;
+&lt;li&gt;当新生代回收时，G1并发检查是否由字符串重复&lt;/li&gt;
+&lt;li&gt;如果他们值一样，让他们引用同一个char[]&lt;/li&gt;
+&lt;li&gt;注意，与String.intern()不一样
+&lt;ul&gt;
+&lt;li&gt;String.intern()关注的是字符串对&lt;/li&gt;
+&lt;li&gt;而字符串去重关注的是char[]&lt;/li&gt;
+&lt;li&gt;在JVM内部，使用了不同的字符串表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="jdk-8u40并发标记类卸载"&gt;JDK 8u40并发标记类卸载
+&lt;/h4&gt;&lt;p&gt;所有对象都经过并发标记后，就能知道哪些类不再被使用，当一个类加载器的所有类都不再使用，则卸载它所加载的所有类。&lt;/p&gt;
+&lt;p&gt;-XX:+ClassUnloadingWithConcurrentMark默认启用。&lt;/p&gt;
+&lt;h4 id="jdk-8-u60回收巨型对象"&gt;JDK 8 u60回收巨型对象
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;一个对象大于region的一半时，称之为巨型对象&lt;/li&gt;
+&lt;li&gt;G1不会对巨型对象进行拷贝&lt;/li&gt;
+&lt;li&gt;巨型对象回收时会被优先考虑&lt;/li&gt;
+&lt;li&gt;G1会跟踪老年代所有的incoming引用，这样老年代incoming引用为0的巨型对象就可以在新生代垃圾回收时处理掉&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="jdk9-并发标记起始时间调整"&gt;JDK9 并发标记起始时间调整
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;并发标记必须在堆空间占满前完成，否则退化为FullGC&lt;/li&gt;
+&lt;li&gt;JDK9之前需使用-XX:InitiatingHeapOccupancyPercent&lt;/li&gt;
+&lt;li&gt;JDK9可以动态调整
+&lt;ul&gt;
+&lt;li&gt;-XX:InitiatingHeapOccupancyPercent用来设置初始值&lt;/li&gt;
+&lt;li&gt;进行数据采样并动态调整&lt;/li&gt;
+&lt;li&gt;总会添加一个安全的空档空间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="读深入理解java虚拟机第3版有感"&gt;读《深入理解java虚拟机（第3版）》有感
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-816:42:08-1675845727393.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h3 id="自动内存管理"&gt;自动内存管理
+&lt;/h3&gt;&lt;h4 id="java内存区域和内存溢出异常"&gt;java内存区域和内存溢出异常
+&lt;/h4&gt;&lt;h5 id="运行时数据区-1"&gt;运行时数据区
+&lt;/h5&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-1710:57:17-1676602637615.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;程序计数器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;字节码解释器通过改变程序计数器的值来选取需要执行的下一条指令。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;由于JVM的多线程是通过线程轮流切换来实现的，同一时刻，一个CPU的一个内核，只能执行一条线程中的指令。每条线程都需要有一个独立的程序计数器，每个程序计数器的区域都是线程私有的。&lt;/p&gt;
+&lt;p&gt;如果一个线程正在运行，执行的为java方法，计数器记录的为正在执行的虚拟机字节码指令的地址。&lt;/p&gt;
+&lt;p&gt;如果正在执行的是本地方法（native），计数器的值则为空。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;程序计数器是JVM中唯一没有任何内存溢出的区域&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;java虚拟机栈&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;也是线程私有的，生命周期与线程相同。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;java每个方法被执行的时候，都会创建一个栈帧用于存储，局部变量表，操作数栈，动态连接，方法出口等。每个方法被调用完毕，就对应着一个栈帧的入栈和出栈。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;局部变量表：存放了，基本数据类型，对象的引用，和returnAddress类型。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;数据类型在局部变量表中以sort（槽）来存放，64位长度的long和double类型占用两个槽，其余只占用一个槽。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;本地方法栈&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;虚拟机执行native方法时，需要把本地方法入栈。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;方法区&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;各个线程共享的区域，存储被虚拟机加载类型信息，常量，静态变量，即时编译器编译后的代码缓存等信息。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;运行时常量池&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用于存储编译期生成的各种字面量和符号引用。&lt;/p&gt;
+&lt;h3 id="hotspot"&gt;HotSpot
+&lt;/h3&gt;&lt;h4 id="对象的创建"&gt;对象的创建
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;指针碰撞&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果内存的空间是规整的（已使用的内存，是连续的，未使用的内存也是连续的）&lt;/p&gt;
+&lt;p&gt;在创建新对象时，指针只需要移动所要创建的对象大小的内存就好。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;空闲列表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果java堆中的内存不是规整的，已被使用的内存和未被使用的内存相互交错在一起&lt;/p&gt;
+&lt;p&gt;虚拟机会维护一个列表，记录哪些内存块是可用的，在列表中找到一块空间足够大的内存空间给对象实例，并在列表上更新实例。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;是选择指针碰撞还是空间列表的方式，取决于所采用的垃圾回收器是否有空间压缩整理的能力。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Serial、ParNew等带有压缩整理过程的收集器，系统采用的分配算法是指针碰撞。&lt;/p&gt;
+&lt;p&gt;CMS这种基于Sweep算法的收集器，使用空闲列表的方式来分配内存。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;并发安全问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果在并发的情况下，两个线程同时分配内存。可以有两种解决方案：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;对分配内存的动作进行同步处理，虚拟机是采用CAS配上失败重试的方式来保证更新操作的原子性。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;TLAB：把内存分配的动作按照线程，按照线程划分成不同的内存进行。&lt;/p&gt;
+&lt;p&gt;当每个线程预分配的空间（本地线程分配缓冲）不够时，就采用1中同步的方式给这个线程分配新的缓冲区。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;虚拟机是否采用TLAB：通过-XX：+/-UseTLAB参数来 设定。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;实际CMS使用TLAB分配对象的速度更快，因为这样可以减少同步方法。&lt;/p&gt;
+&lt;h2 id="垃圾收集器和内存分配策略"&gt;垃圾收集器和内存分配策略
+&lt;/h2&gt;&lt;h3 id="确认对象需要被回收"&gt;确认对象需要被回收
+&lt;/h3&gt;&lt;h4 id="引用计数算法"&gt;引用计数算法
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;在对象中添加一个引用计数器，每当有一个地方 引用它时，计数器值就加一；当引用失效时，计数器值就减一；任何时刻计数器为零的对象就是不可 能再被使用的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;但是主流的JVM都没有使用引用计数算法来管理内存，原因是引用计数器无法处理很多意外情况。例如循环依赖问题。&lt;/p&gt;
+&lt;h4 id="可达性分析算法"&gt;可达性分析算法
+&lt;/h4&gt;&lt;p&gt;从GCroot作为起始节点，通过引用关系向下搜索，搜索过的路径叫做引用链。如果某个对象没有任何引用链，就证明此对象不再被使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;GCROOT&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;在栈中的引用对象，每个线程使用到的参数，局部变量，临时变量等。&lt;/li&gt;
+&lt;li&gt;在方法区中的静态变量。&lt;/li&gt;
+&lt;li&gt;在方法区中常量引用的对象，如字符串池中的对象。&lt;/li&gt;
+&lt;li&gt;native方法引用的对象。&lt;/li&gt;
+&lt;li&gt;虚拟机系统引用的对象，如基本数据类型的class对象，异常对象，系统的类加载器等。&lt;/li&gt;
+&lt;li&gt;所有被同步锁（（synchronized关键字）持有的对象。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;并发情况的可达性分析算法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;·白色：表示对象尚未被垃圾收集器访问过。显然在可达性分析刚刚开始的阶段，所有的对象都是 白色的，若在分析结束的阶段，仍然是白色的对象，即代表不可达。&lt;/p&gt;
+&lt;p&gt;·黑色：表示对象已经被垃圾收集器访问过，且这个对象的所有引用都已经扫描过。黑色的对象代 表已经扫描过，它是安全存活的，如果有其他对象引用指向了黑色对象，无须重新扫描一遍。黑色对 象不可能直接（不经过灰色对象）指向某个白色对象。&lt;/p&gt;
+&lt;p&gt;·灰色：表示对象已经被垃圾收集器访问过，但这个对象上至少存在一个引用还没有被扫描过。&lt;/p&gt;
+&lt;h3 id="垃圾回收算法"&gt;垃圾回收算法
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;标记清除算法：最基本的垃圾回收算法，可用于新生代和老年带。&lt;/li&gt;
+&lt;li&gt;标记复制算法：常用于新生代，目前主流的垃圾回收期新生代都是采用此算法。&lt;/li&gt;
+&lt;li&gt;标记整理算法：老年带才会用的垃圾回收算法，性能消耗很高。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;标记整理和标记清除算法都需要停掉用户线程来处理（STW）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="垃圾回收器"&gt;垃圾回收器
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2318:53:19-1677149598308.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Serial收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2318:54:13-1677149652489.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ParNew收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2318:56:13-1677149772287.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;目前只有ParNew和Serial才能和CMS配合使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2319:01:03-1677150062735.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Garbage First收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;面对堆内存组成回收集来进行回收，不再管他是哪个分带。&lt;/p&gt;
+&lt;p&gt;把连续的java堆划分成大小相同的内存区域。&lt;/p&gt;
+&lt;p&gt;回收过程：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;初始标记：只标记和GCROOT有直接关联的对象。（没有停顿）&lt;/li&gt;
+&lt;li&gt;并发标记：从GCroot开始，对堆中的对象进行可达性分析。（与用户进程同步运行）&lt;/li&gt;
+&lt;li&gt;最终标记：对用户线程进行暂停，处理2步遗留的有变动的标记。&lt;/li&gt;
+&lt;li&gt;筛选回收：暂停用户线程，按照每个内存区域的价值，来决定回收哪个区域的内存。（把回收内存中需要留下的数据复制到新的地方，然后清理掉整个区域的数据）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2319:13:12-1677150791924.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;G1不再追求能够回收所有的垃圾，只要回收速度能追的上使用创建的速度就可以。所以一次不会回收掉全部的垃圾。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="低延迟垃圾收集器"&gt;低延迟垃圾收集器
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2319:18:34-1677151113863.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="shenandoah谢南多厄收集器"&gt;Shenandoah（谢南多厄）收集器
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;初始标记：标记与GCroot直接关联的对象。此阶段STW&lt;/li&gt;
+&lt;li&gt;并发标记：遍历对象图，标记出全部可达对象。与用户线程一起运行。&lt;/li&gt;
+&lt;li&gt;最终标记：标记并发标记中间变动的对象。小段的STW&lt;/li&gt;
+&lt;li&gt;并发清理：清理整个区域一个存活对象都没有的区域。与用户线程一起&lt;/li&gt;
+&lt;li&gt;并发回收：把需要回收的内存区域中存活的对象，复制到其他区域。利用读屏障和转发指针，实现此操作和用户线程一起运行。（G1这一步需要暂停用户线程）&lt;/li&gt;
+&lt;li&gt;初始引用更新：把堆中所有指向旧对象地址的指针全部指向新的对象（只是统计出哪些对象指针需要被更新）。会有短暂的STW。&lt;/li&gt;
+&lt;li&gt;并发引用更新：并发的更新上面统计的引用。与用户线程一起运行。&lt;/li&gt;
+&lt;li&gt;最终引用更新：修正GCROOT中的引用。需要STW&lt;/li&gt;
+&lt;li&gt;并发清理：清理需要被清理的内存块。与用户线程一起。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2319:35:45-1677152145027.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2319:37:34-1677152253748.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="zgc"&gt;ZGC
+&lt;/h4&gt;&lt;p&gt;目前最强垃圾回收器，回收的停顿时间只与GCROOT的大小有关，与堆内存无关。领先其他回收器一个数量级的差距。吞吐量第一。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;引入了染色指针的概念，把少量的信息存在了指针上。但是如果内存超过4TB将无法使用此技术。而且只能在LINUX环境下运行。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;并发标记（Concurrent Mark）：与G1、Shenandoah一样，并发标记是遍历对象图做可达性分析的 阶段，前后也要经过类似于G1、Shenandoah的初始标记、最终标记（尽管ZGC中的名字不叫这些）的 短暂停顿，而且这些停顿阶段所做的事情在目标上也是相类似的。与G1、Shenandoah不同的是，ZGC 的标记是在指针上而不是在对象上进行的，标记阶段会更新染色指针中的Marked 0、Marked 1标志 位。&lt;/li&gt;
+&lt;li&gt;并发预备重新分配：扫描整个堆内存区域，把所有存活的对象都记录下来。&lt;/li&gt;
+&lt;li&gt;并发重分配：把被标记的对象都复制到新的内存块中，在旧的内存块中为这些对象建立一个转发表。如果用户线程这个时候并发访问了就的对象，会被内存屏障截取，把这个对象的引用修正到新的区域。（指针的自愈）。&lt;/li&gt;
+&lt;li&gt;并发重映射：如果某个旧对象一直没被用户线程访问，就在下一次垃圾回收的并发标记阶段里把这些对象的引用指向新的地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一旦某个内存块中的引用全部指向了新的地址。此转发表被释放，内存区域也被回收。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="虚拟机性能监控故障处理"&gt;虚拟机性能监控，故障处理
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;jps&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;可以显示目前运行的java进程&lt;/p&gt;
+&lt;p&gt;jps还可以通过RMI协议查询远程的RMI虚拟机进程&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jstat&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;监视虚拟机各种运行状态的命令行工具。&lt;/p&gt;
+&lt;p&gt;显示虚拟当前的运行状态，是在运行期查看虚拟当前状态的工具。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jinfo&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;实时的查看和修改虚拟机的各项参数。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jmap&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用于生成堆内存快照文件。dump文件。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jhat（不推荐使用）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;与jmap配合使用，用于分析jmap生成的dump文件。&lt;/p&gt;
+&lt;p&gt;非常耗费性能，而且分析的很简陋。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jstack&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用于生成虚拟机当前时刻的线程快照。&lt;/p&gt;
+&lt;p&gt;利用java.lang.Thread类中的getAllStackTraces()方法可以获取所有线程的stack对象，可以实现jstack大部分的功能。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;个人用jstack分析分析的线程状态：
+运行：RUNNABLE，备注：runnable
+在等待获取锁的阻塞:BLOCKED，备注：waiting for monitor entry
+调用sleep方法：TIME_WAITING，备注：waiting on condition
+调用wait方法：WAITING，备注：in Object.wait()&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="调优案例分析和实战"&gt;调优案例分析和实战
+&lt;/h2&gt;&lt;h3 id="大内存硬件上的程序部署策略"&gt;大内存硬件上的程序部署策略
+&lt;/h3&gt;&lt;p&gt;一个文档网站，每次操作都会把文档整个读到内存中来。由于文件内容很大，读取到堆内存中就直接到了老年代，不会在Minor GC中被回收。&lt;/p&gt;
+&lt;p&gt;之前服务器是32位操作系统，只给程序分配了1.5G堆内存。当时用户感受到缓慢但不至于等十几秒。&lt;/p&gt;
+&lt;p&gt;后来升级了硬件，64位操作系统，程序分配了12G堆内存，垃圾回收器使用了默认的吞吐量优先收集器，由于文档都直接进入了老年代，内存很快就达到阈值，每几分钟就要触发一次full GC，需要等十几秒。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;升级了硬件，加大内存条，程序运行更慢，用户体验更差了。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;解决方案&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;通过一个单独的JVM虚拟机，来管理大量的java堆内存。&lt;/li&gt;
+&lt;li&gt;同时使用若干个java虚拟机，建立逻辑集群来利用硬件资源。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;方案1的问题：&lt;/p&gt;
+&lt;p&gt;方案1需要使用G1，谢南多厄等注重延迟的垃圾回收器。这些垃圾回收器并不成熟，而且光垃圾回收器本身就非常耗费性能。&lt;/p&gt;
+&lt;p&gt;单个JVM管理大堆内存，必须在64位的操作系统中运行。&lt;/p&gt;
+&lt;p&gt;由于压缩指针的关系，相同的程序，在32位系统中，运行速度和占用内存大小，都要优于64位操作系统。&lt;/p&gt;
+&lt;p&gt;方案2的问题：&lt;/p&gt;
+&lt;p&gt;节点竞争系统资源，磁盘资源，各节点如果同时写入某个文件，容易产生IO异常。&lt;/p&gt;
+&lt;p&gt;如果单个服务器上大量的使用HashMap等本地缓存，每个逻辑JVM节点上都有一份相同的缓存，容易造成内存的浪费。（所以小容量的JVM内存建议使用 集中式缓存）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;大结局&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;最后的部署方案并没有选择升级JDK版本，而 是调整为建立5个32位JDK的逻辑集群，每个进程按2GB内存计算（其中堆固定为1.5GB），占用了 10GB内存。另外建立一个Apache服务作为前端均衡代理作为访问门户。考虑到用户对响应速度比较关心，并且文档服务的主要压力集中在磁盘和内存访问，处理器资源敏感度较低，因此改为CMS收集器 进行垃圾回收。部署方式调整后，服务再没有出现长时间停顿，速度比起硬件升级前有较大提升。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;堆外内存导致的内存溢出问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当堆外内存被不断使用时，由于JVM默认的GC监控没有监控堆外内存的使用量，只在乎堆内存被使用到一定比例时才触发GC。只有FULL GC才会顺手清理一下堆外内存。&lt;/p&gt;
+&lt;p&gt;严格控制好堆外内存。&lt;/p&gt;
+&lt;h3 id="由于数据结构问题导致的gc时间变长"&gt;由于数据结构问题导致的GC时间变长
+&lt;/h3&gt;&lt;p&gt;程序中有一个巨大的map在新生代，如果触发了Minor GC，而map中的数据也不能被回收。在调用复制算法的时候，就会到导致大量的信息被复制，让GC时间变长。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;解决方案&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;可以禁用缓冲区，让此对象直接被复制到老年代。等到老年代GC的时候再去清理它。&lt;/p&gt;
+&lt;h2 id="类加载机制"&gt;类加载机制
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-2-2716:07:21-1677485240979.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果是动态链接的情况下，解析会在验证之前&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="高效并发"&gt;高效并发
+&lt;/h2&gt;&lt;h3 id="java内存模型和线程"&gt;java内存模型和线程
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-3-3010:54:40-1680144880028.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="java内存交互操作"&gt;java内存交互操作
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;lock（锁定）：作用于主内存的变量，把一个变量标识成线程独占的状态。&lt;/li&gt;
+&lt;li&gt;unlock（解锁）：作用于主内存的变量，把一个处于锁定状态的对象释放出来，释放后的变量才可以被其他线程锁定。&lt;/li&gt;
+&lt;li&gt;read（读取）：作用于主内存的变量，把一个变量的值从主内存传递到工作内存中，以便随后的load动作使用。&lt;/li&gt;
+&lt;li&gt;load（载入）：作用于工作内存的变量，把read操作从主内存中得到的变量值放入工作内存的变量副本中。&lt;/li&gt;
+&lt;li&gt;use（使用）：作用于工作内存的变量，把工作内存中一个变量的值传递给执行引擎，每当虚拟机遇到一个需要使用变量值的字节码指令时将会执行这个操作。&lt;/li&gt;
+&lt;li&gt;assign（赋值）：作用于工作内存的变量，把一个从执行引擎接收的值赋值给工作内存的变量，每当虚拟机遇到一个变量赋值的字节码指令时，都会执行此操作。&lt;/li&gt;
+&lt;li&gt;store（存储）：作用于工作内存的变量，把工作内存中一个变量的值传递到主内存中，以便随后的write操作使用。&lt;/li&gt;
+&lt;li&gt;write（写入）：作用于主内存的变量，把store操作从工作内存中得到的变量的值放入主内存的变量中。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;一个变量在同一时刻，只允许一条线程对其进行lock操作，但lock操作可以被同一条线程重复执行多次，多次执行lock后，只有执行相同次数的unlock操作，变量才会被解锁。&lt;/li&gt;
+&lt;li&gt;如果一个变量执行lock操作，那将会清空工作内存中此变量的值，在执行引擎使用这个变量前，需要重新执行lock或assign操作以初始化变量的值。&lt;/li&gt;
+&lt;li&gt;如果一个变量事先没有被lock操作锁定，那就不允许对它执行unlock操作，也不允许去unlock一个被其他线程锁定的变量。&lt;/li&gt;
+&lt;li&gt;一个变量执行unlock操作之前，必须先把此变量同步回主内存，（执行store、write操作）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="对于volatile型变量的特殊规则"&gt;对于volatile型变量的特殊规则
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;java虚拟机提供的最轻量级的同步机制。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;案例一&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个用volatile修饰的整型变量，多个线程同时调用++操作来修改此变量。&lt;/p&gt;
+&lt;p&gt;最终结果并不正确。&lt;/p&gt;
+&lt;p&gt;原因：volatile只能保证元素的可见性，只有在读取此变量时，可以保证此值的正确性，在执行++操作时，可以其他线程已经完成了++并赋值，导致当前线程给此值赋错值。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;所以volatile还是要加synchronized或者JUC相关的锁，来保证操作的原子性。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;volatile是怎么禁止指令重排序的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;指令重排序指，在单个线程内，指令一操作先后顺序对指令二没有影响，cpu会随机的先执行指令1或者指令2&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;被volatile修饰的变量和普通的变量区别在于，被volatile修饰的变量，在读操作和写操作的时候，都会加lock前缀指令（内存屏障）。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;volatile的内存屏障的作用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;volatile的内存屏障加在此变量的每次读取（load）的前后，和write的前后。&lt;/p&gt;
+&lt;p&gt;加了内存屏障之后，内存屏障前的指令不会在内存屏障后面运行，内存屏障后的指令不会在内存屏障前运行。&lt;/p&gt;
+&lt;p&gt;且加了内存屏障的数据，如果是写操作，就会强制把此数据从工作内存写回主内存。让其他的工作内存强制失效，重新从主内存读取数据。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;volatile的lock前缀的方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;lock前缀不是一种内存屏障，但它能完成类似内存屏障的功能。&lt;/p&gt;
+&lt;p&gt;lock先对总线/缓存加锁，然后执行后面的指令，最后释放锁后，把高速缓存中的脏数据全部刷新回主内存。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果lock锁住总线的时候，其他CPU的读写请求会全部被阻塞，知道锁释放。lock后的写操作会让其他CPU相关cache失效，从而从新的内存中读取最新的数据，这个是通过缓存一致性协议做的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;性能：volatile的读操作的性能消耗与普通变量几乎没有什么区别，但写操作可能会慢上一些。（因为lock前缀禁用了CPU的指令重排序）但也比锁的开销低。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;再来说说++的问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这个和++的特性有关，++操作分&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;获取i&lt;/li&gt;
+&lt;li&gt;i自增&lt;/li&gt;
+&lt;li&gt;回写i&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在执行第1步操作时，volatile生效，保证两条线程一定能拿到最新的i&lt;/p&gt;
+&lt;p&gt;2操作时，有可能线程A自增了i并回写，但线程B此时已经拿到了i，不会再重新读取A回写的i，因此会产生问题。&lt;/p&gt;
+&lt;p&gt;虽然volatile会让B线程的i失效，但B线程已经走到了2，不存在读取i的操作，所以会存在问题。&lt;/p&gt;
+&lt;p&gt;这本身是++指令的问题。&lt;/p&gt;
+&lt;h4 id="happens-before先行发生规则"&gt;Happens-Before（先行发生规则）
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;先行发生是java内存模型中定义的两项操作之间的编序关系，操作A先行于操作B，就是说发生操作B之前，操作A产生的影响能被操作B观察到。影响包括修改了内存中共享变量的值，发送了消息，调用了方法等。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;几种java已经默认实现了的先行发生规则：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;管道锁定规则：一个unlock操作先行发生于后面对同一个锁的lock操作。（必须是同一个锁，后面只时间上的先后）&lt;/li&gt;
+&lt;li&gt;volatile变量规则：对一个volatile变量的写操作先行发生于后面对这个变量的读操作。（后面指时间上的先后）&lt;/li&gt;
+&lt;li&gt;线程启动规则：Thread的start方法先行发生于此线程的每一个动作。&lt;/li&gt;
+&lt;li&gt;线程终止规则：线程中的所有操作都先行发生于此线程的终止检测，我们可以通过Thread.join（）方法，Thread::isAlive（）的返回值，检测线程是否已经终止执行。&lt;/li&gt;
+&lt;li&gt;线程中断规则：对线程interrupt（）方法的调用先行发生于被中断线程的代码检测到中断事件的发生，可以通过Thread::interrupted（）方法检测到是否有中断发生。&lt;/li&gt;
+&lt;li&gt;对象终结规则：一个对象的初始化完成，先行发生于它的finalize（）方法的开始。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-4-416:15:53-1680596152950.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;一个普通的set，get方法。两个线程操作同一个对象。&lt;/p&gt;
+&lt;p&gt;A线程时间上先调用set（1）&lt;/p&gt;
+&lt;p&gt;B线程时间上后调用get方法&lt;/p&gt;
+&lt;p&gt;问B线程返回值是多少？&lt;/p&gt;
+&lt;p&gt;由于上面的操作完全没有遵守先行发生规则，所以虽然时间上A操作先于B，但无法判断B线程get方法的返回值，换句话说，这里的操作不是线程安全的。&lt;/p&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;p&gt;把get和set方法都用synchronized修饰，或者把此字段值用volatile修饰，这样可以实现先行发生关系。&lt;/p&gt;
+&lt;p&gt;时间先后顺序与先行发生原则之间基本没有因果关系，所以我们衡量并发安全问题的时候不要受时间顺序的干扰，一切必须以先行发生原则为准。&lt;/p&gt;
+&lt;h3 id="java与线程"&gt;java与线程
+&lt;/h3&gt;&lt;h4 id="线程的实现"&gt;线程的实现
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;操作系统的线程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-4-619:30:36-1680780636323.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;在一个操作系统中，一个线程相当于一个轻量级进程，对应一个内核核心。&lt;/p&gt;
+&lt;p&gt;每个线程的操作都是由调度器来统一调度。线程切换需要消耗很大的资源，需要从内核态，切换为系统态，再由调度器来统一分配。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;用户线程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;完全由用户态统一模拟的线程，利用代码，实现了轻量级进程的大部分操作。&lt;/p&gt;
+&lt;p&gt;这样的代码设计起来复杂，而且有些问题是在用户态下无法解决的问题。（如果一个用户虚拟线程阻塞，则整个进程都阻塞）。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;混合实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-4-619:46:53-1680781613499.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;线程的创建，切换，析构等操作由用户态模拟实现，系统内核用来处理处理的映射，用户线程的调用由内核调度器来完成。（这样可以大大降低整个进程被完全阻塞的风险）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;java线程的实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;jdk1.3之前，主流都是使用一种叫“绿色线程”的虚拟线程实现。&lt;/p&gt;
+&lt;p&gt;之后采用轻量级进程来实现线程，线程的大部分操作都是由操作系统统一来处理的。&lt;/p&gt;
+&lt;p&gt;jdk18开始，java又支持了虚拟线程的新实现。&lt;/p&gt;
+&lt;h4 id="java线程调度"&gt;java线程调度
+&lt;/h4&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-4-620:05:45-1680782745395.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="协程"&gt;协程
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;内核线程调度切换为什么成本高？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;主要来自于用户态与核心态之间的状态转换。&lt;/p&gt;
+&lt;p&gt;如果发生了状态转换，操作系统需要把当前线程需要的所有上下文对象保存起来，这些保存动作会涉及到大量设变之间的拷贝。成本极高。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;协程的实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由用户自己模拟多线程，自己来维护线程间切换时保存上下文对象的操作。恢复操作也由用户态自己模拟。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;协程的优势&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;轻量级，一个协程占用内存非常小，java线程池中的线程如果达到两百时，就已经到达瓶颈。&lt;/p&gt;
+&lt;p&gt;协程可以达到几十万的并存的协程。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缺点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果遇到synchronize关键字，还是会把整个线程全部挂起。&lt;/p&gt;
+&lt;h4 id="纤程"&gt;纤程
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;java的loom项目&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在java虚拟机里，建立了两个并存的java虚拟机实现，可以在程序中同时使用。新模型和旧模型同时使用。&lt;/p&gt;
+&lt;p&gt;新模型被分为两部分&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;执行过程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用于维护执行现场，保护、恢复上下文。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调度器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;编排所有要执行的代码和顺序。默认的调度器实现就是jdk1.7加入的ForkJoinPool&lt;/p&gt;
+&lt;h3 id="线程安全和锁优化"&gt;线程安全和锁优化
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;绝对线程安全&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不管运行环境如何，调用者不需要任何额外的同步措施，调用这个对象都可以得到正确的答案。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;vector的获取和修改操作都是同步的。但是在多线程环境下，还是可能出现问题。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;span class="lnt"&gt;18
+&lt;/span&gt;&lt;span class="lnt"&gt;19
+&lt;/span&gt;&lt;span class="lnt"&gt;20
+&lt;/span&gt;&lt;span class="lnt"&gt;21
+&lt;/span&gt;&lt;span class="lnt"&gt;22
+&lt;/span&gt;&lt;span class="lnt"&gt;23
+&lt;/span&gt;&lt;span class="lnt"&gt;24
+&lt;/span&gt;&lt;span class="lnt"&gt;25
+&lt;/span&gt;&lt;span class="lnt"&gt;26
+&lt;/span&gt;&lt;span class="lnt"&gt;27
+&lt;/span&gt;&lt;span class="lnt"&gt;28
+&lt;/span&gt;&lt;span class="lnt"&gt;29
+&lt;/span&gt;&lt;span class="lnt"&gt;30
+&lt;/span&gt;&lt;span class="lnt"&gt;31
+&lt;/span&gt;&lt;span class="lnt"&gt;32
+&lt;/span&gt;&lt;span class="lnt"&gt;33
+&lt;/span&gt;&lt;span class="lnt"&gt;34
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Integer&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Vector&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;throws&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;InterruptedException&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;10&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;removeThread&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Runnable&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nd"&gt;@Override&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//要想安全必须在这一步锁住整个vector&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;size&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;remove&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;printThread&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Runnable&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nd"&gt;@Override&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;run&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//要想安全必须在这一步锁住整个vector&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;size&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;vector&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;removeThread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;start&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;printThread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;start&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//不要同时产生过多的线程&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;activeCount&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="n"&gt;20&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如何解决vector的线程安全问题？&lt;/p&gt;
+&lt;p&gt;如果让想让vector达到完全的线程安全，需要维护一组一致性的快照访问（类似于mysql），每个对其中元素进行改动的操作都要产生新的快照。这样需要付出极大的维护成本。&lt;/p&gt;
+&lt;h4 id="线程安全的实现方法"&gt;线程安全的实现方法
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;互斥同步&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;共享数据在同一时刻。只能被一条（或一些，当使用信号量的时候）线程使用。&lt;/p&gt;
+&lt;p&gt;synchronize：&lt;/p&gt;
+&lt;p&gt;详见JUC相关的笔记&lt;/p&gt;
+&lt;p&gt;lock接口的各种锁实现&lt;/p&gt;
+&lt;ol start="2"&gt;
+&lt;li&gt;非阻塞同步&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;先不管是否存在线程竞争问题，先去做，做完后检查，如果没有被更改，就提交操作。&lt;/p&gt;
+&lt;p&gt;CAS&lt;/p&gt;
+&lt;p&gt;如果发生ABA问题，其实采用加锁的同步方案，要比加版本号的方案更好。&lt;/p&gt;
+&lt;ol start="3"&gt;
+&lt;li&gt;无同步方案&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;可重入代码（纯代码）：&lt;/p&gt;
+&lt;p&gt;可以在代码执行的任何时刻中断它，转而去执行新代码（也可以是自己），而在控制权返回后，原来的程序不会出现任何错误，也不会对结果造成影响。如：Rust。&lt;/p&gt;
+&lt;p&gt;所有可重入代码都是线程安全的，并不是所有线程安全的代码都是可重入代码。&lt;/p&gt;
+&lt;p&gt;线程本地存储：&lt;/p&gt;
+&lt;p&gt;把当前线程需要操作的数据，只保存在一个线程中独有，其他线程无法获取和改变这个变量。ThreadLocal。&lt;/p&gt;</description></item><item><title>JVM垃圾回收器</title><link>https://thecoolboyhan.github.io/p/jvm%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/</link><pubDate>Thu, 06 Jun 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/jvm%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/</guid><description>&lt;h2 id="gc"&gt;gc
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625217137382-1625217137375.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;这些不会被垃圾回收&lt;/p&gt;
+&lt;h4 id="四种引用"&gt;四种引用
+&lt;/h4&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/HIXqKvshlSgfEjM_1749448093139.png"
+loading="lazy"
+alt="HIXqKvshlSgfEjM.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;软引用和虚引用在被 gc时，要进入引用队列然后被gc回收所占用的空间。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;强&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只有所有GC Roots对象不通过（强引用）引用该对象，该对象才能被 垃圾回收。&lt;/p&gt;
+&lt;p&gt;只要能通过gc root找到，就不会被垃圾回收。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;软&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只要没有被强引用引用到，在gc时就可能会被回收&lt;/p&gt;
+&lt;p&gt;普通gc后，如果内存当内存不足时gc&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;弱&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只要没有被强引用引用到，在gc时就可能会被回收&lt;/p&gt;
+&lt;p&gt;只要发生gc就会被回收。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;虚&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;必须配合引用对象使用，主要配合ByteBuffer使用，被引用对象回收时，会将虚引用入队，由Reference Handler线程调用虚引用相关方法释放直接内存。&lt;/p&gt;
+&lt;p&gt;虚引用被回收时，就会被加入到引用队列中，当此引用不再被强引用引用时，会调用unsafe中的freeMemory方法回收。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;终结器引用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;终结方法被重写后，重写的终结方法就可以被gc回收。&lt;/p&gt;
+&lt;p&gt;无需手动编码，但其内部配合引用队列使用，在垃圾回收时，终结器引用入队（被引用对象暂时没有被回收），再由Finalizer线程通过终结器引用找到被引用对象并调用它的finalize方法，第二次GC时才能回收被引用对象。&lt;/p&gt;
+&lt;h3 id="一些常用参数"&gt;一些常用参数
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;堆初始大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-Xms&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;堆最大大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-Xmx或-XX:MaxHeapSize=size&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;新生代大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-Xnm或（-XX:NewSize=size + -XX:MaxNewSize=size）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;幸存区比例（动态）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:InitialSurvivorRatio=ratio和-XX:-UseAdptiveSizePolicy&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;幸存区比例&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:SurvivorRatio=ratio&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;晋升阀值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:MaxTenuringThreshold=threshold&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;晋升详情&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+PrintTemuringDistributtion&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;GC详情&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+PrintGCDetails -verbose:gc&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;FullGC 前MinorGC&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+ScavengeBeforeFullGC&lt;/p&gt;
+&lt;h4 id="usegcoverheadlimit"&gt;UseGCOverheadLimit
+&lt;/h4&gt;&lt;p&gt;当打开此开关后，如果gc花费98%的时间，也只能回收不到2%的堆空间时，就不再发生gc而是报出此错。&lt;/p&gt;
+&lt;h4 id="-xx-disableexplicitgc"&gt;-xx: +DisableExplicitGC
+&lt;/h4&gt;&lt;p&gt;禁用显示的垃圾回收，让代码中的System.gc()无效。&lt;/p&gt;
+&lt;p&gt;system.gc() 是一种Full GC&lt;/p&gt;
+&lt;h3 id="gc的常用算法"&gt;gc的常用算法
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;标记清除&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;存活对象比较多的话效率高。&lt;/p&gt;
+&lt;p&gt;需要两遍扫描，效率低。容易 产生碎片。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;拷贝&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;把内存一分为二，有用的拷贝，然后清除一边内存。&lt;/p&gt;
+&lt;p&gt;适合存活对象少的，只扫描一次，效率高。&lt;/p&gt;
+&lt;p&gt;需要移动对象，对象的引用也需要调整，&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;标记压缩&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;清理的同时压缩调整内存位置。&lt;/p&gt;
+&lt;p&gt;不会产生碎片，方便分配。&lt;/p&gt;
+&lt;p&gt;需要扫描两遍，需要移动对象，效率低。&lt;/p&gt;
+&lt;h3 id="常见的垃圾回收器"&gt;常见的垃圾回收器
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;Serial&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;单线程回收器&lt;/p&gt;
+&lt;p&gt;回收时所有线程都停止，单线程清除后继续。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;PS（默认的回收器）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;回收时所有线程停止，多线程清理后继续。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ParNew&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;回收时所有线程停止，可以配合CMS使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;垃圾回收器跟内存大小的关系&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;serial 几十兆&lt;/li&gt;
+&lt;li&gt;PS 上百兆-几个G（JDK默认的垃圾回收器）&lt;/li&gt;
+&lt;li&gt;CMS 20G&lt;/li&gt;
+&lt;li&gt;G1 上百G&lt;/li&gt;
+&lt;li&gt;ZGC 4T - 16T（JDK13）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;常见的垃圾回收器的组合参数设定（1.8）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625225994247-1625225994234.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内存泄露&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;有废对象占据内存空间，这块空间不被回收也无法使用，&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;内存溢出&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不断地有数据占据内存，最后把内存空间占满。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="g1和其他的垃圾回收器的区别"&gt;G1和其他的垃圾回收器的区别
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;G1之前的垃圾回收器，有逻辑上的分带，还有物理上的分带。&lt;/li&gt;
+&lt;li&gt;G1只有逻辑上的分带，没有物理上的分带。&lt;/li&gt;
+&lt;li&gt;ZGC没有逻辑分带和物理分带，只有内存。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="jvm调优"&gt;JVM调优
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625228423227-1625228423217.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;调优案例&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625449464803-1625449464792.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;系统cpu经常100%。如何调优？（面试高频）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;cpu 100%那么一定是有线程在占用系统资源。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;找出哪个进程cpu高（top）&lt;/li&gt;
+&lt;li&gt;该进程中的哪个线程cpu占用高（top -Hp）&lt;/li&gt;
+&lt;li&gt;导出该线程的堆栈（jstack）&lt;/li&gt;
+&lt;li&gt;查找哪个方法（栈帧）的消耗时间（jstack）&lt;/li&gt;
+&lt;li&gt;工作线程占比高|垃圾回收线程占比高&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="jvm调优经验"&gt;jvm调优经验
+&lt;/h3&gt;&lt;p&gt;jps 定位具体java进程&lt;/p&gt;
+&lt;p&gt;jstack 定位线程状态，重点关注 WAITING BOCKED&lt;/p&gt;
+&lt;p&gt;加入有一个进程中100个线程，很多线程都在waiting on&lt;xxx&gt;，一定要找到是哪个线程持有这把锁。&lt;/p&gt;
+&lt;p&gt;jinfo +线程名：显示进程详细信息。&lt;/p&gt;
+&lt;p&gt;jstat -gc 线程号： 显示gc信息。（不好看）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;利用JMX实现的图形化界面工具&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;利用 JMX会消耗服务器性能，还挺大。&lt;/p&gt;
+&lt;p&gt;jconsole ：jdk自带的可视化工具。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625463036770-1625463036755.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;jvisualvm： 新的可视化工具（JDK自带）&lt;/p&gt;
+&lt;p&gt;jprofiler最好用的图形化界面工具。（收费）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何定位OOM问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;cmdline: arthas&lt;/p&gt;
+&lt;p&gt;jmap -histo 1736 | head -20&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;显示前20行的占用cpu的对象。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625464536097-1625464536091.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;池线上系统，内存特别大，jmap转dump执行期间会对进程产生很大的影响，甚至卡顿，（电商系统不适合）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;设定参数HeapDump，OOM时会自动产生堆转储文件&lt;/li&gt;
+&lt;li&gt;&lt;font color="red"&gt;很多服务器备份（高可用），停一台服务器对其他的不影响。&lt;/font&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在线分析&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;arthas：阿里的在线jvm分析工具。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;heapdump导出堆内存的情况。（也会影响性嫩）&lt;/p&gt;
+&lt;p&gt;分析dump&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;jhat（jdk自带的dump分析工具）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;默认是多大dump文件用多大的内存去分析，分析时最好指定最大内存。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625469300750-1625469300744.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;分析完成后它会返回一个port端口，我们可以通过远程连接这个端口来分析dump中的数据。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="g1jdk9的默认回收器"&gt;G1（JDK9的默认回收器）
+&lt;/h3&gt;&lt;h4 id="cms老年带回收器"&gt;&lt;strong&gt;CMS&lt;/strong&gt;（老年带回收器）
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;concurrent mark sweep&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;垃圾回收的线程和工作线程同时运行。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/PIS7chgOrfAF5N9_1749448162152.png"
+loading="lazy"
+alt="PIS7chgOrfAF5N9.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625216803062-1625216803045.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS的缺点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当老年带满时（内存条碎片过多），会调用老年带单线程回收器来清理。（FGC）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;初始标记：通过GCroot找到根对象。（STW的）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625536953783-1625536953770.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发标记：不影响主线程的运行，在程序的运行当中来标记要回收的垃圾。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;重新标记：假如之前并发标记的垃圾被又被root重新连接了，（又不能回收）在STW的情况下重新标记一遍。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并发清理：不影响程序运行的情况下清理。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="g1垃圾优先"&gt;G1（垃圾优先）
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;G1是一种服务端应用使用的垃圾回收器，目标是用在多核、大内存的机器上，它在大多数情况下可以实现指定的GC暂停时间，同时还能保持较高的吞吐量。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;特点&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;并发收集&lt;/li&gt;
+&lt;li&gt;压缩空闲空间不会延长GC的暂停时间&lt;/li&gt;
+&lt;li&gt;更易预测的GC暂停时间&lt;/li&gt;
+&lt;li&gt;适用不需要实现很高的吞吐量的场景&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;把内存分成多个不同的分区，每个分区都可能是年轻代也可能是老年代。同一时间一个分区只能属于一个代。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625553178210-1625553178204.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h4 id="三色标记算法"&gt;三色标记算法
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;白色：未被标记的对象&lt;/li&gt;
+&lt;li&gt;灰色：自身被标记，成员变量未被标记&lt;/li&gt;
+&lt;li&gt;黑色：自身和成员变量均已标记完成，&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625554564046-1625554563987.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;CMS解决三色标记问题&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1625556799695-1625556799674.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;CMS使用增量更新&lt;/p&gt;
+&lt;p&gt;G1使用SATB&lt;/p&gt;
+&lt;h4 id="g1的优化"&gt;G1的优化
+&lt;/h4&gt;&lt;h5 id="jdk-8u20-字符串去重"&gt;JDK 8u20 字符串去重
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;优点：节省大量内存&lt;/li&gt;
+&lt;li&gt;缺点：略微多占用的cpu时间，新生代回收时间略微增加。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;-XX:+UseStringDeduplication&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;s1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;hello&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;s2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;hello&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;将所有新分配的字符放入一个队列&lt;/li&gt;
+&lt;li&gt;当新生代回收时，G1并发检查是否由字符串重复&lt;/li&gt;
+&lt;li&gt;如果他们值一样，让他们引用同一个char[]&lt;/li&gt;
+&lt;li&gt;注意，与String.intern()不一样
+&lt;ul&gt;
+&lt;li&gt;String.intern()关注的是字符串对&lt;/li&gt;
+&lt;li&gt;而字符串去重关注的是char[]&lt;/li&gt;
+&lt;li&gt;在JVM内部，使用了不同的字符串表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="jdk-8u40并发标记类卸载"&gt;JDK 8u40并发标记类卸载
+&lt;/h4&gt;&lt;p&gt;所有对象都经过并发标记后，就能知道哪些类不再被使用，当一个类加载器的所有类都不再使用，则卸载它所加载的所有类。&lt;/p&gt;
+&lt;p&gt;-XX:+ClassUnloadingWithConcurrentMark默认启用。&lt;/p&gt;
+&lt;h4 id="jdk-8-u60回收巨型对象"&gt;JDK 8 u60回收巨型对象
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;一个对象大于region的一半时，称之为巨型对象&lt;/li&gt;
+&lt;li&gt;G1不会对巨型对象进行拷贝&lt;/li&gt;
+&lt;li&gt;巨型对象回收时会被优先考虑&lt;/li&gt;
+&lt;li&gt;G1会跟踪老年代所有的incoming引用，这样老年代incoming引用为0的巨型对象就可以在新生代垃圾回收时处理掉&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="jdk9-并发标记起始时间调整"&gt;JDK9 并发标记起始时间调整
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;并发标记必须在堆空间占满前完成，否则退化为FullGC&lt;/li&gt;
+&lt;li&gt;JDK9之前需使用-XX:InitiatingHeapOccupancyPercent&lt;/li&gt;
+&lt;li&gt;JDK9可以动态调整
+&lt;ul&gt;
+&lt;li&gt;-XX:InitiatingHeapOccupancyPercent用来设置初始值&lt;/li&gt;
+&lt;li&gt;进行数据采样并动态调整&lt;/li&gt;
+&lt;li&gt;总会添加一个安全的空档空间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="垃圾收集器和内存分配策略"&gt;垃圾收集器和内存分配策略
+&lt;/h2&gt;&lt;h3 id="确认对象需要被回收"&gt;确认对象需要被回收
+&lt;/h3&gt;&lt;h4 id="引用计数算法"&gt;引用计数算法
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;在对象中添加一个引用计数器，每当有一个地方 引用它时，计数器值就加一；当引用失效时，计数器值就减一；任何时刻计数器为零的对象就是不可 能再被使用的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;但是主流的JVM都没有使用引用计数算法来管理内存，原因是引用计数器无法处理很多意外情况。例如循环依赖问题。&lt;/p&gt;
+&lt;h4 id="可达性分析算法"&gt;可达性分析算法
+&lt;/h4&gt;&lt;p&gt;从GCroot作为起始节点，通过引用关系向下搜索，搜索过的路径叫做引用链。如果某个对象没有任何引用链，就证明此对象不再被使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;GCROOT&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;在栈中的引用对象，每个线程使用到的参数，局部变量，临时变量等。&lt;/li&gt;
+&lt;li&gt;在方法区中的静态变量。&lt;/li&gt;
+&lt;li&gt;在方法区中常量引用的对象，如字符串池中的对象。&lt;/li&gt;
+&lt;li&gt;native方法引用的对象。&lt;/li&gt;
+&lt;li&gt;虚拟机系统引用的对象，如基本数据类型的class对象，异常对象，系统的类加载器等。&lt;/li&gt;
+&lt;li&gt;所有被同步锁（（synchronized关键字）持有的对象。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;并发情况的可达性分析算法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;·白色：表示对象尚未被垃圾收集器访问过。显然在可达性分析刚刚开始的阶段，所有的对象都是 白色的，若在分析结束的阶段，仍然是白色的对象，即代表不可达。&lt;/p&gt;
+&lt;p&gt;·黑色：表示对象已经被垃圾收集器访问过，且这个对象的所有引用都已经扫描过。黑色的对象代 表已经扫描过，它是安全存活的，如果有其他对象引用指向了黑色对象，无须重新扫描一遍。黑色对 象不可能直接（不经过灰色对象）指向某个白色对象。&lt;/p&gt;
+&lt;p&gt;·灰色：表示对象已经被垃圾收集器访问过，但这个对象上至少存在一个引用还没有被扫描过。&lt;/p&gt;
+&lt;h3 id="垃圾回收算法"&gt;垃圾回收算法
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;标记清除算法：最基本的垃圾回收算法，可用于新生代和老年带。&lt;/li&gt;
+&lt;li&gt;标记复制算法：常用于新生代，目前主流的垃圾回收期新生代都是采用此算法。&lt;/li&gt;
+&lt;li&gt;标记整理算法：老年带才会用的垃圾回收算法，性能消耗很高。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;标记整理和标记清除算法都需要停掉用户线程来处理（STW）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="垃圾回收器"&gt;垃圾回收器
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2318_53_19-1677149598308_1749448239913.png"
+loading="lazy"
+alt="2023-2-2318_53_19-1677149598308.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Serial收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2318_54_13-1677149652489_1749448311305.png"
+loading="lazy"
+alt="2023-2-2318_54_13-1677149652489.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ParNew收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2318_56_13-1677149772287_1749448341387.png"
+loading="lazy"
+alt="2023-2-2318_56_13-1677149772287.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;目前只有ParNew和Serial才能和CMS配合使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2319_01_03-1677150062735_1749448434044.png"
+loading="lazy"
+alt="2023-2-2319_01_03-1677150062735.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Garbage First收集器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;面对堆内存组成回收集来进行回收，不再管他是哪个分带。&lt;/p&gt;
+&lt;p&gt;把连续的java堆划分成大小相同的内存区域。&lt;/p&gt;
+&lt;p&gt;回收过程：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;初始标记：只标记和GCROOT有直接关联的对象。（没有停顿）&lt;/li&gt;
+&lt;li&gt;并发标记：从GCroot开始，对堆中的对象进行可达性分析。（与用户进程同步运行）&lt;/li&gt;
+&lt;li&gt;最终标记：对用户线程进行暂停，处理2步遗留的有变动的标记。&lt;/li&gt;
+&lt;li&gt;筛选回收：暂停用户线程，按照每个内存区域的价值，来决定回收哪个区域的内存。（把回收内存中需要留下的数据复制到新的地方，然后清理掉整个区域的数据）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2319_13_12-1677150791924_1749448480478.png"
+loading="lazy"
+alt="2023-2-2319_13_12-1677150791924.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;G1不再追求能够回收所有的垃圾，只要回收速度能追的上使用创建的速度就可以。所以一次不会回收掉全部的垃圾。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="低延迟垃圾收集器"&gt;低延迟垃圾收集器
+&lt;/h3&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2319_18_34-1677151113863_1749448523939.png"
+loading="lazy"
+alt="2023-2-2319_18_34-1677151113863.png"
+&gt;&lt;/p&gt;
+&lt;h4 id="shenandoah谢南多厄收集器"&gt;Shenandoah（谢南多厄）收集器
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;初始标记：标记与GCroot直接关联的对象。此阶段STW&lt;/li&gt;
+&lt;li&gt;并发标记：遍历对象图，标记出全部可达对象。与用户线程一起运行。&lt;/li&gt;
+&lt;li&gt;最终标记：标记并发标记中间变动的对象。小段的STW&lt;/li&gt;
+&lt;li&gt;并发清理：清理整个区域一个存活对象都没有的区域。与用户线程一起&lt;/li&gt;
+&lt;li&gt;并发回收：把需要回收的内存区域中存活的对象，复制到其他区域。利用读屏障和转发指针，实现此操作和用户线程一起运行。（G1这一步需要暂停用户线程）&lt;/li&gt;
+&lt;li&gt;初始引用更新：把堆中所有指向旧对象地址的指针全部指向新的对象（只是统计出哪些对象指针需要被更新）。会有短暂的STW。&lt;/li&gt;
+&lt;li&gt;并发引用更新：并发的更新上面统计的引用。与用户线程一起运行。&lt;/li&gt;
+&lt;li&gt;最终引用更新：修正GCROOT中的引用。需要STW&lt;/li&gt;
+&lt;li&gt;并发清理：清理需要被清理的内存块。与用户线程一起。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2319_35_45-1677152145027_1749448579621.png"
+loading="lazy"
+alt="2023-2-2319_35_45-1677152145027.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-06/2023-2-2319_37_34-1677152253748_1749448608150.png"
+loading="lazy"
+alt="2023-2-2319_37_34-1677152253748.png"
+&gt;&lt;/p&gt;
+&lt;h4 id="zgc"&gt;ZGC
+&lt;/h4&gt;&lt;p&gt;目前最强垃圾回收器，回收的停顿时间只与GCROOT的大小有关，与堆内存无关。领先其他回收器一个数量级的差距。吞吐量第一。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;引入了染色指针的概念，把少量的信息存在了指针上。但是如果内存超过4TB将无法使用此技术。而且只能在LINUX环境下运行。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;并发标记（Concurrent Mark）：与G1、Shenandoah一样，并发标记是遍历对象图做可达性分析的 阶段，前后也要经过类似于G1、Shenandoah的初始标记、最终标记（尽管ZGC中的名字不叫这些）的 短暂停顿，而且这些停顿阶段所做的事情在目标上也是相类似的。与G1、Shenandoah不同的是，ZGC 的标记是在指针上而不是在对象上进行的，标记阶段会更新染色指针中的Marked 0、Marked 1标志 位。&lt;/li&gt;
+&lt;li&gt;并发预备重新分配：扫描整个堆内存区域，把所有存活的对象都记录下来。&lt;/li&gt;
+&lt;li&gt;并发重分配：把被标记的对象都复制到新的内存块中，在旧的内存块中为这些对象建立一个转发表。如果用户线程这个时候并发访问了就的对象，会被内存屏障截取，把这个对象的引用修正到新的区域。（指针的自愈）。&lt;/li&gt;
+&lt;li&gt;并发重映射：如果某个旧对象一直没被用户线程访问，就在下一次垃圾回收的并发标记阶段里把这些对象的引用指向新的地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一旦某个内存块中的引用全部指向了新的地址。此转发表被释放，内存区域也被回收。&lt;/p&gt;
+&lt;/blockquote&gt;</description></item></channel></rss>
