@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>欢迎 on 韩永发的博客</title><link>https://thecoolboyhan.github.io/categories/%E6%AC%A2%E8%BF%8E/</link><description>Recent content in 欢迎 on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 06 Mar 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/categories/%E6%AC%A2%E8%BF%8E/index.xml" rel="self" type="application/rss+xml"/><item><title>Hello</title><link>https://thecoolboyhan.github.io/p/hello-world/</link><pubDate>Sun, 06 Mar 2022 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/hello-world/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/hello-world/welcome.jpg" alt="Featured image of post Hello" /&gt;&lt;h2 id="写在前面的话"&gt;写在前面的话
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;欢迎来到我的网站，我常在这里记录我的各种内容文章。如果想了解我的基本信息，可以直接通过右侧导航栏跳转到关于我。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;为保证体验网站完整功能，访问本网站最好开启科学上网&lt;/p&gt;
+&lt;h2 id="关于我"&gt;关于我
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;网站要比简历可以更好的展示自己&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;姓名：韩永发&lt;/p&gt;
+&lt;p&gt;年龄：28&lt;/p&gt;
+&lt;p&gt;学历：赤峰学院（20年毕业）&lt;/p&gt;
+&lt;p&gt;电话：13847302621&lt;/p&gt;
+&lt;p&gt;邮箱：hanyongfa2013@163.com&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果您是HR，为保证我快速响应，请直接通过邮箱或电话与我联系。（下方评论区反馈可能不会很及时）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="工作经历"&gt;工作经历
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;成都新希望金融科技有限公司&lt;/strong&gt; 2022-06 ~ 至今&lt;/p&gt;
+&lt;p&gt;核算支付中心 &lt;em&gt;核算&amp;amp;ODS开发（小组组长)&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;负责CROS智慧零售平台-核心账务系统（日交易额超5亿的金融SaaS平台）在贷余额2000亿&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;信贷核心模块&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;处于贷款流程的最末端，主营自营、助贷业务。主要负责贷款管理（授信、客户，账户），放还款、计提、转列批扣等。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;主要技术&lt;/strong&gt;：具有伸缩性的大型分布式系统，利用自研绑定算法，可实现数据库与服务根据业务量的动态扩容。分布式事务、分布式批量扣款等&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;个人贡献&lt;/strong&gt;：主导多款产品从立项开始的全生命周期。累计贷余（70亿左右）&lt;/p&gt;
+&lt;p&gt;K8s优雅下线+滚动更新实现零空窗发布 让核心服务发版不再需要停服规避停服损失约130万/年（按空窗期交易量估算）&lt;/p&gt;
+&lt;ol start="2"&gt;
+&lt;li&gt;&lt;strong&gt;ODS模块&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;负责记账、会计分录、日总额台账、对账。助贷、联合贷接入等，监管报送，不良资产债转、借新还旧，资产重组等业务。联合贷部份账务贷余（400亿+）&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;主要技术&lt;/strong&gt;：日切期间进行当日账务清洗、勾对、核算拆分等。日间负载联合贷账务交互、记账、勾兑。特点为数据量较大、花呗等个别大批量渠道单日数据量2000W+。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;个人贡献&lt;/strong&gt;：从0开始对接了几乎市面上所有腰部以上的联合贷。对各个合作方账务文件内容逻辑等都有着较为深刻的了解。&lt;/p&gt;
+&lt;p&gt;个人根据联合贷合作模式特殊性，专属定制了多日账务合并功能。大幅度增加了系统上下游的容错性。减少了运营维护的成本。&lt;/p&gt;
+&lt;p&gt;随着业务量增大，系统不断迭代，优化从多租户多线程批量处理，大数据文件导出、大规模数据查询，OnlineDDL实现超大表加字段不中断业务，数据库分区等&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;技术亮点&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;多线程任务管理、异常处理、千万级数据拆分多线程处理、几十亿级数据量单表查询、插入、删除、修改表结构、数据备份等优化。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;业务亮点&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;处于整个贷款系统群的核心、账务处理、为行内整行核心输送每日账务，账务校验，为监管报送、征信报送等提供数据。&lt;/p&gt;
+&lt;h3 id="取得的一些小成就"&gt;取得的一些小成就
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;算法基本功&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;目前周赛成绩普遍保持在1800左右（最近几场略有下降），（拿过几次knight但没一直保住）最好成绩全国56名。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250720155229116_1752997949162.png"
+loading="lazy"
+alt="250720155229116.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;目前题量大概在1600+左右（三年出勤率超90%）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998012179_1752998012205.png"
+loading="lazy"
+alt="1752998012179.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250720160156752_1752998516773.png"
+loading="lazy"
+alt="250720160156752.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998579780_1752998579805.png"
+loading="lazy"
+alt="1752998579780.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998606435_1752998606456.png"
+loading="lazy"
+alt="1752998606435.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998626948_1752998626973.png"
+loading="lazy"
+alt="1752998626948.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;工作成就&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;2023年公司年度最佳S级员工&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998100152_1752998100179.png"
+loading="lazy"
+alt="1752998100152.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;所带小组为项目组第一届优秀小组奖获得者（可惜图没了）
+&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-09/WechatIMG4_1758002513899.jpg"
+loading="lazy"
+alt="WechatIMG4.jpg"
+&gt;&lt;/p&gt;
+&lt;p&gt;公司2023年1024算法比赛二等奖获得者&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998310191_1752998310218.png"
+loading="lazy"
+alt="1752998310191.png"
+&gt;&lt;/p&gt;
+&lt;h2 id="写这个博客的原因"&gt;写这个博客的原因
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;记录已学过的知识：每篇文章都有上传时间，分类等，可以更好的展示我的心路过程&lt;/li&gt;
+&lt;li&gt;更好的展示自己：简历的几张纸很难全面的说明一个人&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;程序员要一直保持着不断学习的习惯，把学到的知识记录，分享，教给别人才是最好的方式。之前有尝试在主流论坛中分享。可惜网络爬虫流氓太多，把我的博客以原创名义发到各种网站。（投诉还无果）&lt;/p&gt;
+&lt;h2 id="知识导航"&gt;知识导航
+&lt;/h2&gt;&lt;h2 id="qa"&gt;QA
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;如何与我互动？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;可以通过我的联系方式来直接与我取得联系，本网站自带评论功能，评论需科学上网。技术由Disqus提供，可以直接发表评论。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752999018190_1752999018207.png"
+loading="lazy"
+alt="1752999018190.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;为什么不使用CDN加速？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于代码托管在github，国内访问可能需要科学上网。理论访问可通过CF的CDN加速国内访问速度。由于我使用的是国外域名，无法在国内备案，如果发布到中文DNS服务器，会导致反欺诈误封。为了保证正常访问，固不做加速处理。&lt;/p&gt;</description></item></channel></rss>

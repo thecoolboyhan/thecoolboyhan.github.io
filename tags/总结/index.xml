@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>总结 on 韩永发的博客</title><link>https://thecoolboyhan.github.io/tags/%E6%80%BB%E7%BB%93/</link><description>Recent content in 总结 on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 28 Feb 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/tags/%E6%80%BB%E7%BB%93/index.xml" rel="self" type="application/rss+xml"/><item><title>蚂蚁系账务文件理解</title><link>https://thecoolboyhan.github.io/p/%E8%9A%82%E8%9A%81%E7%B3%BB%E8%B4%A6%E5%8A%A1%E6%96%87%E4%BB%B6%E7%90%86%E8%A7%A3/</link><pubDate>Fri, 28 Feb 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/%E8%9A%82%E8%9A%81%E7%B3%BB%E8%B4%A6%E5%8A%A1%E6%96%87%E4%BB%B6%E7%90%86%E8%A7%A3/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/%E8%9A%82%E8%9A%81%E7%B3%BB%E8%B4%A6%E5%8A%A1%E6%96%87%E4%BB%B6%E7%90%86%E8%A7%A3/mayi.png" alt="Featured image of post 蚂蚁系账务文件理解" /&gt;&lt;h2 id="蚂蚁系账务文件分享"&gt;蚂蚁系账务文件分享
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;原创内容，禁止转载&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="蚂蚁系账务和我行账务文件格式的区别"&gt;蚂蚁系账务和我行账务文件格式的区别
+&lt;/h3&gt;&lt;h4 id="以下内容以两边借据信息表为例"&gt;以下内容以两边借据信息表为例  &amp;gt;
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;ods账务借据明细特点 
+1、字段数量多（100多个） 
+2、关键字段缺失（各种数据的余额） 
+3、改动非常频繁几乎每个涉及核心的需求，都需在借据信息中添加1至两个字段（1年10个字段） 
+4、数据联动性困难，很少能给其他表作为参考。&lt;/li&gt;
+&lt;li&gt;花呗账务借据明细特点 &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;1、字段数少（24个） 
+2、关键金额字段都有（本、利、罚） 
+3、接入花呗渠道3年多，只由于业务要求，才增加过贴息余额一个字段（3年一个字段） 
+4、几乎是必用表格，表数据设计风格统一，多表联动nice&lt;/p&gt;
+&lt;h2 id="why花呗"&gt;why花呗
+&lt;/h2&gt;&lt;h3 id="好的表结构设计决定了可扩展性和易于维护性"&gt;好的表结构设计决定了可扩展性和易于维护性
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;组成一笔借据的基本数据都有哪些？&lt;/p&gt;
+&lt;p&gt;（无论处于何种形态的借据，一定具备以下属性） 
+1、借据号 
+2、本金（正常or逾期） 
+3、利息（正常or逾期） 
+4、罚息（本金罚息、利息罚息） 
+5、逾期天数 
+6、借据状态 
+7、期数 
+8、会计日期 
+9、借据类型
+ 10、表内外标识&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="组成一笔交易"&gt;组成一笔交易
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;在账务文件中，体现一笔交易需要几张表？&lt;/p&gt;
+&lt;p&gt; 显而易见，想要合理的组成一笔交易，需要终态表+流水表。
+上日终态+今日流水=今日终态  &lt;/p&gt;
+&lt;p&gt;终态：一笔借据的日切后那一刻的镜像状态，只体现结果。（各种余额、逾期天数、是否逾期、减值等）&lt;/p&gt;
+&lt;p&gt; 流水：一笔借据的某天发生过的交易，不体现结果，只表示过程。（今日利息计提、今天本金回收、今日转列等）&lt;/p&gt;
+&lt;p&gt;现在回答问题： 如果只从借据角度来看，组成一笔交易只需要：借据明细+acctflow（今日发生流水）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="观察账务的角度"&gt;观察账务的角度
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;账务可以从几种来观察？ &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;前文中，一直都是一笔借据的角度来解释的。但其实，不同的人可能对账务重视的角度不同。（催收人员可能只在乎到期的那几期账务能不能收回——期供角度；对与贷款个人来说只在乎自己的整笔借据有没有问题——借据角度；对于渠道负责人来说并不在乎单笔借据的情况，需要重视整个渠道账务问题——总账维度）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;对于账务大概可以粗略的分为三个维度 
+1、期供 
+2、整笔借据 
+3、整个渠道（总账）&lt;/p&gt;
+&lt;p&gt;结合前文提到的一笔借据角度，组成交易需要的数据，就可按照三个维度来拆分成：终态+流水&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="如何适配业务"&gt;如何适配业务
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;备注 对于账务核心来说，任何交易无非就是对于现有的本利罚做不同计算和扣减。 由于存在众多的业务规则，可能由于业务的日益复杂，处理金额时会有需要的逻辑各不相同（分期、单期、循环、贴息、代偿等） 
+但无论是何种操作，都无非是需要前文提供提过的账务角度、交易组成来实现。（无非处理逻辑不同，但组成的维度完全相同）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;增加业务代码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;每个字段要通过不同的逻辑来加工。那逻辑选择就可以用编程的switch思想。用不同的业务代码（contract_type）来表示不同业务，让所有数据统一存放，又可以单独区分。&lt;/p&gt;
+&lt;h2 id="添加一个新业务"&gt;添加一个新业务
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;现在再来看如何实现业务、假设业务突然发明了一种比核销还要烂的账务维度，如果出现逾期50年的账务（简称GG）。公司记录欠款金额从老板的工资里扣钱来还。 那么每个角度应该如何添加？&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;期供角度： 
+终态：无需添加字段。只需添加期供维度的GG状态（增加枚举） 
+流水：无需添加字段。只需添加期供维度的交易码（增加交易码）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;借据角度： 
+终态：无需添加字段。只需添加借据维度的GG状态（增加枚举） 
+流水：无需添加字段。只需添加借据维度的交易码（增加交易码）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;总账角度： 
+终态：无需添加字段。只需添加总账维度的GG余额（由于花呗横表转竖表，不同科目也是由交易码来代表） 
+流水：无需添加字段。只需添加总账维度的交易码（增加交易码）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;请领导指示！&lt;/p&gt;</description></item></channel></rss>

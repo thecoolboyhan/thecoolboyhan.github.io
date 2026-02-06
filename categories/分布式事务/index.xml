@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>分布式事务 on 韩永发的博客</title><link>https://thecoolboyhan.github.io/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/</link><description>Recent content in 分布式事务 on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 20 Oct 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/index.xml" rel="self" type="application/rss+xml"/><item><title>从seata源码入手分布式事务</title><link>https://thecoolboyhan.github.io/p/seatatransactional/</link><pubDate>Mon, 20 Oct 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/seatatransactional/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/seatatransactional/1.png" alt="Featured image of post 从seata源码入手分布式事务" /&gt;&lt;h1 id="从seata源码入手分布式事务"&gt;从seata源码入手分布式事务
+&lt;/h1&gt;&lt;h2 id="at模式可靠消息队列思想"&gt;AT模式（可靠消息队列思想）
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;借用本地ACID事务（硬性事务）数据库实现的分布式事务。&lt;/p&gt;
+&lt;p&gt;通过Seata 在内部做了对数据库操作的代理层，让本地数据库操作时会检测全局事务，插入回滚日志等。（&lt;strong&gt;目前仅java支持&lt;/strong&gt;）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="概述"&gt;概述
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;整体机制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;大致分为两个阶段：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;本地提交：把业务数据和undo_log（回滚日志）同时在本地数据库提交，本地数据库释放锁和数据库连接。（&lt;strong&gt;没有释放全局锁&lt;/strong&gt;）&lt;/li&gt;
+&lt;li&gt;全局提交阶段：
+&lt;ol&gt;
+&lt;li&gt;提交事务：异步化提交事务，&lt;strong&gt;释放全局锁&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;事务回滚：执行undo_log中记录的回滚sql，回滚后&lt;strong&gt;释放全局锁&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;写隔离&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于同一全局锁的数据：一阶段时，A事务持有全局锁，只要A事务不进行二阶段释放全局锁。B事务就始终无法一阶段提交，一阶段提交的必要条件是需要获取全局锁。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;回滚&lt;/strong&gt;：如果A事务二阶段回滚，此时B事务持有A事务一阶段相同的本地锁，A事务会回滚失败，但A事务会无限重试回滚（最大努力交付），直到B事务由于获取全局锁超时而回滚释放本地锁。A事务又可以获取本地锁，A事务回滚成功，释放全局锁。（&lt;strong&gt;有效避免了脏写&lt;/strong&gt;）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://seata.apache.org/zh-cn/assets/images/seata_at-2-c7537b8cd8036580215240d037ea4278.png"
+loading="lazy"
+alt="Write-Isolation: Rollback"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;读隔离&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;普通select语句是没有读隔离的，可能会读到中间阶段的数据。&lt;strong&gt;读隔离只对select forUpdate语句生效&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;A事务持有全局锁没有释放，B事务for update查询数据时，会尝试获取全局锁，获取失败后B事务回滚（&lt;strong&gt;回滚是为了防止出现死锁&lt;/strong&gt;），然后重试B事务流程。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://seata.apache.org/zh-cn/assets/images/seata_at-3-f5d071f55ecde9189c4f2c0d9dec7f5d.png"
+loading="lazy"
+alt="Read Isolation: SELECT FOR UPDATE"
+&gt;&lt;/p&gt;
+&lt;h3 id="如何做到代理jdbc操作"&gt;如何做到代理JDBC操作
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;前置知识：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Spring的类在IOC的过程中（依赖注入）需要创建BeanDefinition，每个BeanDefinition都需要通过BeanPostProcessors（后置处理器）阶段来完成，&lt;strong&gt;通过这两个阶段是判断在创建对象时，是否要根据AOP来创建代理对象&lt;/strong&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Seata的AT模式通过创建名为GlobalTransactionScanner的bean，来实现AOP。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;GlobalTransactionScanner&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;extends&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;AbstractAutoProxyCreator&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;实现了AbstractAutoProxyCreator从而达到AOP的效果。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何保证可以拦截@GlobalTransactional注解的类？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Spring BeanDefinition创建过程中，需通过后置处理器的postProcessAfterInitialization来判断经过哪些后置处理（增加AOP代码或者调用）。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Seata实现了AbstractAutoProxyCreator并重写了wrapIfNecessary方法，来对所有有@GlobalTransactional注解的类，@GlobalLock注解，类型为SeataDataSourceProxy的数据库实现代理。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;创建代理类的过程中，会全程对于存放所有BeanName的PROXYED_SET加锁，来避免多线程创建bean出现冲突。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="本地事务提交"&gt;本地事务提交
+&lt;/h3&gt;&lt;p&gt;SQL执行时：会现在被seata代理的ConnectionProxy连接代理类中的commit方法。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;检测本地上下文中是否有本lockkey的事务如果有直接返回，表示本次请求已经持有锁。&lt;/p&gt;
+&lt;p&gt;持有锁，向远程服务器注册锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果没有尝试去远程服务器获取锁，没有就注册锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果远程服务器中已存在其他事务获取该锁，抛出以后，事务提交失败，走回滚流程。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;以上获取到锁后，提交本地事务。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="事务回滚"&gt;事务回滚
+&lt;/h3&gt;&lt;p&gt;当前事务回滚，直接执行ACID的回滚逻辑。&lt;/p&gt;
+&lt;p&gt;本地AT事务回滚，查询undo_log中记录的回滚日志，循环尝试执行，最大努力交付。&lt;/p&gt;
+&lt;p&gt;并向seata，sever发送当前事务回滚请求，提示让全局事务回滚。&lt;/p&gt;
+&lt;h3 id="全局事务提交"&gt;全局事务提交
+&lt;/h3&gt;&lt;p&gt;GlobalTransaction 对象向 TC 发起 commit 请求
+TC 接收到全局提交请求&lt;/p&gt;
+&lt;p&gt;TC 将分支事务标记为完成状态
+异步删除各个分支的 undo_log 记录
+释放相关资源&lt;/p&gt;
+&lt;p&gt;主要实现在 Seata Server 端：
+DefaultCore.commit() 方法：处理全局事务提交
+AbstractCore.doGlobalCommit() 方法：执行具体的提交逻辑
+FileManager.removeUndoLog() 方法：清理 undo_log 文件&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-09/1759133601762_1759133601774.png"
+loading="lazy"
+alt="1759133601762.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="selectforupdate"&gt;Selectforupdate
+&lt;/h3&gt;&lt;p&gt;对于当前读也是和上面类似的逻辑，获取对应sql，在ACID的基础上增加获取锁，释放锁，提交锁等。&lt;/p&gt;
+&lt;h2 id="tcc模式"&gt;TCC模式
+&lt;/h2&gt;&lt;h3 id="简介"&gt;简介
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;TCC事务是颗粒度细，但对业务有侵入的分布式事务，特点为运行速度极快，但需预占用资源，回滚方便等。常用于金融核心系统，我们的核心事务正是采用TCC实现。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://seata.apache.org/zh-cn/assets/images/seata_tcc-1-1f7a834639aa755d73fa2af435c4f042.png"
+loading="lazy"
+alt="Overview of a global transaction"
+&gt;&lt;/p&gt;
+&lt;p&gt;需要业务代码自己实现Try，Confirm，Cancel三个操作，对业务系统有着非常大的侵入性，设计相对复杂。性能高。&lt;/p&gt;
+&lt;p&gt;事务管理器分 2 阶段协调所有资源管理器&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Try&lt;/strong&gt;：在第一阶段询问所有资源管理器“准备”是否成功。（资源预占用）&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Confirm&lt;/strong&gt;：如果所有资源均“准备”成功则在第二阶段执行所有资源的“提交”操作。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Cancel&lt;/strong&gt;：否则在第二阶段执行所有资源的“回滚”操作。&lt;/p&gt;
+&lt;p&gt;保证所有资源的最终状态是一致的，要么全部提交要么全部回滚。&lt;/p&gt;
+&lt;h3 id="seatatcc的实现方式"&gt;SeataTCC的实现方式
+&lt;/h3&gt;&lt;p&gt;prepare、commit、rollback，三个阶段业务逻辑需要代码自己实现。Seata负责对本地实现的三阶段调度。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;现在我们模拟一个场景，需要两个参与者都做一定操作，都成功才能提交，有一个失败事务就整体回滚。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;开启事务：seata标准的开启事务方式，在分布式事务发起前添加@GlobalTransactional注解&lt;/p&gt;
+&lt;p&gt;seata会利用上文中提到的AOP方式，检测被@GlobalTransactional代理类中的异常，如果出现异常就回滚。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;事务提交：SeataTCC事务提交不由任意单个客户端控制，而是由SeataServer统一调度，在所有参与者都资源占用成功后，seata Server统一协调参与者提交事务。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nd"&gt;@TwoPhaseBusinessAction&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;&amp;#34;SofaTccActionTwo&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;commitMethod&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;&amp;#34;commit&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;rollbackMethod&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;&amp;#34;rollback&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;每个参与者都如上由@TwoPhaseBusinessAction注解修饰，name为当前参与者“小事务”的名字，commitMethod和rollbackMethod分别表示提交和回滚事务需要调用的方法。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;SeataServer如何做到可以调用commit和rollback？&lt;/p&gt;
+&lt;p&gt;同上TccActionInterceptorHandler在代理类方法运行时，ActionInterceptorHandler为占用方法调用前将调用SeataServer的doTxActionLogStore方法，此方法通过状态机来判断当前事务所处的状态。来判断当前调用原有资源占用方法，commit方法，还是rollback方法。&lt;/p&gt;
+&lt;p&gt;通过DefaultCoordinator实现调用&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;下文将详细讲解Seata基于状态机实现的全局事务会话类。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="幂等问题"&gt;幂等问题
+&lt;/h3&gt;&lt;p&gt;同一个操作，无论执行多少次，结果都是一样的。TCC中，Confirm和Cancel操作可以会被反复重复调用。&lt;/p&gt;
+&lt;p&gt;Seata的TCCResourceManager（事务状态管理器）为每个TCC全局事务创建不同的全局事务ID和分支事务ID。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;每个小事务在资源占用时Try阶段：都会向事务状态管理器发起注册registerResource，判断是否可以占用资源，是否已经做过相同操作。&lt;/li&gt;
+&lt;li&gt;Confirm阶段调用branchCommit方法，先判断当前事务是否已经提交，如果已提交就不会重复执行。&lt;/li&gt;
+&lt;li&gt;Cancel阶段：调用branchRollback方法，先判断是否存在当前事务，如果不存在就直接返回，存在则执行取消方法。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="空回滚问题"&gt;空回滚问题
+&lt;/h3&gt;&lt;p&gt;在Try方法执行之前，Cancel方法已经被执行了。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;为什么会出现这种情况？&lt;/p&gt;
+&lt;p&gt;try阶段由于网络延迟，或者消息乱序（同时发起两个相同的try），导致Cancel操作已经执行完毕。此时可能出现重复占用情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;TCC的Aop类TccActionInterceptorHandler中会调用prepareFence方法来通过向数据库插入日志的方式来检测当前事务是否已经存在，如果插入失败就直接返回，不执行Try阶段代码。&lt;/p&gt;
+&lt;h3 id="悬挂问题"&gt;悬挂问题
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;假设有A、B两个分支，Atry成功，B由于网络问题无法Try，等全局事务回滚后，B又成功Try。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Seata利用上面提到的日志机制，记录每个分支状态，（已try，已cancel等）来防止悬挂。&lt;/p&gt;
+&lt;h2 id="saga模式状态机"&gt;Saga模式（状态机）
+&lt;/h2&gt;&lt;p&gt;Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业务流程中每个参与者都提交本地事务，当出现某一个参与者失败则补偿前面已经成功的参与者，一阶段正向服务和二阶段补偿服务都由业务开发实现。&lt;/p&gt;
+&lt;p&gt;&lt;img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAb0AAAG8CAMAAAB9rIvTAAAIwnRFWHRteGZpbGUAJTNDbXhmaWxlJTIwbW9kaWZpZWQlM0QlMjIyMDIwLTAxLTA3VDEyJTNBMjMlM0E0NS41MjlaJTIyJTIwaG9zdCUzRCUyMkVsZWN0cm9uJTIyJTIwYWdlbnQlM0QlMjJNb3ppbGxhJTJGNS4wJTIwKE1hY2ludG9zaCUzQiUyMEludGVsJTIwTWFjJTIwT1MlMjBYJTIwMTBfMTFfNiklMjBBcHBsZVdlYktpdCUyRjUzNy4zNiUyMChLSFRNTCUyQyUyMGxpa2UlMjBHZWNrbyklMjBkcmF3LmlvJTJGMTIuMy4yJTIwQ2hyb21lJTJGNzguMC4zOTA0LjExMyUyMEVsZWN0cm9uJTJGNy4xLjIlMjBTYWZhcmklMkY1MzcuMzYlMjIlMjBldGFnJTNEJTIyT0hZZnpnOGdHY3N4V2tkek1EMEolMjIlMjB2ZXJzaW9uJTNEJTIyMTIuMy4yJTIyJTIwdHlwZSUzRCUyMmRldmljZSUyMiUyMHBhZ2VzJTNEJTIyMSUyMiUzRSUzQ2RpYWdyYW0lMjBpZCUzRCUyMjhWczRpZ09wTWhPZDBTQzJNc2dCJTIyJTIwbmFtZSUzRCUyMlBhZ2UtMSUyMiUzRTVWcGRjNXM0RlAwMWZzd09RbnclMkJPbzZUN1d6YTZVNDYyJTJCMmpBckt0TGtZZUljZDJmdjBLSXd4STJCQnFqSk8lMkJlTkNWRU9qYzQzdnVGUnJCeVhMN3dOQnE4Wm1HT0JxWlJyZ2R3YnVSYWZxV0kzNVR3eTR6T0o2UkdlYU1oSmtKRklZbjhvcWxNUiUyQjJKaUZPS2dNNXBSRW5xNm94b0hHTUExNnhJY2JvcGpwc1JxUHFVMWRvampYRFU0QWkzZnFkaEh5UldUM1RMZXglMkZZakpmNUU4R2pwJTJGMUxGRSUyQldLNGtXYUNRYmtvbU9CM0JDYU9VWjFmTDdRUkhLWFk1THRsOTkwZDZEeSUyRkdjTXpiM1BBUSUyRnZWUHRQbk9qT25OZW1xdnZkMXVQTDR4WVRiTkM0cldjc1h5YmZrdWg0RFJkUnppZEJaakJHODNDOEx4MHdvRmFlOUclMkJGellGbndaaVJZUWx5RktGdnV4YVdOR1l5NWRDanpSMWw5WnJ1SUZNNDYzSlpOY3dnT21TOHpaVGd5UnZkQ1FieXo1QktDRWQxTjRCempTdGloNUJocVdaSVZreFB3d2R3R2F1SkM0dlFGRDRMd3pESDJnUUFqYVFXZ1pmbDhRYWdoJTJCQXljd0JNMFlxckROU0JSTmFFVFpmaTRZMnRnTExXRlBPS1AlMkY0VktQWno1RHh6a1AwQ0NQWWpuU2RnMVp6UnFrYyUyRlRQRDdUWHpGVWNpZ2dvbTVUeEJaM1RHRVhUd25wYlpYTXg1cEhTbGNUJTJGSiUyQlo4SngyQTFweWU5czVSckJPNlpnRSUyQkZjQ2tKaUEyeDd5WlllbmFUbnFPNFFoeDhsS04lMkZtZDNnNm56JTJGVlRNZUs5OFAlMkZCNE1MN3I4dllOZmtDZ1laNTFEQWEwcFFNZGYwQ2dMWGRvUnR2TkFWeGttcXYwY2hiaDdUak5nUVVXT0E3bDVWMFFvU1Fod1dtMDhaYndmOU1BJTJGNGN0V3olMkZreVBUNmJpdGolMkY3NnhrdzNWUXdoN3M2RE9RMDdnNGVmWkw4WDl2QlpvaXZ0bXk3aGY4cWRkNDg3YzFsb2U1Qk8lMkJVaUpXVm1TdnB2SyUyRmhRcE5zblhMdThySnZEcVJxMFJhVDVrb0EwYWJhRSUyQjV3N0s3czdCRnlqc1VDd1dWMks1MFU5cjhVZTRyYnR1M2htQnYyNndGWGhWN2dhZVF6dXpJWHVDcThuVlo5cm9YWW05SEpsNTc3SVV0Mld0ZEZYdE5xRWk1ZFNiMldxNXpVZmJxSmR5azMySjU1Z1U0cUNYVHMyZGJ0bkdtblIzejZvcGxRMGU2M3pKdEdLU0hMOU9BdmdFMDZiZE9Hd2JwNGVzMDBHTER0NlJ6TVkyeHVpUFpJbDhESmQwcVZLd3BYNnRvWkNHWlIxU3l1MzYxclIyOHE5WXZzNnQlMkJtVW9hQiUyRnpMWmw5QTN5czRKd1U3MHFrTGRidFRzRzBCa0V2UXRYRFFha2pjVzNQUVZ5WUNGJTJCWmdpMjJVajg3QnRtbDhMczdYd2tFMSUyRlZiRFYlMkJzOUZMT2hJT2liZzNvWmVqJTJGJTJCOVBpa0VUR3ZSUU1VUlhUTm0zT2ZGV1pFdkIxbXhVMWZDNU5HMXhWTkNDYzBOaVdsR09Vb2JZdW1YMU5iM3Q4N3puNSUyRjlYanF0S0NNdklxbm9FaE9tV1NQcyUyQjNTNCUyRmJraHNMd2pKSzAwJTJGVFBrM1JwaFo1Wms5NGFOUVFGME80cjYlMkZLYncwMSUyRiUyQjJYR3lRRHk5c1Q0Mkw0RzZDOWpNOTVseW1ZNVNzcldkY05NbThpOWJLaks2ZG8zZjMlMkJKaTRabFZlWFdTeDF6V25EVFZpazBucVpwODhlRzY5cXYxYkkxOVNOQmE2VTBsSW5VenhaOTAwJTJCdkdMNVF0a1Rwalp5aE9FRkJLaWlKeGttaEdMekt1Q3FUWkY1WHBwMDBvWWpNVTRVS0JBbjJvcG5xRHhGaU9wWWRTeEtHJTJCOE1RZFZwY1BTRFJ3eEVlejZrNHhIZDFoWE5yaUtYR24lMkZNZGFORHo2UWxkcnJCd0RTZnglMkZMZjFrMXJuMURqcThDODl0Nk51bHk3M1h1eFA4ZVBUbDFkbiUyRnZuRyUyQnR1cU9YbHlmWUc4UTFLaFJOd2FydzMyeWRmMXE3RXozd0o4JTJCeWRmWlNLZ1ROUTVDSXRtY1F3MUcxNmM1WVhUJTJGd0UlM0QlM0MlMkZkaWFncmFtJTNFJTNDJTJGbXhmaWxlJTNFL3urqwAAAD9QTFRF////g7Rnfn592qimAwMD2uj8uVVR1ejU&amp;#43;M7M/2Zm211cMCsrq7ilxNHAV1BP8vHx0YaDcpPCrcHflZeU5rq4RH8w0QAAFQJJREFUeNrsnYu6myoQhbORar6CYra8/7Mebiq5eRoDMuqatmkSRRmXjL9gmMsFBoPBYDDYMaxp2&amp;#43;YMfjIuvL&amp;#43;8&amp;#43;6CUECq8U&amp;#43;t3bYoq0WXwqeXWusT6/X91tz8WjPPhY/WU4KGmkrdrK2yLKiHSizdwLgbj1/qqratugWNhvWyKqXdRKkfLk15EoRKrt1zdAsfCqtdN6jVdiDjD0HRCmVfWdY1inXANtGVCsDZSb&amp;#43;h4J8PK09KLK&amp;#43;ZKqEEIIeOibh&amp;#43;CNVPRh70&amp;#43;FfzYBJfjm&amp;#43;Zx27Mvg2w70bkKKSY61vxPvefqzmtd7BZbOVyKHQvGW2Fjp1NPmpLCnrpGHtsm3Wswdr9YhTZovvIrq4fCroStCr/bsns3brtzsX6x4OfAMjU5ey4/bTvswNece8&amp;#43;dLddbTdWN1pJhc&amp;#43;WOBeNNY2OnVU&amp;#43;JsEll3onWvnbKts7WhKPObqa9uHf3kdOvfLfUFJPmnTsl3MrzQldtZg6bL/qw16eCK9Tr7kL83bYnX&amp;#43;xHv&amp;#43;ASVhFqsd5xdcNazhXV8YLHwrQ988&amp;#43;vI63S7ivloo4vIh3W2LdSXt6oZ5v641LzatqB3UwbFfX7UGKu8d1enwp&amp;#43;p97jtidflKdmsyCs/2b3U73jAxzWGl0peCyY36X06klfC&amp;#43;md8xTkPA7OM9fGn2rsY9W8VPgtKx9NZLzQH7&amp;#43;56MNenwt&amp;#43;oZ562vbkS8Bz89nGKmPcHrCFekfqjWsFSmEFjwXzzVj4c6ENm/LyeBcjj81W2PCq7fnTZFraTV7Jzl0H5qIzmM01nvf6VHDFndN03TMR6nHb79WzQLNU70i9blG9TY&amp;#43;FUy&amp;#43;QZzgX2Bv1GhuJzdF5rV68dNyxbe7KUNQwL/T7UOZcmms87/Wp4CrmHIKMvHnc9qN6A29bH6yadrneL9WTryLnlsfCq&amp;#43;fOB9sE3a7d&amp;#43;fFKPeYcfqfevHT2b/AbmBf6fQzRlTre61PB9fd7jksetx3HEbOSgb3Gt1V7vVqs9wv1/MYZL3gsurGteqjkUlqMfqMeZ9IGYRmr18mxxvPS6bQx37UDd1gbFrp9MEu5vuj9Xp8Kruv8830t9kA8bPvuKjAMDsjZ&amp;#43;G653mN1o5Bm7zg6zgseCxa&amp;#43;ZY5LbQT1WCYi9WT4wt3ftOYGU039nC2fPkVL/Y7HEgGC/cKwj3YsGu/1VcF1PRfuTkldnrY9&amp;#43;WJb5rjOEO6rluvdhOpGa7mSbOrgKn8smqZZIAXVNJfHHh21vHTcYLRQjbtQC3tVyzX5dzdeb8fpMNVjYfdxvZ/2oux3UecyyWNxQEsxuNGE6x7D4dyheq4LS6y8OMO&amp;#43;UY8NCTYyCC4YYhoMBoPBYDAYDAaDwWAwGAwGS21sHHMl&amp;#43;wpPF3w6z3l6QJ/4aY75ET3lpzm7jugpO4165/EUVyt4CoPi8BTMCeYEc4I5wZxgTngKg&amp;#43;LwFNEWzAnmBHOCOREFcbWCpzAo/j&amp;#43;etvJH/mxhZj9tWp/eRFvd9329hZn96KLM2ZhD2jbbWGtOlCY7c17rvtLXbUxXfX0tx5xSNtva2&amp;#43;aXijmr/rqt9VUp5txcPCOfzOrp5uItyZf3utxsL56Rr8noqd5ePCPftQjJ/DQl7CdjPKmvJawuwZytLKJeOvLkJJqeaXy6AHPKtoh6rczGnH1VRL2qL8CcP4XU&amp;#43;8nGnL0uop7Ort6Lc7tM4DShM5unZQKnCZ0FmPOnkHo/2TytC6mXH1uIq5cknhxWPXZA9Thx9bIy5&amp;#43;4jJ3X1&amp;#43;GnU4weMnPw0kZMfkFrAnGBOMCeYE8wJ5gRzgjnBnGBOMCeYE8wJ5gRzrlNPV1V1BuZs52y8bmxQsv0zp&amp;#43;58IqpxmJwdljnlg3qCt3tnTu3SU9pENf6z4PrIzNmOkrU2IV27d&amp;#43;YUvLNyVYIP5tW6pA/NnKN6Lkt4u3PmlFz4N4NtfM4lfWjmnNpeK1OqV4Y5O9vkfAi1/3RFVD2WWr31170u2wStK9SrHiOpPipzJlKPEHPmVY&amp;#43;fRj1eKHKO6ml9BuakpN731MLG614V8EWchDkJRM7v1Ru40EFGll69y2nUK9TPGe73Bh5CqDgNc7al1UvQU2ZuEXjHzI3eMHa9gDn3189ZnYQ5Dze2rquvZynA2DrG1jG2jrF1jK1jbB3Pc&amp;#43;J5zl2rB&amp;#43;bcc&amp;#43;QEc4I5wZxgTjAnmBPMCeYEc4I5d82cmCsplfUlmJPSPGVJPP1La56yrEZqjsAk8YTYHIFZmRPzc6YKnCXm5yQ1N26aOeFpzY2bd054SvNSp5kT/kpqXurMc8IXiJ3v4ibmhP/cNpfvp83sKaV8DNmNTC6UZPGEUC6UzJ765vdpHqJhNOQhKpyHaIXdfke7bXF2beKTkbzWyVsMxdyXtz&amp;#43;j3Qp7mpAKDDimT2lCMfclHfUSWp1jlI5ifsA86pX1tHY/fK4vx7c86hVVPPSP5u&amp;#43;vPGrkLBltp3vExPduJJmTTORM5FPUvZaWXMCc&amp;#43;c9tFXdt1wrMuSvmrLM9HgbmzG4PecPokguY8wWxPA7HVxXBYw7mfGkvRuN7Te&amp;#43;Ygzlf4ubfFyMHf6/kjjmY8/&amp;#43;JJTW5gDmz2psnCPVfMCd9T98&amp;#43;QHhg8DwMcy48RNETA08w5xOx9GueEwNzkmBOZR9s8KajZ9pHS9FlBubMd25Xk83kWc9fgjmpM&amp;#43;fTfUPa8Vkw557VA3NuoTh99cCce46cYM7t1QNz7jlygjnBnGBOMCeYc7&amp;#43;e/s6/PZnVm78Ec1JmThUpNakXKapKeArm/Ff7Mze5Z7v9AXPSZs6ozT1aisAJ5sxrb&amp;#43;VLctUDc24Gmw9xE8y5B09vtMQDc35PLgmIBcy5yZZeXPp&amp;#43;m3L1A3N&amp;#43;KV&amp;#43;y&amp;#43;3Qw5xbk8pvpogfm3B48y/Z0gjk/NRXLd1NFfQJzfgOeiXATzLnhliZySTqyAObciAqCfGmHhcCc25LL7TCenmlsPch3K18NMOdacklJLGDOba8rv7dfAmdXMvXmXw7tjTk/nxt3pS3PjZuQOcnMjZudOcnMS53MU0LzUucmMSmpJELBnPD0xTPyyazXSlL5GPJSAaVcKGmu5ZpULhTkIfrMpxPlISKVAywJcxLLAZY39yWl/Htpcl/Syr&amp;#43;H3JefqXem3JeU8s4miSfE8s5mZU7kW0e&amp;#43;deRbR7515FvfdeRM4ulhI&amp;#43;flgJGTunqX06h3OWDkBHOCOcGcYE4wJ5gTzAnmBHOCOcGcYE4wJ5gTzLlOPV1V1RmYs&amp;#43;WTyaaRjLFh98ypO&amp;#43;cP84Pk1qWjMqeM1WPuf7Fz5tSC844ZBTvzwbvU6eMyZyt4G5QcWik42zdzCi9WJfhwtS5p844dmDmDeswGT6Nht2vmlFz4N4NpfIzbqFm5ZnhU5gzqde6/Npl6ZZiz4&amp;#43;NlTtsPVVr1OFn1vLE16pmrjNGK3b/yp29WvK5Q7wk3GUX1WAb1zGWPt7tmzif1zGWP62My5716rWlDot03c87qaR1uH4S&amp;#43;Hpc5J/Wkv&amp;#43;vbdz8nG697lcWXyrp07H7OoJ65c2cp&amp;#43;1rKMOcwNjVm7hMqvuJmYa/MOTQp1SvUzxnu9wZuQugMoIdnThE6XbqC1JLgbt0Gy44ZZwarZHDp&amp;#43;MxJQb2E/ZzVNYN6GFvPP7auq69nKcDYOsbWMbaOsXWMrWNsHc9z4nnODagFz3PieU4wJ5gTzAnmBHOCOcGcYE4wJ5jzcMyJuZJSWV&amp;#43;COSnNU5bkWv6X1jxlWZmT1ByBSZiT2ByBmJ/zo3hypvk5Sc2Nm8ZTWnPj5p0TntK81Gk8vZKalzqzFYidSxk1EsSTE80JX0C&amp;#43;n4TivYy2lPIxZM9DRCYXSrI8RIRyoZDMQzSMhjxEhfMQrbDb72i3zFFwOzPkkYE9KOa&amp;#43;vGXJ113W0/p6kryXmdQrqnjtfv5FWD52QPVSRdvQwVb1ZI85J65ewdyX001G6js3fhr1yuVbj/pnEpMLSeYko14SU3HfaK3AnLvytC4&amp;#43;Sg7mXE8s&amp;#43;p8GWsGcFJnzaTw3JbmAOfP69GI4d7nzC8xJhzmbv1mH68CcGxJLcnIBc&amp;#43;a0N4&amp;#43;g6b9gTvok9vYJtORdZmDO5NF2YRQ&amp;#43;EXiCObP5tPgAUxpyAXPmOreVHRn3pqN79dGSdJmBObNZNdlMnvX8JZhzJ57W5&amp;#43;nlPODY&amp;#43;g7UA3Nurx6Yc8/qgTn3HDnBnHumFjAnmBPMCeYEc&amp;#43;6XOX/nXy/M6s1fgjkpM6eKlJrUixRVJeoH5vxX&amp;#43;zM3uWe7/QFz0mbOqM09WoLACeYsJV8K8cCcuT19FzuLoSeY83v5bsU8BXN&amp;#43;TS4JiAXMuYmnzW&amp;#43;2ix6YswC5JCMWMOcGdruX77doZxmY8ztyKdvTCeb81FQs300V9RTM&amp;#43;Q14JsJNMOeGrXgil6R9LGDObcEzbQfZv3p63ZF6RMGzHLFUtQZzJpCvDG5WffT7HjDnWnJJSSwfeFr10a/rwJwrL3231KNC/J/Vu&amp;#43;rxBz6pIuf8y6HdMefns6uutCSzq/qfTNaL7EJmdtXszLm3mY3DD14XftxKaGbj3Lb5rOLfTgk//ly5798oTmlW8cxUIAvM6C&amp;#43;TqHetzMWPExBvSb68zLnDbBqROvX12Sda2TTyMifNTDbK/nV/Xljctnq2AP8UMtlkZc7yWaSun3NeDCR9/0SbpLJIZWXO8hncvr1KPU6LQyyDW1Yrnz3xa8bQ98De08qemJU5y2cuTUCId1GLWObSg&amp;#43;dbT8H3MbAj3/re1IsPHfKt7029&amp;#43;MqHfOv7Uk/fTSh2pnzrB1DvgdUPq96eI6e2f8c/14Xb9cNGTpLUsqKvJb4fr/WFtHoHZ87PPY36wnTNLmdRjx1Nvaq&amp;#43;XIird3Dm/NzTSb2&amp;#43;v5BX73Ia9T4dW69eKQ7mpK1eaHv&amp;#43;Fp2fJnLyA0XO8Radn4ZaDsSc0y06mHNn6pnrXv9&amp;#43;NG2VerqqqjMwZ8snk00zMMbk9pHz78IDsCvU053zh4UnZRirjsqcMlYveL01tcRDCgkipxacd8z40pkPsZDHZM5WcPdABeNCtoNrhFuqtxxtP1dP8M52nVaCD1fj0n/tndmWoyAURauVpiuoZND//9YWcJ4SEeRizn1Ip2rVyuq4w2EDBtKqfkvphZ2zoSf1P6UzekkQejnLzJOybnySVfpZemHnbNueLDTD/Fxr2Sa&amp;#43;m56sm1y3jpHoZigp0ksc01PdYClZZnFfWt291P&amp;#43;bZPzIZr&amp;#43;xeLSgN0aVqrdUXdM5J/TqDp9l/wIm54&amp;#43;DtpdOukHWZuk15zl7eoWyliSgtSQO6VWVGfuVNtIZzzxnQ8986y9nMmrnTNp&amp;#43;L62bnPnaX6oHD9d2zsJkZuGMXhjnLNteLmFJZTKzckePrnNm2jYTZ/TCOGc73tOjvEzHaEKRnuvkVJJXC1rQEYODmbKUqbmWWlZKxc28pfQLnDNp5ztjds5unjM18dk9vfzaepFbfoWMkHM2awzV/CnW1iOY58TaesTOibX1qJ0Ta&amp;#43;sxOyfu54zaOXE/Z9zOifs54ZxwTjgnnBPOCeeEc8I54ZxwTqJ7Jbnuy79qr6Tg&amp;#43;5S5dk5i&amp;#43;5R5dc7wewS6dk5iewRefH9O1&amp;#43;/0m/bnJLU3rpt3yr9GOWntS&amp;#43;0mT2jtS&amp;#43;3VOYNk59Et/d&amp;#43;k7RftCU/pPAZXZ19SOo/B&amp;#43;zlEZM5CcXb2JaGzUEieQ1S2FeAcos/M81vOIbKo56utp&amp;#43;9&amp;#43;GeWeHpHzur&amp;#43;JeHJBeuxrrjkjTi&amp;#43;5ID32NfQsnfP4t6U9PmZfk5zU2xGsBQYSHz3LWcDUccE5rejxx90GHhdOi0eNL5y13Dl/7P90peLmtATo2fV7d/7BJ5&amp;#43;BHlHn/BU3wSvQi9Q5qxqF2D6ZHMlJd8Sg8N3EnkVo0CM0Wjcwdugn6FGaKTM0xKp&amp;#43;Ijkp0/t5GBxr&amp;#43;glrIZycPb4V/QQ9utYywreon0hO4vR&amp;#43;eiDv9RP0XCbnq7&amp;#43;bpafX//KzF&amp;#43;H91Xynn6Dn0FruA1IdvQHR&amp;#43;258E/1Ecvp0zr99k5vX8&amp;#43;&amp;#43;nL8OHF3Son7AWr845aHPT&amp;#43;jQ4VRvmo0va6yfo&amp;#43;a1VfDvgTfH1&amp;#43;onkPE02J7m561V&amp;#43;&amp;#43;eSyLusn6LkerT8dwNPrReNa1E/Qcz1TtmgunxtLW9UUjNJPJKf3ec6Fru9l8WXKGb6aXwZ63uc5Z/h2GcsWmunsJ&amp;#43;j5MJfXsU5vg8149hP0/Iun9f24jyU4Q/0EPffJqabMhvDuP07xDfQT9Jxby0Q89&amp;#43;vmW3zd7CfoeaHXm4udsXS1gqeZ/QQ9H8nZ4zsIbzxjPdNP0PNrLse/QcRXLzX/BT2v&amp;#43;Fx8/YuvX2wOen6SU5vLIWPpBJbfzipYy6Dre76cvM55&amp;#43;C5Kb/9uO5a1uNvOLwc9&amp;#43;&amp;#43;QMvtPVrwA928rD7zJXCdCLBF6NLw&amp;#43;D73rJSWR31VSAnoW1UNnZ&amp;#43;Ax8l6NHZ1fxhwC9vclJaEd///guZy2UTtPwju9y9EidZAN6O5OT1ilSHPR2WQuxE9xc4RNCgN75pye&amp;#43;wZexptQPkmXmt5KJm2h/UHfG6D/hSM6z6b1ZcGBDeh0hWf87oCcZk7zmnF3fOamdfbmNL2Ni1MLkAj3B9B&amp;#43;JeesDPe9nX26uF5lG15LkzY9TerKhy5Gcp59curVelPX0FK7MAJq1PQ7nDHZq8MaCQ92ZSVXCNC1ukE36PaU2GeegF&amp;#43;bE7nV8rXPyJkRNPzihd&amp;#43;PmzyScM8h566sLDrWQ6NLOIrk0ITmlp8Z7iiCsJcx562v4&amp;#43;n5vOPIb0&amp;#43;PNjYR8NmQAvZPOW1&amp;#43;Zse6cUw8L6kaovWVMr1GZSWtEcp5IbwVf1/Z4NyyQs7ZnxnuXa3ssmuRU&amp;#43;DbbXjts123Q0GtKqFDVXSIToBfCWlYXHNq2N85JM8/Z0VNTZWrQIOCcs3XVbqqR5X7pHVlwuOIagwtryT3SSzwv94Gebn8ZK3xby&amp;#43;awD2vrR/q9hl4u81JmsgC9qKyloVc2EVp4Sk7Q80yv/FdImw7wE2sBPa/JWbKkewS9aGbKOnq5ttAEyRktvcIZPVjLucnptu2B3rnW4rbtITnPp5fDWiJOzqIeNoAeVmeRnDHTg7Wckpygh9VZJOel6MFaYk5O0INzgh6sBckJenBO0INzIjlBD9aC5HRWpPZKgrXsTU5C&amp;#43;5SB3l5rIbRHIJJzNz06&amp;#43;3PCWvYnJ5m9cUHPpojsS43ktKsA2bmcm7CW/ckZAN&amp;#43;fD&amp;#43;GB3jtr0eEZ&amp;#43;iwUJOcBeqHPIYK1HEhOup8u0Iv50wV6MRfoxZScoGdlLUhO0IO1wDmH9LhwW7CWMz9dqePCJUaF&amp;#43;mwzltB&amp;#43;RC3Vf0JS/0ulA6hDAAAAAElFTkSuQmCC"
+loading="lazy"
+alt="Saga模式示意图"
+&gt;&lt;/p&gt;
+&lt;p&gt;适用于：流程很长的事务，无锁，且一般无法进行资源占用的情况。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：无法保证隔离性。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;通过状态图来定义服务调用的流程并生成 json 状态语言定义文件&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;状态图中一个节点可以是调用一个服务，节点可以配置它的补偿节点&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;状态图 json 由状态机引擎驱动执行，当出现异常时状态引擎反向执行已成功节点对应的补偿节点将事务回滚&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;注意: 异常发生时是否进行补偿也可由用户自定义决定&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://seata.apache.org/zh-cn/assets/images/demo_statelang-90f1fc01bfaf3a795c3b3357e1046f16.png"
+loading="lazy"
+alt="示例状态图"
+&gt;&lt;/p&gt;
+&lt;p&gt;状态的的运行和流转是根据json文件来执行的：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;span class="lnt"&gt;18
+&lt;/span&gt;&lt;span class="lnt"&gt;19
+&lt;/span&gt;&lt;span class="lnt"&gt;20
+&lt;/span&gt;&lt;span class="lnt"&gt;21
+&lt;/span&gt;&lt;span class="lnt"&gt;22
+&lt;/span&gt;&lt;span class="lnt"&gt;23
+&lt;/span&gt;&lt;span class="lnt"&gt;24
+&lt;/span&gt;&lt;span class="lnt"&gt;25
+&lt;/span&gt;&lt;span class="lnt"&gt;26
+&lt;/span&gt;&lt;span class="lnt"&gt;27
+&lt;/span&gt;&lt;span class="lnt"&gt;28
+&lt;/span&gt;&lt;span class="lnt"&gt;29
+&lt;/span&gt;&lt;span class="lnt"&gt;30
+&lt;/span&gt;&lt;span class="lnt"&gt;31
+&lt;/span&gt;&lt;span class="lnt"&gt;32
+&lt;/span&gt;&lt;span class="lnt"&gt;33
+&lt;/span&gt;&lt;span class="lnt"&gt;34
+&lt;/span&gt;&lt;span class="lnt"&gt;35
+&lt;/span&gt;&lt;span class="lnt"&gt;36
+&lt;/span&gt;&lt;span class="lnt"&gt;37
+&lt;/span&gt;&lt;span class="lnt"&gt;38
+&lt;/span&gt;&lt;span class="lnt"&gt;39
+&lt;/span&gt;&lt;span class="lnt"&gt;40
+&lt;/span&gt;&lt;span class="lnt"&gt;41
+&lt;/span&gt;&lt;span class="lnt"&gt;42
+&lt;/span&gt;&lt;span class="lnt"&gt;43
+&lt;/span&gt;&lt;span class="lnt"&gt;44
+&lt;/span&gt;&lt;span class="lnt"&gt;45
+&lt;/span&gt;&lt;span class="lnt"&gt;46
+&lt;/span&gt;&lt;span class="lnt"&gt;47
+&lt;/span&gt;&lt;span class="lnt"&gt;48
+&lt;/span&gt;&lt;span class="lnt"&gt;49
+&lt;/span&gt;&lt;span class="lnt"&gt;50
+&lt;/span&gt;&lt;span class="lnt"&gt;51
+&lt;/span&gt;&lt;span class="lnt"&gt;52
+&lt;/span&gt;&lt;span class="lnt"&gt;53
+&lt;/span&gt;&lt;span class="lnt"&gt;54
+&lt;/span&gt;&lt;span class="lnt"&gt;55
+&lt;/span&gt;&lt;span class="lnt"&gt;56
+&lt;/span&gt;&lt;span class="lnt"&gt;57
+&lt;/span&gt;&lt;span class="lnt"&gt;58
+&lt;/span&gt;&lt;span class="lnt"&gt;59
+&lt;/span&gt;&lt;span class="lnt"&gt;60
+&lt;/span&gt;&lt;span class="lnt"&gt;61
+&lt;/span&gt;&lt;span class="lnt"&gt;62
+&lt;/span&gt;&lt;span class="lnt"&gt;63
+&lt;/span&gt;&lt;span class="lnt"&gt;64
+&lt;/span&gt;&lt;span class="lnt"&gt;65
+&lt;/span&gt;&lt;span class="lnt"&gt;66
+&lt;/span&gt;&lt;span class="lnt"&gt;67
+&lt;/span&gt;&lt;span class="lnt"&gt;68
+&lt;/span&gt;&lt;span class="lnt"&gt;69
+&lt;/span&gt;&lt;span class="lnt"&gt;70
+&lt;/span&gt;&lt;span class="lnt"&gt;71
+&lt;/span&gt;&lt;span class="lnt"&gt;72
+&lt;/span&gt;&lt;span class="lnt"&gt;73
+&lt;/span&gt;&lt;span class="lnt"&gt;74
+&lt;/span&gt;&lt;span class="lnt"&gt;75
+&lt;/span&gt;&lt;span class="lnt"&gt;76
+&lt;/span&gt;&lt;span class="lnt"&gt;77
+&lt;/span&gt;&lt;span class="lnt"&gt;78
+&lt;/span&gt;&lt;span class="lnt"&gt;79
+&lt;/span&gt;&lt;span class="lnt"&gt;80
+&lt;/span&gt;&lt;span class="lnt"&gt;81
+&lt;/span&gt;&lt;span class="lnt"&gt;82
+&lt;/span&gt;&lt;span class="lnt"&gt;83
+&lt;/span&gt;&lt;span class="lnt"&gt;84
+&lt;/span&gt;&lt;span class="lnt"&gt;85
+&lt;/span&gt;&lt;span class="lnt"&gt;86
+&lt;/span&gt;&lt;span class="lnt"&gt;87
+&lt;/span&gt;&lt;span class="lnt"&gt;88
+&lt;/span&gt;&lt;span class="lnt"&gt;89
+&lt;/span&gt;&lt;span class="lnt"&gt;90
+&lt;/span&gt;&lt;span class="lnt"&gt;91
+&lt;/span&gt;&lt;span class="lnt"&gt;92
+&lt;/span&gt;&lt;span class="lnt"&gt;93
+&lt;/span&gt;&lt;span class="lnt"&gt;94
+&lt;/span&gt;&lt;span class="lnt"&gt;95
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Name&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;reduceInventoryAndBalance&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Comment&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;reduce inventory then reduce balance in a transaction&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;StartState&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ReduceInventory&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Version&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;0.0.1&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;States&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ReduceInventory&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ServiceTask&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceName&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;inventoryAction&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceMethod&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;reduce&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;CompensateState&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;CompensateReduceInventory&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Next&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ChoiceState&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Input&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;$.[businessKey]&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;$.[count]&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;],&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Output&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;reduceInventoryResult&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;$.#root&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Status&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;#root == true&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;SU&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;#root == false&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;FA&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;$Exception{java.lang.Throwable}&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;UN&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ChoiceState&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;Choice&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Choices&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Expression&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;[reduceInventoryResult] == true&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Next&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ReduceBalance&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;],&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Default&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;Fail&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ReduceBalance&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ServiceTask&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceName&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;balanceAction&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceMethod&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;reduce&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;CompensateState&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;CompensateReduceBalance&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Input&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;$.[businessKey]&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;$.[amount]&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;throwException&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;$.[mockReduceBalanceFail]&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;],&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Output&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;compensateReduceBalanceResult&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;$.#root&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Status&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;#root == true&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;SU&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;#root == false&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;FA&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;$Exception{java.lang.Throwable}&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;UN&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Catch&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Exceptions&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;java.lang.Throwable&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;],&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Next&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;CompensationTrigger&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;],&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Next&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;Succeed&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;CompensateReduceInventory&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ServiceTask&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceName&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;inventoryAction&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceMethod&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;compensateReduce&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Input&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;$.[businessKey]&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;CompensateReduceBalance&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ServiceTask&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceName&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;balanceAction&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceMethod&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;compensateReduce&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Input&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s2"&gt;&amp;#34;$.[businessKey]&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;CompensationTrigger&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;CompensationTrigger&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Next&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;Fail&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Succeed&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;Succeed&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Fail&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;Fail&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ErrorCode&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;PURCHASE_FAILED&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Message&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;purchase failed&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;整体流程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-xml" data-lang="xml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;开始 -&amp;gt; 扣减库存 -&amp;gt; 判断库存是否成功
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; ├── 是 -&amp;gt; 扣减余额 -&amp;gt; 成功结束
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; └── 否 -&amp;gt; 失败结束
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;异常情况 -&amp;gt; 触发补偿 -&amp;gt; 执行补偿操作 -&amp;gt; 失败结束
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="s2"&gt;&amp;#34;ReduceInventory&amp;#34;&lt;/span&gt;&lt;span class="err"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Type&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ServiceTask&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceName&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;inventoryAction&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;ServiceMethod&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;reduce&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;CompensateState&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;CompensateReduceInventory&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nt"&gt;&amp;#34;Next&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ChoiceState&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;类型: 服务任务 (ServiceTask)
+调用服务: inventoryAction 的 reduce 方法
+补偿状态: CompensateReduceInventory
+执行成功后进入: ChoiceState&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Seata通过读取上面json文件中的属性，来对目前的调用进行流转。每种状态保证都有自己的执行逻辑。（是否补偿，或者分支选择由用户自己决定）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;由于补偿为用户自己编写，所以需要考虑：&lt;strong&gt;允许空补偿、防悬挂控制、幂等控制&lt;/strong&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;官方给出的缺乏隔离的应对方案，只能说乏善可陈&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;由于 Saga 事务不保证隔离性, 在极端情况下可能由于脏写无法完成回滚操作, 比如举一个极端的例子, 分布式事务内先给用户 A 充值, 然后给用户 B 扣减余额, 如果在给 A 用户充值成功, 在事务提交以前, A 用户把余额消费掉了, 如果事务发生回滚, 这时则没有办法进行补偿了。这就是缺乏隔离性造成的典型的问题, 实践中一般的应对方法是：
+&lt;ul&gt;
+&lt;li&gt;业务流程设计时遵循“宁可长款, 不可短款”的原则, 长款意思是客户少了钱机构多了钱, 以机构信誉可以给客户退款, 反之则是短款, 少的钱可能追不回来了。所以在业务流程设计上一定是先扣款。&lt;/li&gt;
+&lt;li&gt;有些业务场景可以允许让业务最终成功, 在回滚不了的情况下可以继续重试完成后面的流程, 所以状态机引擎除了提供“回滚”能力还需要提供“向前”恢复上下文继续执行的能力, 让业务最终执行成功, 达到最终一致性的目的。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="状态机引擎"&gt;状态机引擎
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;项目启动时：先自动装配SeataSagaAutoConfiguration配置类。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;会在此配置类中初始化Bean：stateMachineEngine，此bean通过StateMachineConfig初始化时会扫描statelang目录（视配置情况）下的json文件&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;初始化&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class="mermaid"&gt;
+flowchart TD
+初始化
+A[Seata Saga模式初始化] --&amp;gt; B[StateMachineConfig配置]
+B --&amp;gt; C[初始化核心组件]
+C --&amp;gt; D[StateLogStore初始化]
+C --&amp;gt; E[StateMachineRepository初始化]
+C --&amp;gt; F[ExpressionFactory初始化]
+C --&amp;gt; G[ScriptEngineManager初始化]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760496856514_1760496856527.png"
+loading="lazy"
+alt="1760496856514.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;StateLogStore&lt;/strong&gt;：用来持久化状态机，对状态机的状态，解析后的状态机id，本地线程清理等。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;有了持久化后，如果事务运行过程中宕机，可以保证续跑，也不会出现事务编号错乱的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;StateMachineRepository&lt;/strong&gt;：用来管理状态机的注册，注销，状态机版本控制等。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;统一状态机获取的如何，让状态机引擎和状态机本身解耦。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;ExpressionFactory&lt;/strong&gt;：解析XML文件&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;ScriptEngineManager&lt;/strong&gt;：初始化脚本管理器，用来管理和执行json中配置的脚本&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;创建状态机&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class="mermaid"&gt;
+flowchart TD
+H[状态机创建] --&amp;gt; I[StateMachineParser解析JSON]
+I --&amp;gt; J[解析States节点]
+J --&amp;gt; K{状态类型判断}
+K --&amp;gt;|ServiceTask| L[创建ServiceTaskState]
+K --&amp;gt;|Choice| M[创建ChoiceState]
+K --&amp;gt;|Succeed| N[创建SucceedState]
+K --&amp;gt;|Fail| O[创建FailState]
+K --&amp;gt;|CompensationTrigger| P[创建CompensationTriggerState]
+K --&amp;gt;|SubStateMachine| Q[创建SubStateMachineState]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760496927120_1760496955622.png"
+loading="lazy"
+alt="1760496927120.png"
+&gt;&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;状态类型&lt;/th&gt;
+&lt;th&gt;说明&lt;/th&gt;
+&lt;th&gt;特点&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L27-L27" &gt;SERVICE_TASK&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;服务任务状态&lt;/td&gt;
+&lt;td&gt;执行具体的业务逻辑，对应实际的服务调用，是状态机中最常用的状态类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L32-L32" &gt;CHOICE&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;选择状态&lt;/td&gt;
+&lt;td&gt;用于条件分支判断，根据条件表达式的结果决定下一步执行哪个状态&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L37-L37" &gt;FAIL&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;失败状态&lt;/td&gt;
+&lt;td&gt;表示状态机执行失败，终止状态机执行并标记为失败&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L42-L42" &gt;SUCCEED&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;成功状态&lt;/td&gt;
+&lt;td&gt;表示状态机执行成功，终止状态机执行并标记为成功&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L47-L47" &gt;COMPENSATION_TRIGGER&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;补偿触发状态&lt;/td&gt;
+&lt;td&gt;用于触发补偿流程，当状态机需要回滚时触发已执行状态的补偿操作&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L52-L52" &gt;SUB_STATE_MACHINE&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;子状态机状态&lt;/td&gt;
+&lt;td&gt;调用另一个状态机作为子流程，支持状态机的嵌套调用和组合&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L57-L57" &gt;SUB_MACHINE_COMPENSATION&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;子状态机补偿状态&lt;/td&gt;
+&lt;td&gt;专门用于补偿子状态机的执行结果&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L62-L62" &gt;SCRIPT_TASK&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;脚本任务状态&lt;/td&gt;
+&lt;td&gt;执行脚本代码，支持通过脚本引擎执行动态逻辑&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L67-L67" &gt;LOOP_START&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;循环开始状态&lt;/td&gt;
+&lt;td&gt;支持循环执行某些状态逻辑&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;事务执行&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class="mermaid"&gt;
+flowchart TD
+R[事务执行流程] --&amp;gt; S[start方法调用]
+S --&amp;gt; T[获取状态机定义]
+T --&amp;gt; U[创建状态机实例]
+U --&amp;gt; V[持久化状态机实例]
+V --&amp;gt; W[执行起始状态]
+W --&amp;gt; X[ServiceTask执行]
+X --&amp;gt; Y[构建服务调用参数]
+Y --&amp;gt; Z[执行前置拦截器]
+Z --&amp;gt; AA{是否持久化执行}
+AA --&amp;gt;|是| AB[executeServiceTaskWithPersist]
+AA --&amp;gt;|否| AC[executeServiceTaskDirectly]
+AB --&amp;gt; AD[创建分支事务]
+AD --&amp;gt; AE[执行业务逻辑]
+AE --&amp;gt; AF{执行结果}
+AF --&amp;gt;|成功| AG[提交分支事务]
+AF --&amp;gt;|失败| AH[回滚分支事务]
+AC --&amp;gt; AI[直接执行业务逻辑]
+X --&amp;gt; AJ[执行后置拦截器]
+AJ --&amp;gt; AK[更新状态机实例状态]
+&lt;/pre&gt;
+&lt;p&gt;![mermaid-diagram (1).png](&lt;a class="link" href="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/mermaid-diagram" target="_blank" rel="noopener"
+&gt;https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/mermaid-diagram&lt;/a&gt; (1)_1760497128502.png)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;事务补偿&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class="mermaid"&gt;
+flowchart TD
+AL[补偿机制] --&amp;gt; AM[CompensationTrigger触发]
+AM --&amp;gt; AN[获取需补偿状态列表]
+AN --&amp;gt; AO[逆序执行补偿]
+AO --&amp;gt; AP[查找补偿处理器]
+AP --&amp;gt; AQ[执行补偿逻辑]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760497180682_1760497180697.png"
+loading="lazy"
+alt="1760497180682.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;子事务嵌套&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class="mermaid"&gt;
+flowchart TD
+AR[子状态机支持] --&amp;gt; AS[SubStateMachine执行]
+AS --&amp;gt; AT[获取子状态机定义]
+AT --&amp;gt; AU[创建子状态机实例]
+AU --&amp;gt; AV[关联父子实例]
+AV --&amp;gt; AW[启动子状态机执行]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760497211127_1760497211137.png"
+loading="lazy"
+alt="1760497211127.png"
+&gt;&lt;/p&gt;
+&lt;h2 id="xa模式"&gt;XA模式
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;以 XA 协议的机制来管理分支事务的一种事务模式。&lt;font color='red'&gt;对业务无侵入，但性能差，属于悲观锁&lt;/font&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://seata.apache.org/img/doc/TB1hSpccIVl614jSZKPXXaGjpXa-1330-924.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;p&gt;也是一种2PC分布式提交方式，利用数据库等可以手动控制事务提交，回滚，来统一管控整体事务的提交回滚等。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;由于不同事务执行顺序不固定，可能出现死锁，需考虑事务超时场景。&lt;/p&gt;
+&lt;/blockquote&gt;</description></item></channel></rss>

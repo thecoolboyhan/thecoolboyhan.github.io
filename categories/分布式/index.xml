@@ -1,0 +1,2315 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>分布式 on 韩永发的博客</title><link>https://thecoolboyhan.github.io/categories/%E5%88%86%E5%B8%83%E5%BC%8F/</link><description>Recent content in 分布式 on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 21 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/categories/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml"/><item><title>读《凤凰架构》有感--分布式基石</title><link>https://thecoolboyhan.github.io/p/icyfenix-hoeksteen/</link><pubDate>Thu, 21 Aug 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/icyfenix-hoeksteen/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/icyfenix-hoeksteen/1.png" alt="Featured image of post 读《凤凰架构》有感--分布式基石" /&gt;&lt;h1 id="分布式的基石"&gt;分布式的基石
+&lt;/h1&gt;&lt;h2 id="分布式共识算法"&gt;分布式共识算法
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;前文书说过，分布式场景中，强一致性是最先被放弃的。但事务的主要目的就是要达到一致性。放弃强一致性，为了达到最终一致性，于是有了分布式共识算法。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;少数服从多数，不强求所有节点都同意，少数默认按照多数的结果来统一结果。来达到所谓的最终一致性。&lt;/p&gt;
+&lt;h3 id="状态机"&gt;状态机
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;并不是共识算法，这也是一种达到一致性的方式，但是需要等消费完所有命令后才可以。依靠这种方式获得状态，有可能不是最终状态。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;a class="link" href="https://en.wikipedia.org/wiki/Finite-state_machine" target="_blank" rel="noopener"
+&gt;状态机&lt;/a&gt;有一个特性：任何初始状态一样的状态机，如果执行的命令序列一样，则最终达到的状态也一样。如果将此特性应用在多参与者进行协商共识上，可以理解为系统中存在多个具有完全相同的状态机（参与者），这些状态机能最终保持一致的关键就是起始状态完全一致和执行命令序列完全一致。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;状态复制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;根据状态机的特性，要让多台机器的最终状态一致，只要确保它们的初始状态是一致的，并且接收到的操作指令序列也是一致的即可，无论这个操作指令是新增、修改、删除抑或是其他任何可能的程序行为，都可以理解为要将一连串的操作日志正确地广播给各个分布式节点。&lt;/p&gt;
+&lt;p&gt;广播指令与指令执行期间，允许系统内部状态存在不一致的情况，即并不要求所有节点的每一条指令都是同时开始、同步完成的，只要求在此期间的内部状态不能被外部观察到，且当操作指令序列执行完毕时，所有节点的最终的状态是一致的，这种模型就被称为&lt;strong&gt;状态机复制&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id="basic-paxos基础版paxos"&gt;Basic Paxos（基础版Paxos）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;存在活锁问题&lt;/p&gt;
+&lt;p&gt;世界上只有一种共识协议，就是Paxos，其他所有共识算法都是Paxos的退化版本。&lt;/p&gt;
+&lt;p&gt;Paxos没有考虑拜占&lt;a class="link" href="https://en.wikipedia.org/wiki/Byzantine_fault" target="_blank" rel="noopener"
+&gt;拜占庭将军&lt;/a&gt;问题。
+假设信息可能丢失也可能延迟，但不会被错误传递。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;角色介绍&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;提案节点（Proposer）：提出对某个值设置操作的节点，对值的操作被称提案，一旦设置成功，就不会丢失也不可改变。这里的设置值是一个日志记录操作。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Paxos是基于操作转移模型而非状态转移模型来设计的算法。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;决策节点（Acceptor）：应答提案的节点，决定该节点是否被投票、是否可被接接受。提案一旦有过半数决策节点的接受，即称该提案被批准Accept，被批准的提案意味着该值不能再被更改，也不会丢失，最终所有节点都会接收该操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;记录节点（leaner）：不参与提案，不参与决策，只是单纯的从提案、决策节点中学习已经达成共识的提案，譬如少数派节点从网络分区中恢复时，将进入这种状态。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;每个节点都可能成为上面三种角色中的一种或多种，但为了明确多数派，决策节点的数量应该被设置成奇数，系统初始化时，每个节点都知道整个网络所有决策节点的数量、地址等信息。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;可能出现的问题&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;系统内部各个节点通信是不可靠的，上面的所有角色，发出或收到信息，都可能延迟送达、也可能丢失，但不会出现信息传递错误的情况。&lt;/li&gt;
+&lt;li&gt;系统外部各个用户访问可能是并发的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;并发访问可能产生的问题&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;由于多个用户可能同时操作同一变量，请求到达的先后顺序可能会直接影响到值的结果。因此应当通过上锁，来使对于同一值的操作为串行化的。这样所有用户都能提前预判到自己本次操作会带来的结果。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;但由于分布式系统中，每个节点都是不可靠的，所以传统的互斥锁很有可能会产生死锁。（如：某个节点取得锁后，与其他节点永久失联，此锁无法自动释放）&lt;/p&gt;
+&lt;p&gt;因此，必须提供一个其他节点能抢占锁的机制，避免因通信问题而出现死锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;分布式环境中的锁必须是可抢占的&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Paxos的操作步骤&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;准备（Prepare）：抢占锁的过程，如果某个提案节点准备发起提案，必须先向所有的决策节点广播一个许可申请（Prepare请求）。提案节点会在请求中附带一个全局唯一的数字n作为提案ID，决策节点收到请求后，会给提案节点两个承诺与一个应答：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;承诺1：承诺不再接收提案ID小于或等于n的Prepare请求（抢锁请求）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;承诺2：对于冲突的数据，承诺不再接收提案ID小于n的Accept请求。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;应答：&lt;font color='red'&gt;在两个承诺的基础上，回复已经批准过的提案中ID最大的那个提案所设定的值和提案ID，如果该值没有被任何提案设定过，就返回空值。（对于来抢锁的节点，返回当前节点的最新值。）&lt;/font&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果收到的提案请求的Id值小于当前值最新通过的id，就直接忽略本次抢锁请求。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;批准（Accept）：尝试设置值.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;没有冲突的情况，如果提案者发现所有响应的决策节点此前都没有批准过该值（最新值为空），说明本次是第一个设置值的节点，可以随意决定要设置的值，将自己选定的值与提案ID，构成二源数组[id,value]，再次广播给所有决策节点（Accept请求）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果提案者发现收到的影响中，已经有一个或多个节点的应答中含有值了，他就不能随意取值，必须无条件的接受从应答中找出的最大ID的值，构成二元数组，再次广播给所有决策节点（Accept请求）。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;提案者虽然发起了抢锁请求，如果抢到锁，尝试按照自己的值来设置值。&lt;/p&gt;
+&lt;p&gt;如果没有抢到锁，就按照抢锁请求中返回的结果来共同执行广播抢锁返回的结果。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;当提案节点收到多数决策节点应答后，协商结束，共识形成，将形成的决策发送给所有记录节点进行学习。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755247330909_1755247330927.png"
+loading="lazy"
+alt="1755247330909.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;实例&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;S5初始想设置值为Y，接收到S1已经通过Promise发起的提案值为X。S5放弃自己原来的Y，改为一起通过X值。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755505029862_1755505029928.png"
+loading="lazy"
+alt="1755505029862.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;X被选定为最终值，并不是必定需要多数派的共同批准，只要S5提案时Promise应答结果中已经包含了批准过X的决策节点，导致S5发起提案的准备阶段，X未获得多数派批准，但由于S3已经批准，最终共识的结果仍为X。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;未获得多数批准时仍可以赋值成功&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755505246414_1755505246436.png"
+loading="lazy"
+alt="1755505246414.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一个提案是否通过，不取决于那边获得的Promise（承诺）更多，只取决于哪个提案先通过了Accept。只要有值先通过了Accept，后续再来promise时，天然让新提案结果也共识为之前Accept的结果。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;X已经提案，但并为立刻给出应答，此时Y值的提案到达多数节点，此时达成的共识为Y&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755505945073_1755505945101.png"
+loading="lazy"
+alt="1755505945073.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;s3接收到X值提案后，又接收了新的Y提案（且Y提案版本号领先X），此时X的通过请求被放弃，集群达成的共识为Y。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;活锁&lt;/strong&gt;极端情况导致的活锁&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755506052152_1755506052168.png"
+loading="lazy"
+alt="1755506052152.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;不断使用新的版本号来提案，导致准备阶段无限成功，之前通过他的提案全部作废。形成活锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;解决方案：可以加入随机超时时间，来避免活锁产生。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Basic Paxos的缺点&lt;/strong&gt;：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;只能对单个值形成决议&lt;/li&gt;
+&lt;li&gt;决议的形成至少需要两次网络请求和应答（准备和批准）高并发情况下将产生较大的网络开销&lt;/li&gt;
+&lt;li&gt;极端情况下甚至可能形成活锁&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="multi-paxos"&gt;Multi Paxos
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;选主的Paxos，在Basic Paxos的基础上增加了“选主” 的过程。&lt;/p&gt;
+&lt;p&gt;zookeeper的ZAB算法，Raft算法都属于本共识算法的派生&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;通过Basic Paxos选出主节点，后续所有操作都路由给主节点决策，相当于只有主节点有决策权，所有的提案节点接收到请求后，都要把请求路由给主节点，主节点通过接收到请求的先后顺序来决策发起Accepted请求。&lt;/p&gt;
+&lt;p&gt;如果主节点宕机后（心跳检测发现与主节点失联），则每个节点都会发起提案，尝试让自己为主。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755507359476_1755507359521.png"
+loading="lazy"
+alt="1755507359476.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;节点只有主（Leader）和从（Follower）的区别，没有提案者、决策者和记录者&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755507461220_1755507461257.png"
+loading="lazy"
+alt="1755507461220.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;分布式场景下，当以下三个问题全部解决时，就相当于达成了分布式的共识。&lt;/p&gt;
+&lt;p&gt;证明论文：这篇以《&lt;a class="link" href="https://web.stanford.edu/~ouster/cgi-bin/papers/raft-atc14" target="_blank" rel="noopener"
+&gt;一种可以让人理解的共识算法&lt;/a&gt;》（In Search of an Understandable Consensus Algorithm）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;如何选主&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;所有节点通过心跳检测来判断主节点是否失效&lt;/p&gt;
+&lt;p&gt;如果失效，开始通过基础Paxos来让自己成为主节点。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何把数据复制到各个节点上&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;主节点接收变更，并记录日志&lt;/strong&gt;。提出将某个值设置为X，此时主节点将X写入到自己的变更日志，先不提交，然后将变更成X的信息在下一次心跳广播中广播给所有的从节点，并要求从节点恢复确认收到的消息。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;主节点发起变更，给从节点记录日志&lt;/strong&gt;。从节点收到消息后，将操作写入自己的变更日志中，然后给主节点发送确认签收的消息。主节点收到过半的签收消息后，提交自己的变更、应答客户端并给从节点广播可以提交的消息。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;主节点收到半数日志记录完成，提交变更并广播从节点确认日志&lt;/strong&gt;。从节点收到提交消息，变更自己记录的日志，数据复制完成。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;网络产生分区的异常情况&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;S1、S2和S3、S4、S5之间彼此无法通信，形成网络分区。&lt;/li&gt;
+&lt;li&gt;一段时间后，S3、S4、S5中某个节点达到心跳检测阈值，得知当前分区中没有主节点存在，开始发起竞选自己为新主节点。S3、S4、S5选择S3为新主节点。此时分区中存在三个节点，超过半数（5/2=2）。S3成功当选。S1、S2不知道有S3新主的存在。此时集群中出现了两个主节点，S1和S3。&lt;/li&gt;
+&lt;li&gt;此时客户端发起操作请求：
+&lt;ol&gt;
+&lt;li&gt;S1、S2分区接收到请求：请求由S1处理，但S1只能收到两个节点的响应，无法超过半数。&lt;strong&gt;S1、S2分区的所有请求都无法成功提交&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;如果客户端连接到了S3、S4、S5分区，请求由S3处理，S3最多可以收到3个响应，超过半数，修改有效。集群可以正常提供服务。&lt;/li&gt;
+&lt;li&gt;只要系统中仍有半数以上的节点在线，系统就可以正常提供服务。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;假设网络阻塞被打通，两个分区重新恢复了通信
+&lt;ol&gt;
+&lt;li&gt;S1和S3都向所有节点发送心跳包，S3中的任期编号更大，此时5个节点都只承认S3是唯一的主节点。&lt;/li&gt;
+&lt;li&gt;S1、S2回滚它们所有未提交的变更。&lt;/li&gt;
+&lt;li&gt;S1、S2从主节点（S3）发送的心跳包中获得它们失联期间发生的所有变更，将变更提交写入到本地。&lt;/li&gt;
+&lt;li&gt;此时分布式系统各节点状态达成最终一致。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;如何保证过程的安全&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;协定性（Safety）：所有的坏事都不会发生。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;选主的结果一定是有且只有唯一的一个主节点，不可能同时出现两个主节点&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;终止性（Liveness）：所有的好事都终将发生，但不知道啥时候。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;选主过程是一定可以在某个时刻能够结束的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="gossip-协议"&gt;Gossip 协议
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;Paxos、Raft、ZAB为强一致性的分布式共识协议，虽然系统内部可能会出现不同值，但在外部只能观察到一致的值。&lt;/p&gt;
+&lt;p&gt;Gossip为最终一致性的分布式共识协议，系统中不一致的状态可能被外部观察到。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;病毒式传播。&lt;/p&gt;
+&lt;p&gt;某个信息需要传播，从信息源开始，按照固定周期（1秒），随机选择它相连接的K个节点来传播消息。&lt;/p&gt;
+&lt;p&gt;每个节点收到消息后，将在下一个周期内，选择给其他相邻的k个节点发送相同的消息，直到最终网络中的所有节点有收到消息为止。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/gossip.0eb19e80.gif"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;p&gt;Gossip 传播示意图(&lt;a class="link" href="https://managementfromscratch.wordpress.com/2016/04/01/introduction-to-gossip/" target="_blank" rel="noopener"
+&gt;图片来源&lt;/a&gt;)&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;能够容忍网络上节点的随意增加或者减少，随意宕机或者重启，新增加的节点状态最终都会和其他同步达成一致。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;完全去中心化，没有主节点的概念&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;缺点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;消息要通过多个轮次才能到达全网&lt;/li&gt;
+&lt;li&gt;全网的各个节点必定存在不一致的情况&lt;/li&gt;
+&lt;li&gt;对于个体，无法准确的预测消息传播到全网的时间&lt;/li&gt;
+&lt;li&gt;消息冗余，同样的消息重复发送给同一个节点，增加了网络压力&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="从类库到服务"&gt;从类库到服务
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;将构成软件服务的组件，拆分成一个个服务。&lt;/p&gt;
+&lt;p&gt;采用服务来当组件，而不是类库&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;类库在程序编译期间静态链接到程序中的，通过调用本地方法来使用其中的功能。&lt;/p&gt;
+&lt;p&gt;服务是进程外组件，通过远程调用方法来使用其中的功能。&lt;/p&gt;
+&lt;h3 id="服务发现"&gt;服务发现
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;如何确定目标方法的确切位置&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;所有远程服务调用都是使用全限定名、端口号与服务标识所构成的三元组来确定一个远程服务的精确坐标。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;服务发现三个必须的过程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;服务的注册：当服务启动时，将自己的坐标信息通知到服务注册中心
+&lt;ol&gt;
+&lt;li&gt;自注册模式： Spring Cloud 的@EnableEurekaClient 注解，程序主动来完成&lt;/li&gt;
+&lt;li&gt;第三方注册： Kubernetes 和 Registrator，由容器编排框架或第三方注册工具来完成&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;服务的维护（心跳检测）：服务是不可靠的，随时可能因为各种意外而被迫下线。服务发现框架必须要自己区保证所维护的服务列表的正确性。
+&lt;ol&gt;
+&lt;li&gt;维护方式：长连接、心跳、探针、进程状态等&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;服务的发现：消费者从服务发现框架中，把一个服务转换为服务实际坐标的过程。
+&lt;ol&gt;
+&lt;li&gt;Eureka 中的 ServiceID、Nacos 中的服务名、或者通用的 FQDN&lt;/li&gt;
+&lt;li&gt;Kubernetes 也支持注入环境变量来做服务发现。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;注册中心的地位是特殊的，注册中心不依赖其他服务，但被所有其他服务共同依赖，是系统中最基础的服务，几乎没有可能在业务层面进行容错。注册中心一旦崩溃，整个系统都不再可用。&lt;strong&gt;必须尽最大努力保证服务发现的可用性。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755573399747_1755573399784.png"
+loading="lazy"
+alt="1755573399747.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Eureka（AP）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;优先保证高可用性，牺牲了系统中服务状态的一致性。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;注册&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;Eureka的各个节点采用异步复制来交换服务注册信息，当有新服务注册进来时，并不需要等待信息在其他节点注册复制完成，而是马上在该节点宣布服务可见，只是不保证在其他节点上多长时间后才会可见。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;维护&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;当旧服务下线或者断网，只由超时机制来控制从哪个服务注册表中移除，变动信息不会实时的同步给所有服务端和客户端。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;客户端或服务端都维护着一份服务注册表缓存，并以TTL（Time to Live）机制来进行更新。哪怕注册中心崩溃，客户端依然可以维持有限的可用。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;总结&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;Eureka更适合节点关系相对固定，服务不会频繁的上下线，以较小的代价换取最高的可用性。&lt;/p&gt;
+&lt;p&gt;万一客户端拿到了已经发生变动的错误地址，也能够通过Ribbon和Hystrix模块配合来兜底，实现故障转移或者快速失败。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Consul（CP）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;采用Raft算法，要求多数派写入成功后，服务的注册或变动才算成功。严格保证集群外读取到的结果必定是一致的。同时采用Gossip协议，支持多数据中心之间更大规模的服务同步。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;如果从注册中心中取到了错误的地址，就没有其他兜底方案了。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CP模型：ZooKeeper、Doozerd、Etcd&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Etcd采用Raft算法，ZooKeeper采用ZAB算法，都是主从 Multi Paxos的派生算法。他们都是CP的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;只提供CRUD和Watch等少量API，完整的服务发现，健康检查等，都必须自己手动实现。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;利用基础设施（主要指DNS服务器）实现的服务发现，SkyDNS，CoreDNS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;K8S的服务注册发现机制，是 CP 还是 AP 就取决于后端采用何种存储，如果是基于 Etcd 实现的，那自然是 CP 的，如果是基于内存异步复制的方案实现的，那就是 AP 的（仅针对 DNS 服务器本身，不考虑本地 DNS 缓存的 TTL 刷新）。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：对应用透明，任何语言、框架、工具肯定都支持HTTP、DNS的，完全不受程序技术选型的约束。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;缺点&lt;/strong&gt;：必须自己考虑如何做负载均衡、如何调用远程方法等。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;专门用于服务发现的框架和工具，代表是 Eureka、Consul 和 Nacos。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;CP 的 Consul、AP 的 Eureka，还有同时支持 CP 和 AP 的 Nacos（Nacos 采用类 Raft 协议做的 CP，采用自研的 Distro 协议做的 AP，这里“同时”是“都支持”的意思，它们必须二取其一，不是说 CAP 全能满足）。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="网关路由gateway"&gt;网关路由（Gateway）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;微服务中网关的首要职责就是作为统一的出口对外提供服务，将外部访问网关地址的流量，根据适当的规则路由到内部集群中正确的服务节点之上。&lt;/p&gt;
+&lt;p&gt;关还可以根据需要作为流量过滤器来使用，提供某些额外的可选的功能，譬如安全、认证、授权、限流、监控、缓存，等等&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;网关 = 路由器（基础职能） + 过滤器（可选职能）&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;五种网络IO模型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;异步IO（Asynchronous I/O）：异步IO中数据到达缓冲区后，不需要调用进程主动进行从缓冲区复制数据的操作，而是复制完成后，由操作系统向线程发送信号。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;阻塞IO（Blocking I/O）：由调用进程执行操作，如果遇到阻塞，调用进程被阻塞。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;节省CPU资源。缺点是线程休眠所带来的上下文切换，需要从用户态切换到内核态的重负载操作。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;非阻塞IO（Non-Blocking I/O）：调用线程执行，如果发现资源没有就绪，就等待固定时间轮询，直到操作结束。可以避免CPU休眠，节省切换上下文的消耗，但如果需要等待时间较长的返回，非阻塞IO浪费了CPU资源。非常不推荐&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;多路复用IO（Multiplexing IO）：可以在同一条阻塞线程上处理多个不同端口的监听。哪个端口资源准备好，就先去处理哪个端口的操作。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;目前最主流的网络IO应用，有select、epoll、kqueue 等不同实现。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;信号驱动IO（Signal-Driven I/O）：有固定线程监听缓冲区，当资源准备完成，此线程把数据复制结束后，通知其他线程执行操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="客户端负载均衡"&gt;客户端负载均衡
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;客户端负载均衡（Ribbon、Spring Cloud Load Balancer）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755667983405_1755667983454.png"
+loading="lazy"
+alt="1755667983405.png"
+&gt;客户端负载均衡&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;在服务内部实现的负载均衡，每个服务都有自己对应的负载均衡器，负载均衡器和服务在同一个进程内，互相调用不会出现网络开销。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;由于请求的来源可能是来自集群中任意一个服务节点，而不再是统一来自集中式均衡器，这就使得内部网络安全和信任关系变得复杂，当攻破任何一个服务时，更容易通过该服务突破集群中的其他部分。&lt;/p&gt;
+&lt;p&gt;服务集群的拓扑关系是动态的，每一个客户端均衡器必须持续跟踪其他服务的健康状况，以实现上线新服务、下线旧服务、自动剔除失败的服务、自动重连恢复的服务等均衡器必须具备的功能。由于这些操作都需要通过访问服务注册中心来完成，数量庞大的客户端均衡器一直持续轮询服务注册中心，也会为它带来不小的负担。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;代理负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;服务网格（Service Mesh）基于代理，类似VPN实现的负载均衡器。&lt;/p&gt;
+&lt;p&gt;原本嵌入服务进程中的均衡器提取出来，同一个Pod之内的一个特殊服务。（边车代理）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755679263950_1755679263998.png"
+loading="lazy"
+alt="1755679263950.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;Kubernetes 严格保证了同一个 Pod 中的容器不会跨越不同的节点，这些容器共享着同一个网络名称空间，因此代理均衡器与服务实例的交互，实质上是对本机回环设备的访问，仍然要比真正的网络交互高效且稳定得多。代理均衡器付出的代价较小。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;好处&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;代理均衡器不受编程语言限制&lt;/li&gt;
+&lt;li&gt;服务拓扑感知方面更有优势，控制平台K8S会同一管控服务上下线状态。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;地域或区域的负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;云计算领域常用的负载均衡，基于地理位置把请求全部分发给不同的机房去处理。尽量保证一个地方的请求，全部都只会在同一个区域的机房内部处理完成，不要出现跨区域调用的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="流量治理"&gt;流量治理
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;容错性设计：失败检查，自动恢复&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="服务容错"&gt;服务容错
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;在分布式场景中，错误是必然存在的，当服务出现错误时，与其有关联的服务应当如何处理&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;常见的容错策略&lt;/strong&gt;:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;故障转移：多数服务均部署了多个副本，每个副本可能在不同的机器上，当某台机器宕机时，故障转移只如果调用的服务出现故障，系统不会立刻向调用者返回失败，而是自动切换到其他服务副本。（Feign的原理）从而保证服务的高可用。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;故障转移存在调用次数的限制，如果服务调用超时时间为100毫秒，但失败的请求就花费了60毫秒返回数据，就算转移调用可以正常返回结果，但也会超时，这样的调用也就没意义了。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;快速失败：有些业务不允许做故障转移，&lt;strong&gt;故障转移策略可以实施的前提是必须要保证接口的幂等性&lt;/strong&gt;，对于非幂等的接口，重复调用就可能会产生脏数据。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果服务出现异常。就尽快抛出异常，由调用者处理。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;安全失败：服务调用过程中，有主路和旁路之分，(旁路调用不重要，主路调用重要)，只要主路调用正确，有部分服务失败了也不影响核心业务的正确性。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;沉默失败：当请求失败后，就默认服务提供者一定时间内无法再对外提供服务。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;故障恢复：通常以快速失败+故障恢复的策略同时出现，服务调用出错之后，将该调用的失败信息存入一个消息队列，然后由系统自动开始异步重试调用。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;例如，核心放款Confirm阶段，调用支付放款失败后，记录流水，等待流水同步。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并行调用：在调用开始之前，就想尽最大可能拿到返回值。一开始就同时向多个服务发起调用，只要其中任何一个返回成功，调用就悬挂成功。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;广播调用：调用所有的副本，要求所有请求都返回成功后，才算成功。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如刷新分布式缓存。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;center&gt;表 8-1 常见容错策略优缺点及应用场景对比&lt;/center&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;容错策略&lt;/th&gt;
+&lt;th&gt;优点&lt;/th&gt;
+&lt;th&gt;缺点&lt;/th&gt;
+&lt;th&gt;应用场景&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;故障转移&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;系统自动处理，调用者对失败的信息不可见&lt;/td&gt;
+&lt;td&gt;增加调用时间，额外的资源开销&lt;/td&gt;
+&lt;td&gt;调用幂等服务 对调用时间不敏感的场景&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;快速失败&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;调用者有对失败的处理完全控制权 不依赖服务的幂等性&lt;/td&gt;
+&lt;td&gt;调用者必须正确处理失败逻辑，如果一味只是对外抛异常，容易引起雪崩&lt;/td&gt;
+&lt;td&gt;调用非幂等的服务 超时阈值较低的场景&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;安全失败&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;不影响主路逻辑&lt;/td&gt;
+&lt;td&gt;只适用于旁路调用&lt;/td&gt;
+&lt;td&gt;调用链中的旁路服务&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;沉默失败&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;控制错误不影响全局&lt;/td&gt;
+&lt;td&gt;出错的地方将在一段时间内不可用&lt;/td&gt;
+&lt;td&gt;频繁超时的服务&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;故障恢复&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;调用失败后自动重试，也不影响主路逻辑&lt;/td&gt;
+&lt;td&gt;重试任务可能产生堆积，重试仍然可能失败&lt;/td&gt;
+&lt;td&gt;调用链中的旁路服务 对实时性要求不高的主路逻辑也可以使用&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;并行调用&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;尽可能在最短时间内获得最高的成功率&lt;/td&gt;
+&lt;td&gt;额外消耗机器资源，大部分调用可能都是无用功&lt;/td&gt;
+&lt;td&gt;资源充足且对失败容忍度低的场景&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;广播调用&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;支持同时对批量的服务提供者发起调用&lt;/td&gt;
+&lt;td&gt;资源消耗大，失败概率高&lt;/td&gt;
+&lt;td&gt;只适用于批量操作的场景&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;center&gt;容错设计模式&lt;/center&gt;
+&lt;ul&gt;
+&lt;li&gt;断路器模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;通过代理（断路器对象），来一对一的接管服务调用者的远程请求。&lt;/p&gt;
+&lt;p&gt;熔断：&lt;/p&gt;
+&lt;p&gt;断路器来统计调用返回的各种结果，当出现故障的次数达到断路器的阈值，断路器open，窗口内，断路器不再进行远程访问。等待后续恢复。&lt;/p&gt;
+&lt;p&gt;这样可以避免因持续的失败导致的资源堆积和消耗，避免了雪崩效应。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755740769572_1755740785018.png"
+loading="lazy"
+alt="1755740769572.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755745519077_1755745519113.png"
+loading="lazy"
+alt="1755745519077.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;服务熔断和服务降级的区别&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;服务熔断：当服务不可用时，通过上面提到的短路器方式，不再访问出错的服务。调用者来直接处理此异常。不再被调用的服务相当于被熔断了。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;服务降级：调用者调用下游，当下游无法工作，或负载太高，需要调用者想其他方式来处理的过程，为服务降级。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;服务降级不一定必须是服务熔断时出现，也可能是负载均衡，或流量控制的一种手段。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;舱壁隔离模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;调用外部服务的故障大致可以分为“失败”（如 400 Bad Request、500 Internal Server Error 等错误）、“拒绝”（如 401 Unauthorized、403 Forbidden 等错误）以及“超时”（如 408 Request Timeout、504 Gateway Timeout 等错误）三大类。&lt;/p&gt;
+&lt;p&gt;超时场景中，只要请求一直不结束，就会一直占用着某个线程不能释放，如果某个请求大量超时，导致tomcat的全部线程都被占用，导致整个机器上所有的java服务全部瘫痪。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755754097338_1755754097385.png"
+loading="lazy"
+alt="1755754097338.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;p&gt;为每个服务单独设置线程池，每个服务接收到的任务，只会在本服务中独有的线程池中运行，如果发生大量超时，也只会导致单个服务崩溃，不会对其他服务造成影响。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755754265018_1755754265039.png"
+loading="lazy"
+alt="1755754265018.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;根据 Netflix 官方给出的数据，一旦启用 Hystrix 线程池来进行服务隔离，大概会为每次服务调用增加约 3 毫秒至 10 毫秒的延时，如果调用链中有 20 次远程服务调用，那每次请求就要多付出 60 毫秒至 200 毫秒的代价来换取服务隔离的安全保障。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;一般来说，我们会选择将服务层面的隔离实现在服务调用端或者边车代理上，将系统层面的隔离实现在 DNS 或者网关处。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;重试模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对失败的服务进行重试。&lt;/p&gt;
+&lt;h3 id="流量控制"&gt;流量控制
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;场景应用题&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;已知条件：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;系统中一个业务操作需要调用 10 个服务协作来完成&lt;/li&gt;
+&lt;li&gt;该业务操作的总超时时间是 10 秒&lt;/li&gt;
+&lt;li&gt;每个服务的处理时间平均是 0.5 秒&lt;/li&gt;
+&lt;li&gt;集群中每个服务均部署了 20 个实例 副本&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;求解以下问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;单个用户访问，完成一次业务操作，需要耗费系统多少处理器时间？
+答：0.5 × 10 = 5 Sec &lt;a class="link" href="https://en.wikipedia.org/wiki/CPU_time" target="_blank" rel="noopener"
+&gt;CPU Time&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;集群中每个服务每秒最大能处理多少个请求？
+答：(1 ÷ 0.5) × 20 = 40 &lt;a class="link" href="https://en.wikipedia.org/wiki/Queries_per_second" target="_blank" rel="noopener"
+&gt;QPS&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;假设不考虑顺序且请求分发是均衡的，在保证不超时的前提下，整个集群能持续承受最多每秒多少笔业务操作？
+答：40 × 10 ÷ 5 = 80 &lt;a class="link" href="https://en.wikipedia.org/wiki/Transactions_per_second" target="_blank" rel="noopener"
+&gt;TPS&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;如果集群在一段时间内持续收到 100 TPS 的业务请求，会出现什么情况？
+答：这就超纲了小学水平，得看你们家架构师的本事了。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;流量统计指标&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;通过哪些数据来反应系统的流量压力大小。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;每秒事务数（TPS）：衡量系统吞吐量的最终标准。&lt;/li&gt;
+&lt;li&gt;每秒请求数（HPS）：每秒从客户端发向服务端的请求数，一次业务可能需要多次请求才能完成。&lt;/li&gt;
+&lt;li&gt;每秒查询数（QPS）：一台服务器能够响应的查询次数。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;center&gt;限流设计模式&lt;/center&gt;
+&lt;ul&gt;
+&lt;li&gt;流量计数器模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;不严谨&lt;/strong&gt;，设置一个计算器，统计一段时间内的总流量，然后除以时间。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;可能出现前面几秒流量极大，后面流量极小。流量统计不严谨。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;滑动窗口&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;利用双指针，统计一段时间内的流量数，可以平滑的计算一段时间内的流量数。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;可以保证流量不会超过系统设定的最大值。但不能填谷。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;漏桶模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;通过缓存区来缓冲流量，然后把缓冲区中的流量，较为平稳的发送给服务。&lt;/p&gt;
+&lt;p&gt;比如搞一个FIFO队列，然后让服务消费队列 中的请求。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;可以填谷，且保证流量平稳。但无法动态调整流出速度，流出速度一般是固定值。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;令牌桶模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;假设x秒内最大请求数不超过Y，则每隔X/Y时间就向桶中添加一个令牌（记得给桶中加入令牌数量的上限，到达上限不再添加令牌）。请求进来时，需先从桶中取到令牌，才能进入系统。一旦桶中没有令牌可取，就尝试让调用服务执行降级逻辑。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;让系统以一个由限流目标决定的速率向桶中注入令牌，譬如要控制系统的访问不超过 100 次每秒，速率即设定为 100 个令牌每秒，每个令牌注入间隔为 1/100=10 毫秒。&lt;/li&gt;
+&lt;li&gt;桶中最多可以存放 N 个令牌，N 的具体数量是由超时时间和服务处理能力共同决定的。如果桶已满，第 N+1 个进入的令牌会被丢弃掉。&lt;/li&gt;
+&lt;li&gt;请求到时先从桶中取走 1 个令牌，如果桶已空就进入降级逻辑。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;center&gt;分布式限流&lt;/center&gt;
+&lt;ul&gt;
+&lt;li&gt;通过集中缓存还限流（非常不推荐）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;通过redis等集中缓存，在缓存中统计每个接口的流量使用情况，然后根据缓存中统计的数量+分布式锁来实现限流。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;限流往往只有在高流量的情况下才会使用，但修改redis数量，获取分布式锁等为了限流准备的操作。需要增加至少两次网络IO，反而大大消耗了资源，可能进一步拖累了系统的处理速度。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;在令牌桶基础上增加货币属性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不把令牌看作简单的准入通行证，同时也给令牌添加货币额度。不同等级的用户，添加不同的额度，每次服务调用，都给令牌消耗一定额度。当额度归零时，让用户重新获取令牌。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;只有在获取令牌时需要网络请求，其他情况下都不在需要额外的网络请求。&lt;/p&gt;
+&lt;p&gt;但可能会导致用户额度归零后，无法获取令牌而使业务中断。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="ddd领域驱动设计"&gt;DDD领域驱动设计
+&lt;/h2&gt;&lt;h3 id="传统mvc架构"&gt;传统MVC架构
+&lt;/h3&gt;&lt;p&gt;主要包括M-mode对象层，封装到domain里。V-view展示层，前后端分离，几乎没有JSP文件了。C-Controller控制层，对外提供接口实现类。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://bugstack.cn/images/roadmap/tutorial/road-map-230623-02.png?raw=true"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://bugstack.cn/images/roadmap/tutorial/road-map-230623-03.png?raw=true"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;h3 id="ddd"&gt;DDD
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;DDD是一种软件设计方法。DDD是指导我们做软件工程设计的一种手段，主要用来切割工程模型：领域、界限上下文、实体、值对象、聚合、工厂、仓储等。通过DDD的指导思想，我们可以在前期投入更多的时间，更加合理的规划出可持续迭代的工程设计。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;DDD用来解决什么问题&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;战略设计&lt;/p&gt;
+&lt;p&gt;主要以应对复杂的业务需求，通过抽象、分治的过程，合理的拆分出多个微服务，分而治之。少数几个中等规模的单体应用，周围环绕着一个服务生态系统，这更有意义。&lt;a class="link" href="https://www.simplethread.com/youre-not-actually-building-microservices/" target="_blank" rel="noopener"
+&gt;你实际上并没有构建微服务 @贾斯汀·埃瑟里奇&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;战术设计&lt;/p&gt;
+&lt;p&gt;如何基于面向对象思维，运用领域模型来表达业务概念。传统MVC三层架构，会让Service扁平的、大量的，平铺出非常复杂的业务逻辑代码。系统会不断的增加复杂度，直到难以维护的程度。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>读《凤凰架构》有感--架构篇</title><link>https://thecoolboyhan.github.io/p/icyfenix-argitektuur/</link><pubDate>Thu, 07 Aug 2025 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/icyfenix-argitektuur/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/icyfenix-argitektuur/1.png" alt="Featured image of post 读《凤凰架构》有感--架构篇" /&gt;&lt;p&gt;凤凰架构&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;文中大部分资料摘抄自周志明老师的&lt;a class="link" href="https://icyfenix.cn/" target="_blank" rel="noopener"
+&gt;凤凰架构&lt;/a&gt;开源网站&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id="架构"&gt;架构
+&lt;/h1&gt;&lt;h2 id="访问远程服务"&gt;访问远程服务
+&lt;/h2&gt;&lt;h3 id="远程服务调用rpc"&gt;远程服务调用（RPC）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;RPC出现的目的是为了让计算机能够跟调用本地方法一样去调用远程方法。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="进程间通讯ipc"&gt;&lt;strong&gt;进程间通讯（IPC）&lt;/strong&gt;
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;管道（pipe）&lt;/p&gt;
+&lt;p&gt;管道类似于两个进程间的桥梁，可以通过管道在进程间传递少量的字符流或字节流。&lt;/p&gt;
+&lt;p&gt;管道命令：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-sh" data-lang="sh"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;ps -ef &lt;span class="p"&gt;|&lt;/span&gt; grep java
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;信号（Signal）&lt;/p&gt;
+&lt;p&gt;用于通知目标某种事件发生，除了用于进程间通信外，进程还可以发送信号给进程自身。&lt;/p&gt;
+&lt;p&gt;信号命令：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-sh" data-lang="sh"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nb"&gt;kill&lt;/span&gt; -9 pid
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;信号量（Semaphore)&lt;/p&gt;
+&lt;p&gt;两个进程之间同步协作的手段，相同于操作系统提供的一个特殊变量，程序可以在上面进行wait（）和notify（）操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;消息队列（Message Queue）：上面的三个方式只适合传递少量信息，消息队列用于进程间数据量较多的通信。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;共享内存（Shared Memory）：允许多个进程访问同一块公共的内存空间，这是效率最高的进程间通信方式。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;套接字接口（Socket）：可用于不同机器之间的进程通信。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/rpc.38c28315.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;h4 id="rpc的三个基本问题"&gt;RPC的三个基本问题
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;如何表示数据（序列化与反序列化）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;将交互双方锁涉及的数据转换为某种事先约定好的中立数据流格式来进行传输，将输数据流转换回不同语言中对应的数据类型来进行使用。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何传递数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;两个服务的Endpoint之间交互操作、交换数据。一般是基于标准的TCP、UDP等标准的传输层协议来完成的。（也有可能直接使用HTTP协议来实现）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如何确定方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;编译器或者解释器回根据语言规范，将调用的方法签名传唤为进程空间中子过程入口位置的指针。&lt;/p&gt;
+&lt;h3 id="rest设计风格表征状态转移"&gt;REST设计风格（表征状态转移）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;并非协议，只是一种风格&lt;/p&gt;
+&lt;p&gt;RPC：面向过程编程
+REST：面向资源编程&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;资源（Resource）：内容本身，如信息、数据等。远程调用等都是为了提供资源。&lt;/li&gt;
+&lt;li&gt;表征（Representation）：信息与用户交互时的表示形式，这与软件分层架构中常说的表示层的语义一致。&lt;/li&gt;
+&lt;li&gt;状态（State）：分成有状态与无状态，由服务端保存用户目前所处的阶段或状态为有状态，由用户自己保存自己目前所处的状态，服务端只负责提供资源的为无状态。&lt;/li&gt;
+&lt;li&gt;转移（Transfer）：服务端通过某种方式让用户的状态发生改变，如获取了新资源等。这个操作被称为：表征状态转移&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="rest风格的六大原则"&gt;REST风格的六大原则
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;服务端与客户端分离（Client-Server）前后端分离&lt;/p&gt;
+&lt;p&gt;将用户界面所关注的逻辑和数据存储所关注的逻辑分离开来，有助于提高用户界面的跨平台的可移植性。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;无状态（Stateless）去除session&lt;/p&gt;
+&lt;p&gt;REST希望服务器不要去负责维护状态，每一次从客户端发送的请求中，应包括所有必要的上下文信息，会话信息也由客户端负责保存维护，服务端依据客户端传递的状态来执行业务处理逻辑，驱动整个应用的状态变迁。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;目前大部分系统达不到这个要求，服务端无状态可以在分布式计算中获得非常高的价值，但即希望于用户每次传输大量的上下文有点不切实际。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;可缓存（Cacheability）分布式缓存&lt;/p&gt;
+&lt;p&gt;无状态服务器虽然提升了系统的可见性、可靠性和可伸缩性，但降低了系统的网络性。REST希望分布式系统有一个可以暂时缓存数据的分布式缓存（Redis），这样服务器直接交互，可以进一步提高性能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;分层系统（Layered System）（负载均衡）&lt;/p&gt;
+&lt;p&gt;客户端不需要直到是否直接连接到了最终的服务器，中间服务器可以通过负载均衡和共享缓存的机制提高系统的可扩展性，这样便于缓存、伸缩和安全策略的部署。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;统一接口（Uniform Interface）（面向资源）&lt;/p&gt;
+&lt;p&gt;REST希望开发者面向资源编程，希望软件系统设计的重点放在抽象系统该有哪些资源上，而不是抽象系统该有哪些行为（服务）上。&lt;/p&gt;
+&lt;p&gt;用一个登录场景来举例子：&lt;/p&gt;
+&lt;p&gt;传统思维：登录login()服务，注销logout（）服务。&lt;/p&gt;
+&lt;p&gt;REST思维：登录，PUT Session，注销DELETE Session。查询登录信息，GET Session&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;所有的资源最好应该是自描述信息的，或都是通过资源id来进行的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;按需代码（Code-On-Demand）（可选项）&lt;/p&gt;
+&lt;p&gt;客户端无需直到服务端如何运行，服务端会按需把需要的可执行程序发送给客户端执行。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="rmm成熟度"&gt;RMM成熟度
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;如何衡量一个服务有多么REST，下面直接引入书中的内容&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol start="0"&gt;
+&lt;li&gt;
+&lt;p&gt;完全不REST&lt;/p&gt;
+&lt;p&gt;医院开放了一个&lt;code&gt;/appointmentService&lt;/code&gt;的 Web API，传入日期、医生姓名作为参数，可以得到该时间段该名医生的空闲时间，该 API 的一次 HTTP 调用如下所示：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;POST&lt;/span&gt; &lt;span class="nn"&gt;/appointmentService?action=query&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{date: &amp;#34;2020-03-04&amp;#34;, doctor: &amp;#34;mjones&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;然后服务器会传回一个包含了所需信息的回应：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;200&lt;/span&gt; &lt;span class="ne"&gt;OK&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {start:&amp;#34;14:00&amp;#34;, end: &amp;#34;14:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;},
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {start:&amp;#34;16:00&amp;#34;, end: &amp;#34;16:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;得到了医生空闲的结果后，我觉得 14:00 的时间比较合适，于是进行预约确认，并提交了我的基本信息：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;POST&lt;/span&gt; &lt;span class="nn"&gt;/appointmentService?action=confirm&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; appointment: {date: &amp;#34;2020-03-04&amp;#34;, start:&amp;#34;14:00&amp;#34;, doctor: &amp;#34;mjones&amp;#34;},
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; patient: {name: icyfenix, age: 30, ……}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如果预约成功，那我能够收到一个预约成功的响应：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;200&lt;/span&gt; &lt;span class="ne"&gt;OK&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; code: 0,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; message: &amp;#34;Successful confirmation of appointment&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如果发生了问题，譬如有人在我前面抢先预约了，那么我会在响应中收到某种错误信息：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;200&lt;/span&gt; &lt;span class="ne"&gt;OK&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; code: 1
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; message: &amp;#34;doctor not available&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;到此，整个预约服务宣告完成，直接明了，我们采用的是非常直观的基于 RPC 风格的服务设计似乎很容易就解决了所有问题……了吗？&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Resource：开始引入资源的概念&lt;/p&gt;
+&lt;p&gt;第 0 级是 RPC 的风格，如果需求永远不会变化，也不会增加，那它完全可以良好地工作下去。但是，如果你不想为预约医生之外的其他操作、为获取空闲时间之外的其他信息去编写额外的方法，或者改动现有方法的接口，那还是应该考虑一下如何使用 REST 来抽象资源。&lt;/p&gt;
+&lt;p&gt;通往 REST 的第一步是引入资源的概念，在 API 中基本的体现是围绕着资源而不是过程来设计服务，说的直白一点，可以理解为服务的 Endpoint 应该是一个名词而不是动词。此外，每次请求中都应包含资源的 ID，所有操作均通过资源 ID 来进行，譬如，获取医生指定时间的空闲档期：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;POST&lt;/span&gt; &lt;span class="nn"&gt;/doctors/mjones&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{date: &amp;#34;2020-03-04&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;然后服务器传回一组包含了 ID 信息的档期清单，注意，ID 是资源的唯一编号，有 ID 即代表“医生的档期”被视为一种资源：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;200&lt;/span&gt; &lt;span class="ne"&gt;OK&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {id: 1234, start:&amp;#34;14:00&amp;#34;, end: &amp;#34;14:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;},
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {id: 5678, start:&amp;#34;16:00&amp;#34;, end: &amp;#34;16:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;我还是觉得 14:00 的时间比较合适，于是又进行预约确认，并提交了我的基本信息：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;POST&lt;/span&gt; &lt;span class="nn"&gt;/schedules/1234&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{name: icyfenix, age: 30, ……}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;后面预约成功或者失败的响应消息在这个级别里面与之前一致，就不重复了。比起第 0 级，第 1 级的特征是引入了资源，通过资源 ID 作为主要线索与服务交互，但第 1 级至少还有三个问题并没有解决：一是只处理了查询和预约，如果我临时想换个时间，要调整预约，或者我的病忽然好了，想删除预约，这都需要提供新的服务接口。二是处理结果响应时，只能靠着结果中的&lt;code&gt;code&lt;/code&gt;、&lt;code&gt;message&lt;/code&gt;这些字段做分支判断，每一套服务都要设计可能发生错误的 code，这很难考虑全面，而且也不利于对某些通用的错误做统一处理；三是并没有考虑认证授权等安全方面的内容，譬如要求只有登陆用户才允许查询医生档期时间，某些医生可能只对 VIP 开放，需要特定级别的病人才能预约，等等。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;HTTP Verbs：引入统一接口，映射到HTTP协议&lt;/p&gt;
+&lt;p&gt;第 1 级遗留三个问题都可以靠引入统一接口来解决。HTTP 协议的七个标准方法是经过精心设计的，只要架构师的抽象能力够用，它们几乎能涵盖资源可能遇到的所有操作场景。REST 的做法是把不同业务需求抽象为对资源的增加、修改、删除等操作来解决第一个问题；使用 HTTP 协议的 Status Code，可以涵盖大多数资源操作可能出现的异常，而且 Status Code 可以自定义扩展，以此解决第二个问题；依靠 HTTP Header 中携带的额外认证、授权信息来解决第三个问题，这个在实战中并没有体现，请参考安全架构中的“&lt;a class="link" href="https://icyfenix.cn/architect-perspective/general-architecture/system-security/credentials" target="_blank" rel="noopener"
+&gt;凭证&lt;/a&gt;”相关内容。&lt;/p&gt;
+&lt;p&gt;按这个思路，获取医生档期，应采用具有查询语义的 GET 操作进行：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;GET&lt;/span&gt; &lt;span class="nn"&gt;/doctors/mjones/schedule?date=2020-03-04&amp;amp;status=open&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;然后服务器会传回一个包含了所需信息的回应：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;200&lt;/span&gt; &lt;span class="ne"&gt;OK&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {id: 1234, start:&amp;#34;14:00&amp;#34;, end: &amp;#34;14:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;},
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {id: 5678, start:&amp;#34;16:00&amp;#34;, end: &amp;#34;16:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;我仍然觉得 14:00 的时间比较合适，于是又进行预约确认，并提交了我的基本信息，用以创建预约，这是符合 POST 的语义的：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;POST&lt;/span&gt; &lt;span class="nn"&gt;/schedules/1234&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{name: icyfenix, age: 30, ……}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如果预约成功，那我能够收到一个预约成功的响应：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;201&lt;/span&gt; &lt;span class="ne"&gt;Created&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;Successful confirmation of appointment
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如果发生了问题，譬如有人在我前面抢先预约了，那么我会在响应中收到某种错误信息：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;409&lt;/span&gt; &lt;span class="ne"&gt;Conflict&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;doctor not available
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;超文本驱动的REST接口&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;第 2 级是目前绝大多数系统所到达的 REST 级别，但仍不是完美的，至少还存在一个问题：你是如何知道预约 mjones 医生的档期是需要访问&lt;code&gt;/schedules/1234&lt;/code&gt;这个服务 Endpoint 的？也许你甚至第一时间无法理解为何我会有这样的疑问，这当然是程序代码写的呀！但 REST 并不认同这种已烙在程序员脑海中许久的想法。RMM 中的 Hypermedia Controls、Fielding 论文中的 HATEOAS 和现在提的比较多的“超文本驱动”，所希望的是除了第一个请求是由你在浏览器地址栏输入所驱动之外，其他的请求都应该能够自己描述清楚后续可能发生的状态转移，由超文本自身来驱动。所以，当你输入了查询的指令之后：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;GET&lt;/span&gt; &lt;span class="nn"&gt;/doctors/mjones/schedule?date=2020-03-04&amp;amp;status=open&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;服务器传回的响应信息应该包括诸如如何预约档期、如何了解医生信息等可能的后续操作：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;span class="lnt"&gt;18
+&lt;/span&gt;&lt;span class="lnt"&gt;19
+&lt;/span&gt;&lt;span class="lnt"&gt;20
+&lt;/span&gt;&lt;span class="lnt"&gt;21
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt; &lt;span class="m"&gt;200&lt;/span&gt; &lt;span class="ne"&gt;OK&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; schedules：[
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; id: 1234, start:&amp;#34;14:00&amp;#34;, end: &amp;#34;14:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; links: [
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {rel: &amp;#34;comfirm schedule&amp;#34;, href: &amp;#34;/schedules/1234&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; ]
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; id: 5678, start:&amp;#34;16:00&amp;#34;, end: &amp;#34;16:50&amp;#34;, doctor: &amp;#34;mjones&amp;#34;,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; links: [
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {rel: &amp;#34;comfirm schedule&amp;#34;, href: &amp;#34;/schedules/5678&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; ]
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; ],
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; links: [
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; {rel: &amp;#34;doctor info&amp;#34;, href: &amp;#34;/doctors/mjones/info&amp;#34;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt; ]
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="g"&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如果做到了第 3 级 REST，那服务端的 API 和客户端也是完全解耦的，你要调整服务数量，或者同一个服务做 API 升级将会变得非常简单。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;备注：个人认为这样开发过于夸张，但不可否认，通过动态的返回可选的url，可以强大的实现权限控制，功能扩展等。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="rest的不足"&gt;REST的不足
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;面向资源编程只适合CRUD，面向过程、面向对象编程才能处理真正复杂的业务&lt;/li&gt;
+&lt;li&gt;REST和HTTP完全绑定，不适合应用于要求高性能传输的场景&lt;/li&gt;
+&lt;li&gt;REST不利于事务支持&lt;/li&gt;
+&lt;li&gt;REST没有传输可靠性支持&lt;/li&gt;
+&lt;li&gt;REST缺乏对资源进行“部分”和“批量”的处理能力&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="事务处理"&gt;事务处理
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;事务的ACID&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;C：一致性，一致性不是维持事务的手段，而是我们需要达到的目的。如果保证事务的一致性，只有完成了其他三种手段，才能保证事务的一致性。&lt;/p&gt;
+&lt;p&gt;下面是源文的原话：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;A、I、D 是手段，C 是目的，前者是因，后者是果，弄到一块去完全是为了拼凑个单词缩写。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;A原子性：在同一项业务处理过程中，事务保证了对多个数据的修改，要么同时成功，要么同时被撤销。&lt;/p&gt;
+&lt;p&gt;I隔离性：在不同的业务处理过程中，事务保证了各自业务正在读写的数据互相独立，不会彼此影响。&lt;/p&gt;
+&lt;p&gt;D持久性：事务应当保证所有成功被提交的数据修改都能正确地被持久化，不丢数据。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内部一致性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个服务只使用了一个数据源时，通过AID来保证一致性。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;外部一致性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一个服务使用多个不同的数据源，甚至多个服务同时涉及多个不同的数据源。&lt;/p&gt;
+&lt;h3 id="本地事务局部事务"&gt;本地事务（局部事务）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;仅操作单一事务资源的、不需要全局事务管理器进行协调的事务。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;原子性和持久性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;原子性：要么都生效，要么都不生效，不存在中间状态。&lt;/p&gt;
+&lt;p&gt;持久性：一旦事务生效，就不会再因为任务原因而导致其修改的内容被撤销或丢失。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;原子性：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;未提交事务，写入后崩溃&lt;/strong&gt;：如果修改进行了一部分，但事务没有提交程序就崩溃了。程序一旦重启，数据库必须要有办法得知崩溃前发生过一次不完整的购物操作，将已经修改过的数据从磁盘中恢复成没有修改过的样子。保证原子性。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;mysql的做法：通过MVCC，事务在修改时，会先生成对应的undolog版本链，达到记录每次状态的目的。如果遇到上述情况，可以通过版本链来选择需要恢复的版本。（实现事务的回滚操作）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;持久性：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;已提交事务，写入前崩溃&lt;/strong&gt;：程序已经完成了修改，提交了事务，但还没有把修改后的结果都写入到磁盘中，此时出现了崩溃。程序一旦重启后，数据库必须要有办法得知崩溃前发生过一次完整的操作，将没来得及写入磁盘的部分重新写入磁盘，保证持久性。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;mysql的做法：通过redo log，事务提交前必须保证redo log已写入完毕，就算事务提交但数据没有落盘。也可以保证在重启时通过redo log来加载到修改的变量。
+同时redolog也缩小了刷盘的次数和每次需要修改更新的数据量，不需要一次性读取更新整页的数据。减少了成本&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;以日志的形式——即仅进行顺序追加的文件写入的形式（这是最高效的写入方式）先记录到磁盘中。只有在日志记录全部都安全落盘，数据库在日志中看到代表事务成功提交的“提交记录”（Commit Record）后，才会根据日志上的信息对真正的数据进行修改，修改完成后，再在日志中加入一条“结束记录”（End Record）表示事务已完成持久化，这种事务实现方法被称为“Commit Logging”（提交日志）。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;另一种保证持久性和原子性的方式&lt;strong&gt;Shadow Paging&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对数据的变动会写到硬盘的数据中，但并不是直接就地修改原先的数据，而是先将数据复制一份副本，保留原数据，修改副本数据。&lt;/p&gt;
+&lt;p&gt;当事务成功提交，所有数据的修改都成功持久化之后，最后一步是去修改数据的引用指针，将引用从原数据改为新复制出来修改后的副本，最后的“修改指针”这个操作将被认为是原子操作，现代磁盘的写操作可以认为在硬件上保证了不会出现“改了半个值”的现象。所以 Shadow Paging 也可以保证原子性和持久性。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;以上方式和copyonwritelist的实现非常像。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;FORCE：当事务提交后，要求变动数据必须同时完成写入则称为FORCE，不强制要求同时写入为NO-FORCE。&lt;/li&gt;
+&lt;li&gt;STEAL：事务提交前，允许变动数据提前写入则称为STEAL，不允许则称为NO-STEAL。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;下图中，左边为磁盘IO性能考虑，右边为想要达到效果需要用到的日志。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754632791295_1754632791314.png"
+loading="lazy"
+alt="1754632791295.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;隔离性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;保证每个事务各自读、写的数据相互独立，不会彼此影响。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;这里只突出讲解不同隔离级别下是否需要锁和对应的上锁范围，并不突出mysql的锁。如果想详细了解mysql的锁，可以看我的&lt;a class="link" href="https://thecoolboyhan.github.io/p/mysql-lock/" target="_blank" rel="noopener"
+&gt;这篇文章&lt;/a&gt;。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;现代数据库提供的三种锁：&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;写锁（X锁）：只有持有写锁的数据才能对数据进行写入操作，数据被加写锁时，其他事务不能写入数据，也不能施加读锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;读锁（S锁）：多个事务对同一个数据加多个读锁，只要数据上还有读锁，就不能再加写锁，其他事务也不能对该数据进行写入，但仍然可以读取。如果数据只有当前事务自己添加了读锁，可以把读锁升级成写锁，然后写入数据。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;范围锁：对与某个范围上锁，实现多种多样。在这个范围内的数据不能被写入。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-sql" data-lang="sql"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;SELECT&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;FROM&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;WHERE&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;price&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;FOR&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;UPDATE&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;隔离性的差异&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;串行化：同一时间只能存在一个事务，其他事务需要等待当前事务执行后才能开启。&lt;/p&gt;
+&lt;p&gt;天生具有隔离性，不需对数据加任何锁。但性能极差，没有并发能力。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;可重复读（RR）：只对事务所涉及到的数据加读锁或者写锁，且一直持有锁到事务结束。但任可能产生&lt;a class="link" href="https://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Phantom_reads" target="_blank" rel="noopener"
+&gt;幻读问题&lt;/a&gt;。事务在执行过程中，两个完全相同的范围查询得到的结果集不一致。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-mysql" data-lang="mysql"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;SELECT&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;count&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;FROM&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;WHERE&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;price&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="cm"&gt;/* 时间顺序：1，事务： T1 */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;INSERT&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;INTO&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;books&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;price&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;VALUES&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;深入理解Java虚拟机&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mi"&gt;90&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="cm"&gt;/* 时间顺序：2，事务： T2 */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;SELECT&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;count&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;FROM&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;books&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;WHERE&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;price&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="cm"&gt;/* 时间顺序：3，事务： T1 */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;可重复读没有范围锁来禁止对该范围内插入新的数据，导致隔离性被破坏。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;mysql在可重复读级别下，只读事务完全可以避免幻读问题。但在读写事务下，依然可能出现幻读问题。（MVCC并不能完美解决幻读）&lt;/p&gt;
+&lt;p&gt;如：事务 T1 如果在其他事务插入新书后，不是重新查询一次数量，而是要将所有小于 100 元的书改名，那就依然会受到新插入书籍的影响。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;读已提交（RC）：写锁会一直持续到事务结束，但读锁会在每次查询操作结束后就会立刻释放。会产生&lt;a class="link" href="https://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Non-repeatable_reads" target="_blank" rel="noopener"
+&gt;不可重复读问题&lt;/a&gt;。同一行数据的两次查询得到了不同的结果。&lt;/p&gt;
+&lt;p&gt;读已提交缺乏整个周期性的读锁，无法禁止读取过的数据发生变化。隔离性被破坏的表现。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;读未提交（RU）：对事务涉及的数据只加写锁一直持续到事务结束，但完全不加读锁。会产生&lt;a class="link" href="https://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Dirty_reads" target="_blank" rel="noopener"
+&gt;脏读问题&lt;/a&gt;。一个事务读取到另一个事务未提交的数据。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;理论还存在更低的隔离性，就是事务既不加读锁，也不加写锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;font color='red'&gt;&lt;strong&gt;不同隔离级别产生的问题只是表面现象，是各种锁在不同加锁时间上组合而产生的结果，以锁为手段来实现隔离性才是数据库表现出不同隔离级别的根本原因。&lt;/strong&gt;&lt;/font&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;MVCC（只针对读+写场景）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;插入数据时：CREATE_VERSION 记录插入数据的事务 ID，DELETE_VERSION 为空。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;删除数据时：DELETE_VERSION 记录删除数据的事务 ID，CREATE_VERSION 为空。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;修改数据时：将修改数据视为“删除旧数据，插入新数据”的组合，即先将原有数据复制一份，原有数据的 DELETE_VERSION 记录修改数据的事务 ID，CREATE_VERSION 为空。复制出来的新数据的 CREATE_VERSION 记录修改数据的事务 ID，DELETE_VERSION 为空。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此时，如有另外一个事务要读取这些发生了变化的数据，将根据隔离级别来决定到底应该读取哪个版本的数据。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;隔离级别是&lt;code&gt;可重复读&lt;/code&gt;：总是读取 CREATE_VERSION 小于或等于当前事务 ID 的记录，在这个前提下，如果数据仍有多个版本，则取最新（事务 ID 最大）的。&lt;/li&gt;
+&lt;li&gt;隔离级别是&lt;code&gt;读已提交&lt;/code&gt;：总是取最新的版本即可，即最近被 Commit 的那个版本的数据记录。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;另外两个隔离级别都没有必要用到 MVCC，因为&lt;code&gt;读未提交&lt;/code&gt;直接修改原始数据即可，其他事务查看数据的时候立刻可以看到，根本无须版本字段。&lt;code&gt;可串行化&lt;/code&gt;本来的语义就是要阻塞其他事务的读取操作，而 MVCC 是做读取时无锁优化的，自然就不会放到一起用。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;mysql利用undolog和锁来实现MVCC&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="全局事务外部事务"&gt;全局事务（外部事务）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;单个服务使用多个数据源场景的事务解决方案。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;全局事务和本地事务代码表现得不同：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;buyBook&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;PaymentBill&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;bill&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;userTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;warehouseTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;businessTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;begin&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;userAccountService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;pay&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;bill&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;getMoney&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;warehouseService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;deliver&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;bill&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;getItems&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;businessAccountService&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;receipt&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;bill&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;getMoney&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;userTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;commit&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;warehouseTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;commit&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;businessTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;commit&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;catch&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;userTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;rollback&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;warehouseTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;rollback&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;businessTransaction&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;rollback&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;开启三个事务，提交三个事务，或回滚三个事务。保证多个事务要么全部成功，要么全部失败。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;2PC协议&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;准备阶段：投票阶段，协调者询问事务的所有参与者是否准备好提交。&lt;/li&gt;
+&lt;li&gt;提交阶段：执行阶段，协调者如果在上一个阶段收到所有事务参与者回复的可提交消息，则先自己在本地持久化事务为commit状态，然后给所有参与者发送commit指令。所有参与者立刻执行提交操作。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;mermaid style="margin-bottom: 0px"&gt;
+&lt;p&gt;sequenceDiagram
+协调者 -&amp;raquo;+ 参与者: 要求所有参与者进入准备阶段
+参与者 &amp;ndash;&amp;raquo;- 协调者: 已进入准备阶段
+协调者 -&amp;raquo;+ 参与者: 要求所有参与者进入提交阶段
+参与者 &amp;ndash;&amp;raquo;- 协调者: 已进入提交阶段
+opt 失败或超时
+协调者 -&amp;raquo;+ 参与者: 要求所有参与者回滚事务
+参与者 &amp;ndash;&amp;raquo;- 协调者: 已回滚事务
+end
+&lt;/mermaid&gt;&lt;/p&gt;
+&lt;p&gt;:::center
+图 3-1 两段式提交的交互时序示意图
+:::&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754644931270_1754644931355.png"
+loading="lazy"
+alt="1754644931270.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2PC能够保证一致性的前提条件&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;网络在提交阶段必须是可靠的，不能在提交阶段丢失消息。如果投票阶段失败还可以执行回滚操作，但如果提交阶段失败就无法补救。&lt;/li&gt;
+&lt;li&gt;必须假设在网络分区、机器崩溃或者其他原因导致的节点失联最终能够回复，不会永久性地失联。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;2PC的缺点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;单点问题：协调者在两阶段提交中具有举足轻重的作用，协调者在等待参与者回复时可以有超时机制，允许参与者宕机，但参与者等待协调者指令时无法做超时处理。&lt;/p&gt;
+&lt;p&gt;如果协调者宕机，就没法正常发送Commit或者RollBack指令，所有参与者都必须一直等待。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;性能问题：所有参与者都相当于绑定成一个统一调度的整体，期间要经过两次远程服务调用，三次数据持久化（准备阶段写重做日志，协调者做状态持久化，提交阶段在日志写入 Commit Record）。必须等待执行最慢的参与者执行完毕后，才算事务提交，所以性能较差。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;一致性风险：尽管提交阶段时间很短，但这仍是一段明确存在的危险期，如果协调者在发出准备指令后，根据收到各个参与者发回的信息确定事务状态是可以提交的，协调者会先持久化事务状态，并提交自己的事务，如果这时候网络忽然被断开，无法再通过网络向所有参与者发出 Commit 指令的话，就会导致部分数据（协调者的）已提交，但部分数据（参与者的）既未提交，也没有办法回滚，产生了数据不一致的问题。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一部分提交了事务，一部分未提交，导致事务无法回滚。产生数据不一致问题。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;3PC协议&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754645818202_1754645818239.png"
+loading="lazy"
+alt="1754645818202.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;三段式提交对单点问题和回滚时的性能问题有所改善，但是它对一致性风险问题并未有任何改进，在这方面它面临的风险甚至反而是略有增加了的。譬如，进入 PreCommit 阶段之后，协调者发出的指令不是 Ack 而是 Abort，而此时因网络问题，有部分参与者直至超时都未能收到协调者的 Abort 指令的话，这些参与者将会错误地提交事务，这就产生了不同参与者之间数据不一致的问题。&lt;/p&gt;
+&lt;h3 id="共享事务"&gt;共享事务
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;多个服务共用同一个数据源。伪需求，不应当存在的场景&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;使用一个公共的交易服务器来与数据库连接，无论上游有多少个不同的服务器，都需要请求交易服务器来实现数据库操作。从而达到共享事务的效果。（但使原本分散的负载又重新聚合了）&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754882685058_1754882685070.png"
+loading="lazy"
+alt="1754882685058.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;将多个服务的事务，通过聚合到一个服务代理，转换成一个本地事务&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;使用消息队列让多个服务来处理任务也算是共享事务的一个变种&lt;/p&gt;
+&lt;h3 id="分布式事务"&gt;分布式事务
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;多个服务同时访问多个数据源的事务处理机制，在分布式创建下的事务处理机制。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;CAP&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/cap.290d0a22.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;一致性（C）：数据在任何时刻、任何分布式节点中所看到的都是符合逾期的。&lt;/li&gt;
+&lt;li&gt;可用性（A）：系统不间断地提供服务的能力。
+&lt;ol&gt;
+&lt;li&gt;可靠性：根据平均无故障时间来度量&lt;/li&gt;
+&lt;li&gt;可维护性：平均可修复时间来度量&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;分区容错性（P）：分布式环境中，部分节点因网络原因而彼此失联后，与其他节点形成网络分区，系统仍能正确地提供服务的能力。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如何取舍CAP&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;如果放弃分区容错性（CA）&lt;/strong&gt;：所有节点之间的通讯永远都是可靠的。（永远可靠的通讯在分布式场景下必定不存在）不可能的选择&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;如果放弃可用性（CP）&lt;/strong&gt;：一旦网络发生了分区，节点之间的信息同步可以无限制的延长。类似于前面的全局事务一致性问题，可以通过2PC/3PC手段，来获得分区容错性和一致性。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;CP下系统一般用于对数据质量要求很高的场景中。如果发生错误，服务就下线，不再提供服务，等待恢复后才提供服务。&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;如果放弃一致性（AP）&lt;/strong&gt;：一旦发生分区，节点之间提供的数据可能不一致。（目前分布式系统的主流选择）&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;高可用一般是一个分布式系统建立的主要目的，如果为了保证一致性而放弃高可用，那不如不做分布式&lt;/strong&gt;（银行类的金融系统除外）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;事务出现的初衷就是为了保证一致性，在AP分布式场景下，一致性反而无法得到保证。于是为了回到初衷，又提出了最终一致性的概念。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;最终一致性：如果数据在一段时间之内没有被另外的操作所更改，那它最终将会达到与强一致性过程相同的结果。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="可靠事件队列最大努力交付"&gt;可靠事件队列（最大努力交付）
+&lt;/h4&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754891613491_1754891613521.png"
+loading="lazy"
+alt="1754891613491.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;目前需要做三个操作，账号扣款、商家账号收款、库存商品出库。&lt;/p&gt;
+&lt;p&gt;三个操作中账号扣款最容易出现问题，其次扣库存容易出错，收款环节最不容易出现问题。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一般设计时把最容易出现问题的操作放在最前面，这样出现问题回滚的代价最小。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;扣款：先开启一个本地事务，进行扣款和写入消息操作。如果扣款成功，就在自己本地的数据库中建立一张消息表，存入一条消息，状态为：扣款已完成，出库进行中、收款进行中。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果扣款过程出现错误，就不需要进行写入消息等操作。利用一个本地事务完成最大规模的筛选。&lt;/p&gt;
+&lt;p&gt;扣款成功后，后面的扣减库存和收款操作没有先后顺序，可以同时进行。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;收款成功、扣减库存成功：把两个消息状态都修改成已完成，整个事务结束，达到最终一致性。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;扣减库存或收款出现网络问题：账号服务一直没有收到消息。账号服务一直重复向未响应的服务重复发送消息。（扣减库存和收款服务一定要实现幂等性）可以同每个事务唯一的事务ID来实现幂等。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;库存服务或收款服务无法完成工作：没有库存或者无法收款。账号服务会不断重复发送消息直到成功为止。或者人工介入处理。&lt;strong&gt;通过事件队列来处理的分布式事务没有失败回滚的概念，只许成功，不许失败。&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;收款和库存服务都成功后，由于网络原因导致回复给账号服务的消息丢失：账号服务会不断地重复给收款和库存服务发送消息，由于已做幂等操作，收到重复消息后，收款和库存服务会再次给账号服务发送成功消息。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;TCP协议中，如果未收到ACK应答自动重新发送包的可靠性保障就属于最大努力交付。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;缺点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;可靠消息会不断的重试操作，会造成大量无畏消耗。&lt;/li&gt;
+&lt;li&gt;所有操作只许成功，如果必定会失败，就会无限重试。死循环。&lt;/li&gt;
+&lt;li&gt;没有任何隔离性可言，可能会出现“超售”情况。每个人购买的数量都没有超过最大数量，但加起来超过了最大数量。（会导致一个事务无限重试）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="tcc事务"&gt;TCC事务
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;Try-Confirm-Cancel，如果事务需要隔离性，应重点考虑TCC。但对业务入侵性较强。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;Try：尝试执行阶段，完成所有业务可执行性的检查（保证一致性），并且预留好全部需要用到的业务资源（保证隔离性）。&lt;/li&gt;
+&lt;li&gt;Confirm：确认执行阶段，不进行任何业务检查，直接使用Try阶段准备的资源来完成业务处理。Confirm阶段可能会重复执行，此阶段需要做幂等性校验。&lt;/li&gt;
+&lt;li&gt;Cancel：取消执行阶段，释放Try阶段预留的业务资源。Cancel阶段可能会重复执行，需要幂等性。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754900636872_1754900636908.png"
+loading="lazy"
+alt="1754900636872.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;业务场景与上方相同：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;创建事务，生成事务ID，记录到日志表中，进入Try阶段（一下所有服务调用没有先后顺序）：
+&lt;ol&gt;
+&lt;li&gt;用户服务：检查业务可行性，可行，将用户100元设置为冻结状态，（占用额度），通知下一步进入Confirm阶段；不可行，通知下一步进入Cancel阶段。&lt;/li&gt;
+&lt;li&gt;仓库服务：检查可行性，可行，冻结库存1（占用），通知下一步进入Confirm阶段；不可行，通知下一步进入Cancel阶段&lt;/li&gt;
+&lt;li&gt;商家服务：检查业务可行性，不需要冻结资源。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;如果所有业务都可行，进入Confirm阶段：
+&lt;ol&gt;
+&lt;li&gt;用户服务：完成操作。进行扣款。&lt;/li&gt;
+&lt;li&gt;仓库服务：按冻结数量扣减库存。&lt;/li&gt;
+&lt;li&gt;商家服务：收款。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;全部完成后，事务正式结束，如果2中任意步骤出现异常，都需要重新执行Confirm操作，进行最大努力交付。&lt;/li&gt;
+&lt;li&gt;如果1中业务任意不可行，或任意一个服务超时，则将活动日志置为Cancel，进入Cancel阶段：
+&lt;ol&gt;
+&lt;li&gt;用户服务：取消业务，释放冻结的100元&lt;/li&gt;
+&lt;li&gt;仓库服务：取消业务，释放冻结的库存&lt;/li&gt;
+&lt;li&gt;商家服务：取消业务，（大哭一场，然后安慰商家谋生不易:-)）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;如果4全部成功，事务最终置为失败，如果4中任意操作出现异常，就重复发送Concel操作，进行最大努力交付。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;优点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;TCC与2PC逻辑类似，但TCC所有的操作都只操作预留的资源（预冻结或占用的资源），天生具有隔离性，几乎不涉及锁和资源的争用，拥有更好的性能。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;缺点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;开发成本高，对业务的侵入性较大，更大的更换成本。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;推荐使用阿里开源的&lt;a class="link" href="https://seata.io/zh-cn/" target="_blank" rel="noopener"
+&gt;Seata&lt;/a&gt;来减少TCC代码开发的编码工作量。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="saga事务一长串事件长篇故事"&gt;SAGA事务（一长串事件、长篇故事）
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;用来提升长时间事务运作效率的方法。避免大事务长时间锁定数据库的资源，将大事务分解成一系列本地事务的设计模式。&lt;/p&gt;
+&lt;p&gt;性能最好，适用于无法使用Try阶段的事务，如目前盛行的网络支付，直接从银行转账等类似场景。（无法进行冻结、占用等操作）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;大事务拆分成若干小事务，将整个分布式事务T分解成为n个子事务，命名为 T1，T2，…，Ti，…，Tn。每个子事务都应该是或者能被视为是原子行为。&lt;/li&gt;
+&lt;li&gt;为每个子事务设计对应的补偿动作，命名为 C1，C2，…，Ci，…，Cn。Ti与 Ci必须满足以下条件：
+&lt;ul&gt;
+&lt;li&gt;Ti和Ci都具备幂等性&lt;/li&gt;
+&lt;li&gt;Ti和Ci满足交换律，先执行Ti还是先执行Ci，效果都是一样的&lt;/li&gt;
+&lt;li&gt;Ci必须能成功提交，不能存在Ci本身提交失败回滚的情况，如果出现就必须持续重试直到成功，或者直接人工介入。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;如果所有的Ti都成功提交，那事务顺利完成，否则执行恢复策略&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;正向恢复&lt;/strong&gt;：如果Ti事务提交失败，则一直对Ti进行重试，直到成功为止（最大努力交付）。不需要补偿，适用于事务最终都要成功的场景。&lt;/p&gt;
+&lt;p&gt;正向恢复的执行模式为：T1，T2，…，Ti（失败），Ti（重试）…，Ti+1，…，Tn。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;反向恢复&lt;/strong&gt;：如果Ti事务提交失败，则一直执行Ci对Ti进行补偿，直到成功为止（最大努力交付）。Ci必须执行成功。&lt;/p&gt;
+&lt;p&gt;反向恢复的执行模式为：T1，T2，…，Ti（失败），Ci（补偿），…，C2，C1。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;与TCC对比，SAGA不需要为资源设计冻结状态和撤销冻结的操作，补偿要比冻结操作容易得多。&lt;/p&gt;
+&lt;p&gt;譬如，前面提到的账号余额直接在银行维护的场景，从银行划转货款到 Fenix&amp;rsquo;s Bookstore 系统中，这步是经由用户支付操作（扫码或 U 盾）来促使银行提供服务；如果后续业务操作失败，尽管我们无法要求银行撤销掉之前的用户转账操作，但是由 Fenix&amp;rsquo;s Bookstore 系统将货款转回到用户账上作为补偿措施却是完全可行的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="透明多级分流系统"&gt;透明多级分流系统
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;如何分配流量，均衡负载等。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="客户端缓存"&gt;客户端缓存
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;分为强制缓存和协商缓存&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;强制缓存&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;浏览器本地设置的缓存，不用与服务器交互就可以得知什么时候需要失效&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;参数&lt;/th&gt;
+&lt;th&gt;说明&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;max-age&lt;/code&gt; / &lt;code&gt;s-maxage&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;相对时间控制缓存有效期，避免客户端时间误差&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;public&lt;/code&gt; / &lt;code&gt;private&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;是否允许代理或 CDN 缓存&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;no-cache&lt;/code&gt; / &lt;code&gt;no-store&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;禁止缓存或禁止保存资源&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;no-transform&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;禁止 CDN 等修改资源&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;min-fresh&lt;/code&gt; / &lt;code&gt;only-if-cached&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;控制客户端请求行为&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;must-revalidate&lt;/code&gt; / &lt;code&gt;proxy-revalidate&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;资源过期后必须重新验证&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;协商缓存&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;资源过期之后，通过与服务器交互来判断是否重新获取资源&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;两种机制&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Last-Modified / If-Modified-Since&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;通过资源最后修改时间判断是否更新。&lt;/li&gt;
+&lt;li&gt;精度有限，可能误判。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ETag / If-None-Match&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;通过资源唯一标识判断是否更新。&lt;/li&gt;
+&lt;li&gt;一致性强，但服务器计算开销大。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;两者可同时使用，优先验证 ETag，再比对 Last-Modified。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="域名解析"&gt;域名解析
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;通过DNS来进行网络分流&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;DNS解析的过程：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;客户端先检查本地的DNS缓存，查看是否存在并且是存活着的该域名的地址记录。&lt;/li&gt;
+&lt;li&gt;客户端把地址发送给操作系统中配置的本地DNS（Local DNS），这个本地DNS地址可以由用户手工设置，也可以在DNCP分配时或者在拨号时从PPP服务器中自动获取。&lt;/li&gt;
+&lt;li&gt;本地DNS收到查询请求后，会按照“是否有&lt;code&gt;www.icyfenix.com.cn&lt;/code&gt;的权威服务器”→“是否有&lt;code&gt;icyfenix.com.cn&lt;/code&gt;的权威服务器”→“是否有&lt;code&gt;com.cn&lt;/code&gt;的权威服务器”→“是否有&lt;code&gt;cn&lt;/code&gt;的权威服务器”的顺序，依次查询自己的地址记录，如果都没有查询到，就会一直找到最后点号代表的根域名服务器为止。&lt;/li&gt;
+&lt;li&gt;假设本地DNS是全新的，按照步骤3的顺序查询到根服务器后，它将会得到“&lt;code&gt;cn&lt;/code&gt;的权威服务器”的地址记录，然后通过“&lt;code&gt;cn&lt;/code&gt;的权威服务器”，得到“&lt;code&gt;com.cn&lt;/code&gt;的权威服务器”的地址记录，以此类推，最后找到能够解释&lt;code&gt;www.icyfenix.com.cn&lt;/code&gt;的权威服务器地址。&lt;/li&gt;
+&lt;li&gt;通过“&lt;code&gt;www.icyfenix.com.cn&lt;/code&gt;的权威服务器”，查询&lt;code&gt;www.icyfenix.com.cn&lt;/code&gt;的地址记录，地址记录并不一定就是指 IP 地址，在 RFC 规范中有定义的地址记录类型已经&lt;a class="link" href="https://en.wikipedia.org/wiki/List_of_DNS_record_types" target="_blank" rel="noopener"
+&gt;多达数十种&lt;/a&gt;，譬如 IPv4 下的 IP 地址为 A 记录，IPv6 下的 AAAA 记录、主机别名 CNAME 记录，等等。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;权威域名服务器：负责翻译特定域名的DNS服务器。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;根域名服务器：固定的、无需查询的顶级域名服务器，全世界一共13组根域名服务器。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通过NDS进行分流：&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;智能线路：根据访问者所处的不同地区（譬如华北、华南、东北）、不同服务商（譬如电信、联通、移动）等因素来确定返回最合适的 A 记录，将访问者路由到最合适的数据中心，达到智能加速的目的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="传输链路"&gt;传输链路
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;优化流量传输的链路，从而达到减少请求的效果。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;前端优化方式（只是看看）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a class="link" href="https://developer.yahoo.com/performance/rules.html" target="_blank" rel="noopener"
+&gt;雅虎 YSlow-23 条规则&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;连接数优化（优化TCP）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;HTTP3.0之前的网络都是基于TCP实现的，3.0基于UDP实现。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;目前大部分流量的特征如下：&lt;/p&gt;
+&lt;p&gt;数量多，时间短，资源小，切换快。&lt;/p&gt;
+&lt;p&gt;TCP协议必须在三次握手完成之后才能开始数据传输，可能会带来百毫秒的开销。&lt;/p&gt;
+&lt;p&gt;TCP还有慢启动的特性，使得刚刚建立连接时传输速度是最低的，后面在逐步加速直到稳定。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;TCP慢启动：避免发送过多数据到网络中而导致网络阻塞。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;长期持有连接（已过时）：&lt;/p&gt;
+&lt;p&gt;持久连接的原理是让客户端对同一个域名长期持有一个或多个不会用完即断的 TCP 连接。典型做法是在客户端维护一个 FIFO 队列，每次取完数据（如何在不断开连接下判断取完数据将会放到稍后&lt;a class="link" href="https://icyfenix.cn/architect-perspective/general-architecture/diversion-system/transmission-optimization.html#%e4%bc%a0%e8%be%93%e5%8e%8b%e7%bc%a9" target="_blank" rel="noopener"
+&gt;传输压缩&lt;/a&gt;部分去讨论）之后一段时间内不自动断开连接，以便获取下一个资源时直接复用，避免创建 TCP 连接的成本。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;可能会出现队首阻塞问题，如果队首的TCP连接需要传输的数据一直处于阻塞，导致后面的操作即使可以进行，也会被阻塞。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决队首阻塞问题：让客户端一次将所有需要请求的资源全部发送给服务器，由服务器安排返回的顺序，管理传输队列。&lt;/p&gt;
+&lt;ol start="2"&gt;
+&lt;li&gt;HTTP/2多路复用：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;通过一个TCP连接，让所有的数据以帧的形式传递，通过每个帧附带的流id，把多个流的数据按照各自流组装区分开。这样可以做到只使用同一个TCP连接来传输多个不同的HTTP请求和响应报文。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/http2-con.f8b394df.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;p&gt;有了HTTP2的多路复用后，客户端和每个域名只需要建立一个TCP连接，减轻了服务器的连接压力。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;可靠传输机制：如果TCP传输过程中，如果有一个包出现错误，那所有的流都需要等待这个包重传成功后，才能组装。（为了避免因为少包导致组装出错误的数据）
+&lt;strong&gt;上述情况在基于UDP的HTTP3中给出了解决方案&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;HTTP2和HTTP1对比，由于TCP自身的可靠传输机制，导致2并不是在所有方面的优于1。&lt;/p&gt;
+&lt;p&gt;HTTP1：每个TCP请求都是独立的连接，一个TCP同时只能处理一个请求，这样更适合传输大文件。（不需要在本地进行组装。）
+HTTP2：一个客户端与一个域名通常只有一个连接，由于多个请求共用同一个TCP连接，导致传输数据量变大，而且需要进行本地组合，如果中间某个包出现错误，那所有的请求都不能被处理。&lt;strong&gt;所以HTTP2更适合处理小文件传输&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;传输压缩&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;通过压缩传输的数据大小实现连接优化的目的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;具体有&lt;a class="link" href="http://nginx.org/en/docs/http/ngx_http_gzip_static_module.html" target="_blank" rel="noopener"
+&gt;静态预压缩&lt;/a&gt;和“&lt;a class="link" href="https://www.usenix.org/legacy/publications/library/proceedings/jvm01/full_papers/hovemeyer/hovemeyer_html/node7.html" target="_blank" rel="noopener"
+&gt;即时压缩&lt;/a&gt;两种实现&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;基于UDP的HTTP3.0&lt;/strong&gt;（快速UDP网络连接）&lt;strong&gt;QUIC&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;QUIC：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754981650147_1754981650200.png"
+loading="lazy"
+alt="1754981650147.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;QUIC与TLS1.2的TCP握手比较&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;当一个请求中某个包丢失了数据，由于UDP没有可靠传输机制，此连接依然可以给其他请求做处理，只有丢失包的请求有问题。即使一个请求发生了错误也不会影响到其他的请求。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754981623098_1754981623113.png"
+loading="lazy"
+alt="1754981623098.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;三种HTTP协议的对比&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;QUIC在应用程序空间中实现的，而不在操作系统内核中实现。当数据在应用程序之间移动时，会存在上下文切换而带来额外开销。&lt;/p&gt;
+&lt;h3 id="内容分发网络cdn"&gt;内容分发网络（CDN）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;更适合用来分发静态资源，动态资源反而不会有好效果&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;一个互联网系统的速度取决于4点因素&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;网站服务器接入网络运营商的链路所能提供的出口带宽&lt;/li&gt;
+&lt;li&gt;客户端接入网络运营商的入口带宽。&lt;/li&gt;
+&lt;li&gt;从网站到用户之间经过不同运营商之间互联网节点的带宽。&lt;/li&gt;
+&lt;li&gt;从网站到用户之间的物理链路传输延迟。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;路由解析&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754984068873_1754984068982.png"
+loading="lazy"
+alt="1754984068873.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754984194582_1754984194618.png"
+loading="lazy"
+alt="1754984194582.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;DNS服务器给浏览器返回的ip为CDN服务器，CDN代理请求源服务器起到加速的效果。&lt;/p&gt;
+&lt;p&gt;如果CDN服务中直接有用户想要的资源，就直接返回。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内容分发（CDN服务器中的资源同步问题）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;资源同步主要有两种方式：&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;主动分发（push）：源网站主动发起分发，把内容从源网站或者其他资源库推送到用户边缘的各个CDN缓存节点上。&lt;strong&gt;甚至可以直接主动推送到浏览器本地的localStorage中&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;被动回源&lt;/strong&gt;（Pull）：当某个资源首次被用户请求时，CDN服务器发现自己没有资源，就会实时从源网站中获取，然后缓存到CDN服务器本地。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;如何判断CDN中缓存的内容是否失效&lt;/strong&gt;？&lt;/p&gt;
+&lt;p&gt;现在，最常见的做法是超时被动失效与手工主动失效相结合。超时失效是指给予缓存资源一定的生存期，超过了生存期就在下次请求时重新被动回源一次。而手工失效是指 CDN 服务商一般会提供给程序调用来失效缓存的接口，在网站更新时，由持续集成的流水线自动调用该接口来实现缓存更新，譬如“&lt;code&gt;icyfenix.cn&lt;/code&gt;”就是依靠&lt;a class="link" href="https://travis-ci.com/" target="_blank" rel="noopener"
+&gt;Travis-CI&lt;/a&gt;的持续集成服务来触发 CDN 失效和重新预热的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="负载均衡"&gt;负载均衡
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;以统一的接口对外提供服务，调度后方的多台机器。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;OSI七层模型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;表 4-1 OSI 七层模型&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;层&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;数据单元&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;功能&lt;/strong&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;7&lt;/td&gt;
+&lt;td&gt;应用层 Application Layer&lt;/td&gt;
+&lt;td&gt;数据 Data&lt;/td&gt;
+&lt;td&gt;提供为应用软件提供服务的接口，用于与其他应用软件之间的通信。典型协议：HTTP、HTTPS、FTP、Telnet、SSH、SMTP、POP3 等&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;6&lt;/td&gt;
+&lt;td&gt;表达层 Presentation Layer&lt;/td&gt;
+&lt;td&gt;数据 Data&lt;/td&gt;
+&lt;td&gt;把数据转换为能与接收者的系统格式兼容并适合传输的格式。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;5&lt;/td&gt;
+&lt;td&gt;会话层 Session Layer&lt;/td&gt;
+&lt;td&gt;数据 Data&lt;/td&gt;
+&lt;td&gt;负责在数据传输中设置和维护计算机网络中两台计算机之间的通信连接。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;传输层 Transport Layer&lt;/td&gt;
+&lt;td&gt;数据段 Segments&lt;/td&gt;
+&lt;td&gt;把传输表头加至数据以形成数据包。传输表头包含了所使用的协议等发送信息。典型协议：TCP、UDP、RDP、SCTP、FCP 等&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;网络层 Network Layer&lt;/td&gt;
+&lt;td&gt;数据包 Packets&lt;/td&gt;
+&lt;td&gt;决定数据的传输路径选择和转发，将网络表头附加至数据段后以形成报文（即数据包）。典型协议：IPv4/IPv6、IGMP、ICMP、EGP、RIP 等&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;数据链路层 Data Link Layer&lt;/td&gt;
+&lt;td&gt;数据帧 Frame&lt;/td&gt;
+&lt;td&gt;负责点对点的网络寻址、错误侦测和纠错。当表头和表尾被附加至数据包后，就形成数据帧（Frame）。典型协议：WiFi（802.11）、Ethernet（802.3）、PPP 等。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;物理层 Physical Layer&lt;/td&gt;
+&lt;td&gt;比特流 Bit&lt;/td&gt;
+&lt;td&gt;在物理网络上传送数据帧，它负责管理电脑通信设备和网络媒体之间的互通。包括了针脚、电压、线缆规范、集线器、中继器、网卡、主机接口卡等。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;数据链路层负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/l2-lb.42b825ec.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;通过修改目标服务器的mac地址来实现负载均衡，无法跨子网，只能在有限的空间下做负载均衡。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;网络层负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754985460755_1754985460951.png"
+loading="lazy"
+alt="1754985460755.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;应用层实现的负载均衡（最常用的负载均衡手段之一）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/l4l7.5410d0a6.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;负载均衡策略和实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;轮循均衡&lt;/strong&gt;（Round Robin）：每一次来自网络的请求轮流分配给内部中的服务器，从 1 至 N 然后重新开始。此种均衡算法适合于集群中的所有服务器都有相同的软硬件配置并且平均服务请求相对均衡的情况。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;权重轮循均衡&lt;/strong&gt;（Weighted Round Robin）：根据服务器的不同处理能力，给每个服务器分配不同的权值，使其能够接受相应权值数的服务请求。譬如：服务器 A 的权值被设计成 1，B 的权值是 3，C 的权值是 6，则服务器 A、B、C 将分别接收到 10%、30％、60％的服务请求。此种均衡算法能确保高性能的服务器得到更多的使用率，避免低性能的服务器负载过重。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;随机均衡&lt;/strong&gt;（Random）：把来自客户端的请求随机分配给内部中的多个服务器，在数据足够大的场景下能达到相对均衡的分布。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;权重随机均衡&lt;/strong&gt;（Weighted Random）：此种均衡算法类似于权重轮循算法，不过在分配处理请求时是个随机选择的过程。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;一致性哈希均衡&lt;/strong&gt;（Consistency Hash）：根据请求中某一些数据（可以是 MAC、IP 地址，也可以是更上层协议中的某些参数信息）作为特征值来计算需要落在的节点上，算法一般会保证同一个特征值每次都一定落在相同的服务器上。一致性的意思是保证当服务集群某个真实服务器出现故障，只影响该服务器的哈希，而不会导致整个服务集群的哈希键值重新分布。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;响应速度均衡&lt;/strong&gt;（Response Time）：负载均衡设备对内部各服务器发出一个探测请求（例如 Ping），然后根据内部中各服务器对探测请求的最快响应时间来决定哪一台服务器来响应客户端的服务请求。此种均衡算法能较好的反映服务器的当前运行状态，但这最快响应时间仅仅指的是负载均衡设备与服务器间的最快响应时间，而不是客户端与服务器间的最快响应时间。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;最少连接数均衡&lt;/strong&gt;（Least Connection）：客户端的每一次请求服务在服务器停留的时间可能会有较大的差异，随着工作时间加长，如果采用简单的轮循或随机均衡算法，每一台服务器上的连接进程可能会产生极大的不平衡，并没有达到真正的负载均衡。最少连接数均衡算法对内部中需负载的每一台服务器都有一个数据记录，记录当前该服务器正在处理的连接数量，当有新的服务连接请求时，将把当前请求分配给连接数最少的服务器，使均衡更加符合实际情况，负载更加均衡。此种均衡策略适合长时处理的请求服务，如 FTP 传输。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="服务器缓存重点"&gt;服务器缓存（重点）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;用空间换时间&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;缓存用来做什么？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;缓解CPU压力做缓存：（记忆化搜索）&lt;/p&gt;
+&lt;p&gt;把方法运行的结果存储起来、把原本要实时计算的内容提前算好、让一些公共资源可以复用，这样可以节省CPU算力，顺带提升响应性能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;缓解IO压力而做缓存：&lt;/p&gt;
+&lt;p&gt;把对网络、磁盘等较慢介质的读写访问变为对内存等较快介质的访问，将原本对单点部件（如数据库）的读写变为到可伸缩部件（如缓存中间件）的访问，顺便提升响应性能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="缓存属性"&gt;缓存属性
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;缓存主要分四个维度&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;吞吐量&lt;/strong&gt;：缓存的吞吐量使用OPS值（每秒操作数）来衡量，反映了对缓存进行并发读写操作的效率，即缓存本身的工作效率高低。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;常见的进程内缓存吞吐量&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/readwrite.a9f305af.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;环形缓存&lt;/strong&gt;（直接内存等）&lt;/p&gt;
+&lt;p&gt;它是一种拥有读、写两个指针的数据复用结构。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/Circular_Buffer_Animation.c3d3d834.gif"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;命中率与淘汰策略&lt;/strong&gt;：成功从缓存中返回结果次数与总请求次数的比值，反映了引入缓存的价值高低，命中率越低，收益越小，价值越低。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;任何缓存的容量都不可能是无限的，命中率是为了考虑空间消耗和节约时间之间取平衡。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;基本的三种淘汰策略：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;FIFO（First In First Out）：先入先出，最先入缓的数据最先被淘汰，可以通过一个固定容量限制的队列来实现。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;常被用到数据，越是有可能最早的进入缓存，如果使用特别频繁，可能会大幅度降低缓存的命中率。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;LRU（Least Recent Used）：优先淘汰最久未被访问过的数据。LRU通常采用HashMap 加 LinkedList 双重结构（如 LinkedHashMap）来实现，HashMap提供数据访问，LinkedList实现动态修改节点。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果某个热点数据，由于一些特殊原因一段时间内没有被访问，可能会导致热点数据被错误的淘汰。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;LFU（Least Frequently Used）：优先淘汰最不经常被使用的数据。LFU给每个数据添加一个访问计数器，每访问一次就加1，需要淘汰时就清理计数器数值最小的那批数据。（有点类似于JVM的分代升级机制）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;可以解决上面提到的特殊原因热点数据没有被访问问题，但同时也引入了新的问题：1、每个缓存的数据都需要维护一个计数器。2、如果某个极其经常被访问的数据失效了。通过LFU也无法被清理。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;TinyLFU&lt;/strong&gt;（Tiny Least Frequently Used）：使用少量的样本数据来评估整体的情况，将缓存的数据分类，通过维护某类数据的访问次数，来评估这些数据的淘汰与否。（常见的是可以用布隆过滤器来实现等价的分类）&lt;/p&gt;
+&lt;p&gt;为了解决极其热点数据过期的问题，采用滑动窗口来统计一部分数据的使用计数情况。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;但如果访问热点数据非常稀疏，也就是说分类无效的时候，反而不知道该如何清理了。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;a class="link" href="https://arxiv.org/pdf/1512.00727.pdf" target="_blank" rel="noopener"
+&gt;W-TinyLFU&lt;/a&gt;&lt;/strong&gt;（Windows-TinyLFU）：同样采用TinyLFU的缓存机制，但是分类后，局部采用LRU的形式来淘汰数据，通过LFU来确定哪些块需要被淘汰，然后通过LRU只淘汰需要被淘汰的数据的一部分。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;几种缓存命中率的情况&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754989995230_1754989995250.png"
+loading="lazy"
+alt="1754989995230.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;扩展功能&lt;/strong&gt;：除了基本的读写功能外，还提供了哪些额外的管理功能，如最大容量、失效时间、失效事件、命中率统计等。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;加载器&lt;/strong&gt;：许多缓存都有“CacheLoader”之类的设计，加载器可以让缓存从只能被动存储外部放入的数据，变为能够主动通过加载器去加载指定 Key 值的数据，加载器也是实现自动刷新功能的基础前提。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;淘汰策略&lt;/strong&gt;：有的缓存淘汰策略是固定的，也有一些缓存能够支持用户自己根据需要选择不同的淘汰策略。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;失效策略&lt;/strong&gt;：要求缓存的数据在一定时间后自动失效（移除出缓存）或者自动刷新（使用加载器重新加载）。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;事件通知&lt;/strong&gt;：缓存可能会提供一些事件监听器，让你在数据状态变动（如失效、刷新、移除）时进行一些额外操作。有的缓存还提供了对缓存数据本身的监视能力（Watch 功能）。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;并发级别&lt;/strong&gt;：对于通过分段加锁来实现的缓存（以 Guava Cache 为代表），往往会提供并发级别的设置。可以简单将其理解为缓存内部是使用多个 Map 来分段存储数据的，并发级别就用于计算出使用 Map 的数量。如果将这个参数设置过大，会引入更多的 Map，需要额外维护这些 Map 而导致更大的时间和空间上的开销；如果设置过小，又会导致在访问时产生线程阻塞，因为多个线程更新同一个 ConcurrentMap 的同一个值时会产生锁竞争。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;容量控制&lt;/strong&gt;：缓存通常都支持指定初始容量和最大容量，初始容量目的是减少扩容频率，这与 Map 接口本身的初始容量含义是一致的。最大容量类似于控制 Java 堆的-Xmx 参数，当缓存接近最大容量时，会自动清理掉低价值的数据。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;引用方式&lt;/strong&gt;：支持将数据设置为软引用或者弱引用，提供引用方式的设置是为了将缓存与 Java 虚拟机的垃圾收集机制联系起来。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;统计信息&lt;/strong&gt;：提供诸如缓存命中率、平均加载时间、自动回收计数等统计。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;持久化&lt;/strong&gt;：支持将缓存的内容存储到数据库或者磁盘中，进程内缓存提供持久化功能的作用不是太大，但分布式缓存大多都会考虑提供持久化功能。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;分布式支持&lt;/strong&gt;：缓存由外部提供，访问缓存需要通过网络，缓存中的数据可以在各个服务节点中共享。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="分布式缓存"&gt;分布式缓存
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;缓存的读取&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;复制式缓存：能够支持分布式的进程内缓存，（如tomcat的全量复制模式，将tomcat中的Session信息全部复制一遍，从而达到session共享的目的）。读取数据时无需网络访问，直接从进程内存中返回，性能极高。当数据发生变化时，必须遵守复制协议，将变更同步给集群内的每个节点中。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;读取性能极高，但修改代价过于高昂。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;集中式缓存：（redis），读写都需要网络访问，不会随着集群节点的增加而产生额外的负担，但读写的性能无法到达进程内部缓存的高性能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;数据一致性&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;这部分其实就是之前事务中提到的CAP理论，都只能尽量的达到最终一致性，不能做到单机ACID的强一致性。&lt;/p&gt;
+&lt;p&gt;redis集群就是典型的AP式，性能高，但不保证强一致性。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;可以保证强一致性的有：ZooKeeper、Doozerd、Etcd等框架。
+虽然可以保证强一致性，但吞吐量等和redis根本不是一个量级。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Q：既然有了分布式缓存，为什么还要引入二级缓存？&lt;/p&gt;
+&lt;p&gt;A：分布式缓存每次访问都需要网络通讯，引入分布式加本地的二级缓存机制，只要缓存不失效，从第二次其的所有读取都不再需要网络请求，大大的提高了读取性能。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1754995844029_1754995844070.png"
+loading="lazy"
+alt="1754995844029.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;Q：如何保证二级缓存的一致性？&lt;/p&gt;
+&lt;p&gt;A：必须实现缓存透明，变更以分布式缓存中的数据为准，访问（读取）以进程内的数据优先。如果数据发生变动时，在集群内发生通知（通知的方式：redis的PUB/SUB&lt;/p&gt;
+&lt;p&gt;,或者Zookeeper或Etcd来处理），让各个节点的一级缓存中对应的数据自动失效。当访问缓存时，统一查询一、二级缓存联合查询，自动更新一级缓存。接口外部是只查询一次，接口内部自动实现优先查询一级缓存，未获取到数据再自动查询二级缓存的逻辑。&lt;/p&gt;
+&lt;h4 id="缓存风险"&gt;缓存风险
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;缓存穿透&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;总是查询缓存中没有数据，达到跳过缓存访问数据库的情况。（如查数据库中根本不存在的数据）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;业务逻辑根本就不能避免的缓存穿透，可以约定一定时间内对返回为空的Key值依然进行缓存，使得一段时间内缓存不会被一个key而多次穿透。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;效果并不好，给缓存带来了更大的压力，且对恶意攻击的防御效果并不好。（我可以随机生成key来恶意访问，或查询一些根本不存的日期的数据，如1800年的数据）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;防止恶意攻击，可以使用布隆过滤器来解决。如果布隆过滤器中不存在的key，就直接返回结果。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;成本为需要在本地维护一个布隆过滤器，布隆过滤器对有效值的一致性不需要特别的实时，但对于空值需要较高的一致性，不能出现缓存中有，布隆过滤器中没有的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;缓存击穿&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;某个热key突然失效了，导致大量的请求被打到数据库。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;加锁同步，对请求该数据的key值加锁，使只有第一个请求会进入数据库，其他线程阻塞或者重试。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;实现复杂&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;热点数据由代码来手动管理，对于热点数据，有代码来有计划的完成更新、失效，避免由同步策略来管理。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;这里有个思路，感觉可以模仿mysql的redo来动态实现缓存的更新和失效。修改的数据先不同步数据库，通过日志来定期刷库。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;缓存雪崩&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;大量的热点数据短时间内一起失效。（热点数据同时创建，且超时时间一样。）短时间给数据库带来了极大的压力。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;出现上面情况的原因为大量的热点数据被同时加载预热：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;提升缓存系统的可用性，建立分布式缓存的集群。如主节点数据失效，去从节点看看是否还在。&lt;/li&gt;
+&lt;li&gt;透明的多级缓存，每个服务的一级缓存中的数据都有不一样的加载时间，分散了过期时间。&lt;/li&gt;
+&lt;li&gt;同时被预热的缓存数据，把过期时间设置成一段时间内的随机数，负载均衡了过期时间，避免大规模同时失效。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;缓存污染&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;缓存中的数据与数据库中的数据不一致。（最终一直性没有得到保证）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;产生原因：&lt;/p&gt;
+&lt;p&gt;数据库中的数据发生回滚（缓存中存放了回滚前的数据）&lt;/p&gt;
+&lt;p&gt;写入缓存失败（缓存中为旧数据）&lt;/p&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;解决方案多种多样，这里只列出redis常用的Cache Aside 方式，后续讨论分布式一致性时详细介绍。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;读数据时，先读缓存，缓存没有的话，再读数据源，然后将数据放入缓存，再响应请求。&lt;/li&gt;
+&lt;li&gt;写数据时，先写数据源，然后失效（而不是更新）掉缓存。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;为什么不使用延时双删？&lt;/p&gt;
+&lt;p&gt;延时双删逻辑为过一段时候后再删除一次数据，时间在分布式系统中并不可靠，先发未必先至，后发未必后至。不如直接让缓存失效，把数据一致性问题交给缓存和数据库同步。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;依然有问题：如果写操作在查询操作之后，查询到的数据可能为过期的数据。&lt;/p&gt;
+&lt;h2 id="架构安全性"&gt;架构安全性
+&lt;/h2&gt;&lt;h3 id="认证"&gt;认证
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;如何正确的分辨出操作用户的真实身份&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;其实登录就是一个简单的认证操作。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;HTTP认证&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;所有支持HTTP协议的服务器，在未授权的用户意图访问服务端保护区域资源时，应返回 401 Unauthorized 的状态码。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755002396893_1755002396907.png"
+loading="lazy"
+alt="1755002396893.png"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;只面向传输的协议进行认证，与内容无关&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;Web认证（表单认证）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;身份认证由应用程序本身的功能完成，而不是由HTTP服务器来负责认证。依靠内容而不是传输协议来实现的认证。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;WebAuthn 规范涵盖了“注册”与“认证”两大流程，先来介绍注册流程，它大致可以分为以下步骤：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;WebAuthn的注册：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;用户进入系统的注册页面，这个页面的格式、内容和用户注册时需要填写的信息均不包含在 WebAuthn 标准的定义范围内。&lt;/li&gt;
+&lt;li&gt;当用户填写完信息，点击“提交注册信息”的按钮后，服务端先暂存用户提交的数据，生成一个随机字符串（规范中称为 Challenge）和用户的 UserID（在规范中称作凭证 ID），返回给客户端。&lt;/li&gt;
+&lt;li&gt;客户端的 WebAuthn API 接收到 Challenge 和 UserID，把这些信息发送给验证器（Authenticator），验证器可理解为用户设备上 TouchID、FaceID、实体密钥等认证设备的统一接口。&lt;/li&gt;
+&lt;li&gt;验证器提示用户进行验证，如果支持多种认证设备，还会提示用户选择一个想要使用的设备。验证的结果是生成一个密钥对（公钥和私钥），由验证器存储私钥、用户信息以及当前的域名。然后使用私钥对 Challenge 进行签名，并将签名结果、UserID 和公钥一起返回客户端。&lt;/li&gt;
+&lt;li&gt;浏览器将验证器返回的结果转发给服务器。&lt;/li&gt;
+&lt;li&gt;服务器核验信息，检查 UserID 与之前发送的是否一致，并用公钥解密后得到的结果与之前发送的 Challenge 相比较，一致即表明注册通过，由服务端存储该 UserID 对应的公钥。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755002701944_1755002701958.png"
+loading="lazy"
+alt="1755002701944.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;WebAuthn的认证&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;用户访问登录页面，填入用户名后即可点击登录按钮。&lt;/li&gt;
+&lt;li&gt;服务器返回随机字符串 Challenge、用户 UserID。&lt;/li&gt;
+&lt;li&gt;浏览器将 Challenge 和 UserID 转发给验证器。&lt;/li&gt;
+&lt;li&gt;验证器提示用户进行认证操作。由于在注册阶段验证器已经存储了该域名的私钥和用户信息，所以如果域名和用户都相同的话，就不需要生成密钥对了，直接以存储的私钥加密 Challenge，然后返回给浏览器。&lt;/li&gt;
+&lt;li&gt;服务端接收到浏览器转发来的被私钥加密的 Challenge，以此前注册时存储的公钥进行解密，如果解密成功则宣告登录成功。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="授权"&gt;授权
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;如何控制一个用户该看到哪些数据、能操作哪些数据&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;授权主要包括两个部分：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;确保授权过程可靠：让第三方系统能够访问的所需的资源，又能保证其不泄露用户敏感数据。（OAuth2和SAML2.0）&lt;/li&gt;
+&lt;li&gt;确保授权的结果可控：对应用程序功能或者资源的访问控制，具体分几种：自主访问控制，强制访问控制，基于属性的访问控制，基于角色访问控制（常用）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;RBAC（基于角色的权限控制）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;所有的访问控制模型，实质上都是在解决同一个问题：“&lt;strong&gt;谁&lt;/strong&gt;（User）拥有什么&lt;strong&gt;权限&lt;/strong&gt;（Authority）去&lt;strong&gt;操作&lt;/strong&gt;（Operation）哪些&lt;strong&gt;资源&lt;/strong&gt;（Resource）”。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755052415482_1755052415497.png"
+loading="lazy"
+alt="1755052415482.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755052991246_1755052991275.png"
+loading="lazy"
+alt="1755052991246.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;为了避免给每个用户设定权限，将权限从用户身上剥离，改为绑定到角色上。&lt;/p&gt;
+&lt;p&gt;将权限控制变为对“&lt;strong&gt;角色&lt;/strong&gt;拥有操作哪些&lt;strong&gt;资源&lt;/strong&gt;的&lt;strong&gt;许可&lt;/strong&gt;”。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;OAuth2&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;国际标准，面向于解决第三方应用的认证授权协议。授权以令牌的形式实现，令牌难以主动失效。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;直接把账号和密码交给第三方会导致如下问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;密码泄露，如果第三方被攻击，用户的密码就会泄露。&lt;/li&gt;
+&lt;li&gt;访问范围：第三方有能力访问所有的用户数据，等同于拥有用户相同的权限。&lt;/li&gt;
+&lt;li&gt;授权回收：只能通过用户自己修改密码来收回授权，同时如果用户修改了密码，那之前所有的授权都会失效。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755054244022_1755054244050.png"
+loading="lazy"
+alt="1755054244022.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;OAuth2主要通过令牌的方式来给第三方授权。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;OAuth2的四种授权方式，安全等级逐级下降&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;授权码模式（最严谨）：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755054423220_1755054461719.png"
+loading="lazy"
+alt="1755054423220.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;会不会有其他应用冒充第三方应用骗取授权？
+ClientID 代表一个第三方应用的“用户名”，这项信息是可以完全公开的。但 ClientSecret 应当只有应用自己才知道，这个代表了第三方应用的“密码”。在第 5 步发放令牌时，调用者必须能够提供 ClientSecret 才能成功完成。只要第三方应用妥善保管好 ClientSecret，就没有人能够冒充它。&lt;/li&gt;
+&lt;li&gt;为什么要先发放授权码，再用授权码换令牌？
+这是因为客户端转向（通常就是一次 HTTP 302 重定向）对于用户是可见的，换而言之，授权码可能会暴露给用户以及用户机器上的其他程序，但由于用户并没有 ClientSecret，光有授权码也是无法换取到令牌的，所以避免了令牌在传输转向过程中被泄漏的风险。&lt;/li&gt;
+&lt;li&gt;为什么要设计一个时限较长的刷新令牌和时限较短的访问令牌？不能直接把访问令牌的时间调长吗？
+这是为了缓解 OAuth2 在实际应用中的一个主要缺陷，通常访问令牌一旦发放，除非超过了令牌中的有效期，否则很难（需要付出较大代价）有其他方式让它失效，所以访问令牌的时效性一般设计的比较短，譬如几个小时，如果还需要继续用，那就定期用刷新令牌去更新，授权服务器就可以在更新过程中决定是否还要继续给予授权。至于为什么说很难让它失效，我们将放到下一节“&lt;a class="link" href="https://icyfenix.cn/architect-perspective/general-architecture/system-security/credentials.html" target="_blank" rel="noopener"
+&gt;凭证&lt;/a&gt;”中去解释。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;隐式授权：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755054655827_1755054655845.png"
+loading="lazy"
+alt="1755054655827.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;授权服务器不验证第三方应用的身份。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;密码凭证：类似于之前的直接提供密码&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755054833748_1755054833765.png"
+loading="lazy"
+alt="1755054833748.png"
+&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;客户端模式：直接由“第三方”和授权服务器交互，中间没有资源所有者参与。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755054963728_1755054963740.png"
+loading="lazy"
+alt="1755054963728.png"
+&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="凭证"&gt;凭证
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;用户和系统之间确定操作的意图都是真实的，准确的、完整且不可抵赖的。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;单机应用时代，凭证主要由Cookie-Session实现，Session的服务器内部单机维护保证本次授权或状态可以得以正确的保持和销毁。&lt;/p&gt;
+&lt;p&gt;分布式时代由于有CAP不可兼容原理的限制，导致不方便在单机上来维护状态和让状态销毁，于是采用JWT令牌的方式来实现。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Cookie-Session&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTTP协议是无状态的协议，每次对事务处理没有上下文的记忆能力，每个请求都是相互独立的。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Session的实现&lt;/strong&gt;：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Session是在Http协议中增加了Set-Cookie 指令，用户在收到Cookie后，后面一段时间内的每次 HTTP 请求中，以名为 Cookie 的 Header 附带着重新发回给服务端。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;服务器根据Header中的cookie分辨出请求来自哪个用户。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;安全&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;状态信息都存储于服务器，只要依靠客户端的&lt;a class="link" href="https://en.wikipedia.org/wiki/Same-origin_policy" target="_blank" rel="noopener"
+&gt;同源策略&lt;/a&gt;和 HTTPS 的传输层安全，保证 Cookie 中的键值不被窃取而出现被冒认身份的情况，就能完全规避掉上下文信息在传输过程中被泄漏和篡改的风险。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;主动下线&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;Cookie-Session 方案的另一大优点是服务端有主动的状态管理能力，可根据自己的意愿随时修改、清除任意上下文信息，譬如很轻易就能实现强制某用户下线的这样功能。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Session共享&lt;/strong&gt;（CAP不可兼得）：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;牺牲一致性：利用负载均衡算法，让固定用户的请求只会访问到固定的服务器&lt;/li&gt;
+&lt;li&gt;牺牲可用性：每个节点都复制一份相同的Session，如果一个节点发生变动，通知所有服务都修改。&lt;/li&gt;
+&lt;li&gt;牺牲分区容错性：把Session集中保存在一个所有节点都可以访问的集中存储（Redis），一旦存取Session的节点损坏或出现网络分区，整个集群就不能提供服务了。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;JWT&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;把状态信息存储在客户端，每次请求都携带回服务器。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://icyfenix.cn/assets/img/jwt.b07b0d79.png"
+loading="lazy"
+alt="img"
+&gt;&lt;/p&gt;
+&lt;p&gt;JWT大致分三部分：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;令牌头：描述令牌的类型和使用的签名算法&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;负载：令牌真正向服务器传输的消息&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;签名（一种哈希算法）：对象头中公开的签名算法，通过服务器特定的秘钥对前面两个部分加密，而来。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;签名为了确保负载中的信息是可信的、没有被篡改的，也没有在传输过程中丢失任何信息。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;JWT的缺点：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;如何主动让令牌失效&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;JWT令牌一旦签发，理论上就和认证服务没有瓜葛了，到期之前始终有效。如果想要实现主动令牌失效，需服务端对需要失效的令牌加入到黑名单中，统一存到redis中。如果检测到黑名单令牌，就让他逻辑失效。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;容易遭受重放攻击&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;一旦请求被劫持，虽然因为签名无法修改内容，但是可以一直主动攻击服务器。&lt;/p&gt;
+&lt;p&gt;真要处理重放攻击，建议的解决方案是在信道层次（譬如启用 HTTPS）上解决，而不提倡在服务层次（譬如在令牌或接口其他参数上增加额外逻辑）上解决。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;只能携带有限的数据&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;由于请求在头中，HTTP本身没有约束header 的最大长度，但tomcat默认最大8kb，Nginx默认4kb。都决定了JWT令牌无法携带大量数据。&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;&lt;strong&gt;必须考虑令牌在客户端如何存储&lt;/strong&gt;&amp;rdquo;:&lt;/p&gt;
+&lt;p&gt;一旦JWT被泄露，就可以做任何事情。必须要保存的客户端考虑安全问题。&lt;/p&gt;
+&lt;h3 id="保密"&gt;保密
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;如何保证数据无法被内外人员窃取、滥用。通过加密改变原有数据，即使未授权的用户获取了已加密的信息，因不知道如何解密，而无法了解真实内容。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="传输"&gt;传输
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;保证网络中额信息王法被窃听、篡改和冒充&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;公钥加密，私钥解密：加密，用来给数据加密。&lt;/li&gt;
+&lt;li&gt;私钥加密，公钥解密：签名，用来让公钥所有者验证私钥所有者的身份，防止私钥所有者发布的内容被篡改。（但内容可能会被获取）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;表 5-1 三种密码学算法的对比&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;类型&lt;/th&gt;
+&lt;th&gt;特点&lt;/th&gt;
+&lt;th&gt;常见实现&lt;/th&gt;
+&lt;th&gt;主要用途&lt;/th&gt;
+&lt;th&gt;主要局限&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;哈希摘要&lt;/td&gt;
+&lt;td&gt;不可逆，即不能解密，所以并不是加密算法，只是一些场景把它当作加密算法使用。 易变性，输入发生 1 Bit 变动，就可能导致输出结果 50%的内容发生改变。 无论输入长度多少，输出长度固定（2 的 N 次幂）。&lt;/td&gt;
+&lt;td&gt;MD2/4/5/6、SHA0/1/256/512&lt;/td&gt;
+&lt;td&gt;摘要&lt;/td&gt;
+&lt;td&gt;无法解密&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;对称加密&lt;/td&gt;
+&lt;td&gt;加密是指加密和解密是一样的密钥。 设计难度相对较小，执行速度相对较块。 加密明文长度不受限制。&lt;/td&gt;
+&lt;td&gt;DES、AES、RC4、IDEA&lt;/td&gt;
+&lt;td&gt;加密&lt;/td&gt;
+&lt;td&gt;要解决如何把密钥安全地传递给解密者。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;非对称加密&lt;/td&gt;
+&lt;td&gt;加密和解密使用的是不同的密钥。 明文长度不能超过公钥长度。&lt;/td&gt;
+&lt;td&gt;RSA、BCDSA、ElGamal&lt;/td&gt;
+&lt;td&gt;签名、传递密钥&lt;/td&gt;
+&lt;td&gt;性能与加密明文长度受限。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;传输安全层TlS协议&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-08/1755067065735_1755067273106.png"
+loading="lazy"
+alt="1755067065735.png"
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;客户端请求：&lt;/p&gt;
+&lt;p&gt;客户端向服务器请求进行加密通讯，本次请求是明文的。并携带加密，混淆机制，协议版本等信息。和一个随机数&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;服务器回应：&lt;/p&gt;
+&lt;p&gt;服务器收到请求后，回复客户端。并携带随机数，协议版本，加密信息等。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;客户端确认：&lt;/p&gt;
+&lt;p&gt;客户端利用RSA等算法，生成一个新的随机数。通过三个随机数一起组成对称加密的私钥，后续对称加密都采用此秘钥。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;服务端确认：&lt;/p&gt;
+&lt;p&gt;服务器握手结束通知&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;TLS握手结束后，双方只使用随机生成的秘钥对称加密来处理请求。&lt;/p&gt;
+&lt;/blockquote&gt;</description></item></channel></rss>

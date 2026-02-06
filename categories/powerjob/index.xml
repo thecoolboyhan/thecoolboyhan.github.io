@@ -1,0 +1,661 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Powerjob on 韩永发的博客</title><link>https://thecoolboyhan.github.io/categories/powerjob/</link><description>Recent content in Powerjob on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 10 Sep 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/categories/powerjob/index.xml" rel="self" type="application/rss+xml"/><item><title>OB的MapReduce</title><link>https://thecoolboyhan.github.io/p/ob%E7%9A%84mapreduce/</link><pubDate>Tue, 10 Sep 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/ob%E7%9A%84mapreduce/</guid><description>&lt;h2 id="server的actor2024-08-21"&gt;server的actor（2024-08-21）
+&lt;/h2&gt;&lt;h3 id="friendactor处理其他服务器的请求"&gt;FriendActor(处理其他服务器的请求)
+&lt;/h3&gt;&lt;h4 id="探活非阻塞的"&gt;探活（非阻塞的）
+&lt;/h4&gt;&lt;p&gt;直接返回当前服务器注册在hashmap中的所有其他sever服务器&lt;/p&gt;
+&lt;h4 id="处理其他服务器的请求阻塞"&gt;处理其他服务器的请求（阻塞）
+&lt;/h4&gt;&lt;p&gt;服务器之间交互直接通过class文件+方法的方式，直接通过反射创建对应实体类和方法来执行&lt;/p&gt;
+&lt;h3 id="workerrequesthandlerimpl处理worker请求"&gt;WorkerRequestHandlerImpl（处理worker请求）
+&lt;/h3&gt;&lt;h4 id="workerheartbeat接收worker的心跳非阻塞"&gt;workerHeartbeat（接收worker的心跳）非阻塞
+&lt;/h4&gt;&lt;p&gt;内部维护着一个worker集群状态的map，如果对应appid集群状态有修改，则更新map。&lt;/p&gt;
+&lt;p&gt;处理完后，写入日志监控器&lt;/p&gt;
+&lt;h4 id="reportinstancestatus处理tasktracker上报的任务实例状态阻塞的"&gt;reportInstanceStatus(处理tasktracker上报的任务实例状态)阻塞的
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;创建一个已经完成任务的事件。&lt;/li&gt;
+&lt;li&gt;更新工作流中对应的任务&lt;/li&gt;
+&lt;li&gt;更新任务日志&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;丢弃掉晚上报的请求&lt;/p&gt;
+&lt;p&gt;丢弃掉不是server任务管理器中执行机器上报的任务&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="reportlog处理日志非阻塞"&gt;reportLog(处理日志)非阻塞
+&lt;/h4&gt;&lt;p&gt;构造好接收的任务信息，把信息入库&lt;/p&gt;
+&lt;h4 id="queryjobcluster查询任务的可执行集群阻塞的"&gt;queryJobCluster（查询任务的可执行集群）阻塞的
+&lt;/h4&gt;&lt;h2 id="关于mapreduce的调研2024-08-26"&gt;关于MapReduce的调研(2024-08-26)
+&lt;/h2&gt;&lt;h3 id="任务拆分"&gt;任务拆分
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;拆分任务和任务实际的执行逻辑（业务代码），用户只需要自定义任务如何拆分和业务代码。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a1[新建一个重量级任务]--&amp;gt;a
+a{判断当前任务是否为根任务}--&amp;gt;|yes|b[开始分发任务]
+b--&amp;gt;c[构造子任务]
+c--&amp;gt;d[拆分任务,从任务的参数中取出总数和每个子任务的大小]
+d--&amp;gt;d1[按拆分后的任务新建一个子task,将构造的子任务,\n模拟器一个请求,发送给当前机器]
+d1--&amp;gt;d2[当前机器接收到请求,把所有分段的任务,\n保存到数据库中]
+a--&amp;gt;|no|b1[开始执行当前任务,根据任务的状态返回执行结果]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://vip.helloimg.com/i/2024/08/29/66d0506da6ff4.png"
+loading="lazy"
+alt="66d0506da6ff4.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="通过tasktracker来处理子任务"&gt;通过TaskTracker来处理子任务
+&lt;/h3&gt;&lt;p&gt;上回书说到map会将大任务拆分成子任务保存到自己机器的数据库中&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;拆分后每个任务分片的调度原理，使用者无感&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a[初始化tasktracker]--&amp;gt;b[初始化定时任务线程池]
+b--&amp;gt;bb[向线程池中提交三种任务]
+bb--&amp;gt;b1[定时检查当前任务的执行状态,3秒一次]
+bb--&amp;gt;bb2{是否为MAP_REDUCE任务}
+bb--&amp;gt;b3[定时扫描数据库中的task,\n出于内存占用量考虑,每次最多获取100个,\n并将需要执行的任务派发出去]
+bb2--&amp;gt;|yes|b2[执行器动态上线,1分钟一次:\n检测是否需要更多的worker节点执行任务]
+b1--&amp;gt;b11[从数据库中统计出子任务的运行状态\n主要是个状态的数量]
+b11--&amp;gt;b12{未完成的任务数量是否为0\n用来判断任务是否真的执行结束}
+b12--&amp;gt;|yes|b13[根据任务的类型做不同的处理\n单机执行:再查一遍数据库,直接认为任务完成\nMAP:如果没有失败的任务就认为任务完成]
+b13--&amp;gt;b14{other:根据终极任务名称和任务id查询数据库中是否存在终极任务}
+b14--&amp;gt;|yes|b15[无论终极任务执行失败还是成功,都会任务当前任务执行成功]
+b14--&amp;gt;|no|b16[根据当前任务id新建一条终极任务提交给当前机器,\n必须让当前机器执行一遍终极任务]
+b12--&amp;gt;|no|b17[检测任务是否超时,把任务执行状态上报给server服务器]
+b15--&amp;gt;b17
+b16--&amp;gt;b17
+b17--&amp;gt;b18[判断是否存在之前未确认的任务,重新发送未确认任务]
+b18--&amp;gt;b19[检查有多少已宕机的ProcessorTracke,上面的任务重新派发\n删除掉宕机的机器]
+b2--&amp;gt;b21[判断是否需要动态加载新的执行器\n没有执行器或者可用的执行器小于配置的最大执行器数量]
+b21--&amp;gt;b22[向server端发送请求查询当前任务所有的可执行worker]
+b22--&amp;gt;b23[把所有可执行worker注册到ProcessTracker状态管理]
+b3--&amp;gt;b31[从任务管理器中取出所有可以执行的worker地址]
+b31--&amp;gt;b32[从数据库中查出当前根任务下所有等待调度的子任务]
+b32--&amp;gt;b33[通过取模算出当前任务需要执行的机器,给固定机器派发任务]
+b33--&amp;gt;b34[把当前任务更新为已调度,给目标机器发送任务开始命令]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://vip.helloimg.com/i/2024/08/27/66cd6506a2f47.png"
+loading="lazy"
+alt="66cd6506a2f47.png"
+&gt;&lt;/p&gt;</description></item><item><title>ActorSystem</title><link>https://thecoolboyhan.github.io/p/actorsystem/</link><pubDate>Mon, 15 Jul 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/actorsystem/</guid><description>&lt;h2 id="powerjobremoteengine"&gt;PowerjobRemoteEngine
+&lt;/h2&gt;&lt;p&gt;用来控制整个Powerjob的网络层&lt;/p&gt;
+&lt;p&gt;在work启动时创建的一个空对象，后续操作时会用到里面的方法&lt;/p&gt;
+&lt;h2 id="engineconfig"&gt;EngineConfig
+&lt;/h2&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt;/**
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; * 服务类型
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ServerType&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;serverType&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt;/**
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; * 需要启动的引擎类型
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt;/**
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; * 绑定的本地地址
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Address&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;bindAddress&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt;/**
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; * actor实例，交由使用侧自己实例化以便自行注入各种 bean
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;List&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Object&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;actorList&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;重点是其中的actorList对象，其中包含三个Actor对象：TaskTrackerActor、ProcessorTrackerActor、WorkerActor。&lt;/p&gt;
+&lt;h2 id="actorinfo对象"&gt;ActorInfo对象
+&lt;/h2&gt;&lt;p&gt;所有的actor对象拆解后的对象。其中包含所有actor对象，和它下面所有的Handler方法&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// actor对象本身&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Object&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;actor&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 当前这个actor对象类上的@Actor注解信息（主要包含path信息）&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Actor&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;anno&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;//当前actor类中所有的HandlerInfo对象&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;List&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;HandlerInfo&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;handlerInfos&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="handlerinfo对象"&gt;HandlerInfo对象
+&lt;/h2&gt;&lt;p&gt;ActorInfo中的属性，包含不同ActorInfo下的Handler修饰的注解，和Handler注解的属性&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;HandlerLocation&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;location&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt;/**
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; * handler 对应的方法
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Method&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;method&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt;/**
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; * Handler 注解携带的信息
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="cm"&gt; */&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Handler&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;anno&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="lighttasktrackermanager"&gt;LightTaskTrackerManager
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;轻量级任务管理器&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 用来存放所有轻量级任务，key为实例ID，value是任务对象&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;final&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Map&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Long&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;LightTaskTracker&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;INSTANCE_ID_2_TASK_TRACKER&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Maps&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;newConcurrentMap&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="heavytasktrackermanager"&gt;HeavyTaskTrackerManager
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;重量级任务管理器&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 用来存放所有的重量级任务&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;final&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Map&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Long&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;HeavyTaskTracker&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;INSTANCE_ID_2_TASK_TRACKER&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Maps&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;newConcurrentMap&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="初始化"&gt;初始化
+&lt;/h2&gt;&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/1722501205010actorSystem%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96.png"
+loading="lazy"
+alt="1722501205010actorSystem的初始化.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;以TaskTrackerActor为例&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;从EngineConfig中取出TaskTrackerActor&lt;/li&gt;
+&lt;li&gt;创建一个ActorInfo对象和HandlerInfo对象&lt;/li&gt;
+&lt;li&gt;将所有的ActorInfo和对应的HandlerInfo交给PowerjobRemoteEngine来实现响应式编程（分为阻塞和非阻塞）两种处理方式。利用事件来触发&lt;/li&gt;
+&lt;li&gt;后续所有的操作，均通过PowerjobRemoteEngine来触发worker和给server发消息。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="tasktrackeractor"&gt;TaskTrackerActor
+&lt;/h2&gt;&lt;h3 id="服务器任务调度处理器onreceiveserverschedulejobreq"&gt;服务器任务调度处理器（onReceiveServerScheduleJobReq）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;服务器触发”runJob“path的命令，worker检测到开始执行。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+A[服务器任务调度处理器] --&amp;gt; B{是否是轻量级任务}
+B --&amp;gt; |Yes| C[创建轻量级任务]
+C --&amp;gt; D{判断是否存在重复的任务}
+D --&amp;gt; |No| G{判断轻量级任务是否超载\n是否超过了1024*1.3}
+G --&amp;gt; |No| I{判断轻量级任务是否超过了1024个}
+I --&amp;gt; |Yes| J[告警提示轻量级任务超载]
+J --&amp;gt; K[原子性创建一个轻量级任务]
+B --&amp;gt; |No| M[创建重量级任务]
+M --&amp;gt; N{不存在重复实例id的重量级任务}
+N --&amp;gt; |No| P{判断重量级任务是否抄负荷是否超过64个}
+P --&amp;gt; |No| R[原子性创建重量级任务]
+&lt;/pre&gt;
+&lt;blockquote&gt;
+&lt;p&gt;轻量级任务，重量级任务这里分析完全可以单独再做一次研究报告，暂时就不展开了。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="processortracker-心跳处理器"&gt;ProcessorTracker 心跳处理器
+&lt;/h3&gt;&lt;p&gt;由&amp;quot;reportProcessorTrackerStatus&amp;quot;命令触发，请求参数中包含实例id&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;由代码推断，只有重量级任务需要上报心跳&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+A[从重量级任务管理器中取出被检查的任务]--&amp;gt;B[处理心跳]
+B--&amp;gt;C[根据请求参数更新当前任务的任务状态]
+C--&amp;gt;D{检测当前任务是否长期处于空闲状态}
+D--&amp;gt;|yes|E[销毁目标地址的任务\n销毁方式在状态管理器中将目标机器重置为初始状态]
+E--&amp;gt;F[通过数据库查询长期处于空间机器上所有执行中的任务]
+F--&amp;gt;G[将空闲机器上的所有任务全部改成失败状态]
+&lt;/pre&gt;
+&lt;ul&gt;
+&lt;li&gt;任务状态参数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;final&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;DISPATCH_THRESHOLD&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;20&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;final&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;HEARTBEAT_TIMEOUT_MS&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;60000&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 冗余存储一份 address 地址&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;address&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 上次活跃时间&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;long&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lastActiveTime&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 等待执行任务数&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;long&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;remainTaskNum&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 是否被派发过任务&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;dispatched&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// 是否接收到过来自 ProcessorTracker 的心跳&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;private&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;connected&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h3 id="停止任务实例"&gt;停止任务实例
+&lt;/h3&gt;&lt;p&gt;由“stopInstance”命令触发，请求参数中包含实例id&lt;/p&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a[从请求中找出实例id]--&amp;gt;b{判断当前实例是什么实例?}
+b--&amp;gt;|重量级|c[关闭重量级任务]
+b--&amp;gt;|轻量级|d[关闭轻量级任务]
+c--&amp;gt;c1[将结束标识改为true]
+c1--&amp;gt;c2[0. 开始关闭线程池\n 1. 通知 ProcessorTracker 释放资源\n 2. 删除所有数据库数\n 3.移除顶层引,送去GC\n 4.强制关闭线程池]
+d--&amp;gt;d1{判断任务是否已经结束}
+d1--&amp;gt;|no|d2{判断结束标识是否为true}
+d2--&amp;gt;|no|d21[修改标识为true]
+d2--&amp;gt;|yes|d22{判断是否仍有未执行的任务}
+d22--&amp;gt;|yes|e1[执行销毁方法]
+d22--&amp;gt;|no|e{判断是否有在执行的任务}
+e--&amp;gt;e2[尝试打断任务]
+&lt;/pre&gt;
+&lt;h3 id="查询任务的运行状态"&gt;查询任务的运行状态
+&lt;/h3&gt;&lt;p&gt;由“queryInstanceStatus”命令触发，请求参数中包含实例id&lt;/p&gt;
+&lt;p&gt;查询任务状态的方法，方法设计2中重量级任务和一种轻量级任务的不同查询方式。&lt;/p&gt;
+&lt;h3 id="子任务状态上报处理器"&gt;子任务状态上报处理器
+&lt;/h3&gt;&lt;p&gt;由&amp;quot;reportTaskStatus&amp;quot;命令触发，请求参数中包含实例id&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;只有重量级任务存在子任务状态上报机制&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a{判断当前子任务是否需要广播}--&amp;gt;|yes|b[批量告诉所有节点当前节点任务处于&amp;#39;等待调度器调&amp;#39;状态]
+a--&amp;gt;|no|c
+b--&amp;gt;c[更新子任务的任务状态]
+c--&amp;gt;d[更新工作流上下文]
+&lt;/pre&gt;
+&lt;h3 id="子任务-map-处理器"&gt;子任务 map 处理器
+&lt;/h3&gt;&lt;p&gt;由&amp;quot;mapTask&amp;quot;命令触发，请求参数中包含实例id，和所有的子任务：List&lt;SubTask&gt; subTasks&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;只有重量级任务存在子任务map&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a[新建一个subTaskList用来存放所有子任务]--&amp;gt;b[从参数中取出所有分给当前节点的子任务]
+b--&amp;gt;c[把所有分给当前worker的子任务实例id设置为当前实例id\n把所有的任务状态设置为&amp;#39;等待调度器调度&amp;#39;]
+c--&amp;gt;d[将所有任务全部持久化到当前worker的数据库or内存]
+&lt;/pre&gt;</description></item><item><title>MapReduce</title><link>https://thecoolboyhan.github.io/p/mapreduce/</link><pubDate>Mon, 15 Jul 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/mapreduce/</guid><description>&lt;h2 id="server的actor2024-08-21"&gt;server的actor（2024-08-21）
+&lt;/h2&gt;&lt;h3 id="friendactor处理其他服务器的请求"&gt;FriendActor(处理其他服务器的请求)
+&lt;/h3&gt;&lt;h4 id="探活非阻塞的"&gt;探活（非阻塞的）
+&lt;/h4&gt;&lt;p&gt;直接返回当前服务器注册在hashmap中的所有其他sever服务器&lt;/p&gt;
+&lt;h4 id="处理其他服务器的请求阻塞"&gt;处理其他服务器的请求（阻塞）
+&lt;/h4&gt;&lt;p&gt;服务器之间交互直接通过class文件+方法的方式，直接通过反射创建对应实体类和方法来执行&lt;/p&gt;
+&lt;h3 id="workerrequesthandlerimpl处理worker请求"&gt;WorkerRequestHandlerImpl（处理worker请求）
+&lt;/h3&gt;&lt;h4 id="workerheartbeat接收worker的心跳非阻塞"&gt;workerHeartbeat（接收worker的心跳）非阻塞
+&lt;/h4&gt;&lt;p&gt;内部维护着一个worker集群状态的map，如果对应appid集群状态有修改，则更新map。&lt;/p&gt;
+&lt;p&gt;处理完后，写入日志监控器&lt;/p&gt;
+&lt;h4 id="reportinstancestatus处理tasktracker上报的任务实例状态阻塞的"&gt;reportInstanceStatus(处理tasktracker上报的任务实例状态)阻塞的
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;创建一个已经完成任务的事件。&lt;/li&gt;
+&lt;li&gt;更新工作流中对应的任务&lt;/li&gt;
+&lt;li&gt;更新任务日志&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;丢弃掉晚上报的请求&lt;/p&gt;
+&lt;p&gt;丢弃掉不是server任务管理器中执行机器上报的任务&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="reportlog处理日志非阻塞"&gt;reportLog(处理日志)非阻塞
+&lt;/h4&gt;&lt;p&gt;构造好接收的任务信息，把信息入库&lt;/p&gt;
+&lt;h4 id="queryjobcluster查询任务的可执行集群阻塞的"&gt;queryJobCluster（查询任务的可执行集群）阻塞的
+&lt;/h4&gt;&lt;h2 id="关于mapreduce的调研2024-08-26"&gt;关于MapReduce的调研(2024-08-26)
+&lt;/h2&gt;&lt;h3 id="任务拆分"&gt;任务拆分
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;拆分任务和任务实际的执行逻辑（业务代码），用户只需要自定义任务如何拆分和业务代码。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a1[新建一个重量级任务]--&amp;gt;a
+a{判断当前任务是否为根任务}--&amp;gt;|yes|b[开始分发任务]
+b--&amp;gt;c[构造子任务]
+c--&amp;gt;d[拆分任务,从任务的参数中取出总数和每个子任务的大小]
+d--&amp;gt;d1[按拆分后的任务新建一个子task,将构造的子任务,\n模拟器一个请求,发送给当前机器]
+d1--&amp;gt;d2[当前机器接收到请求,把所有分段的任务,\n保存到数据库中]
+a--&amp;gt;|no|b1[开始执行当前任务,根据任务的状态返回执行结果]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://vip.helloimg.com/i/2024/08/29/66d0506da6ff4.png"
+loading="lazy"
+alt="66d0506da6ff4.png"
+&gt;&lt;/p&gt;
+&lt;h3 id="通过tasktracker来处理子任务"&gt;通过TaskTracker来处理子任务
+&lt;/h3&gt;&lt;p&gt;上回书说到map会将大任务拆分成子任务保存到自己机器的数据库中&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;拆分后每个任务分片的调度原理，使用者无感&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre class="mermaid"&gt;
+graph TD
+a[初始化tasktracker]--&amp;gt;b[初始化定时任务线程池]
+b--&amp;gt;bb[向线程池中提交三种任务]
+bb--&amp;gt;b1[定时检查当前任务的执行状态,3秒一次]
+bb--&amp;gt;bb2{是否为MAP_REDUCE任务}
+bb--&amp;gt;b3[定时扫描数据库中的task,\n出于内存占用量考虑,每次最多获取100个,\n并将需要执行的任务派发出去]
+bb2--&amp;gt;|yes|b2[执行器动态上线,1分钟一次:\n检测是否需要更多的worker节点执行任务]
+b1--&amp;gt;b11[从数据库中统计出子任务的运行状态\n主要是个状态的数量]
+b11--&amp;gt;b12{未完成的任务数量是否为0\n用来判断任务是否真的执行结束}
+b12--&amp;gt;|yes|b13[根据任务的类型做不同的处理\n单机执行:再查一遍数据库,直接认为任务完成\nMAP:如果没有失败的任务就认为任务完成]
+b13--&amp;gt;b14{other:根据终极任务名称和任务id查询数据库中是否存在终极任务}
+b14--&amp;gt;|yes|b15[无论终极任务执行失败还是成功,都会任务当前任务执行成功]
+b14--&amp;gt;|no|b16[根据当前任务id新建一条终极任务提交给当前机器,\n必须让当前机器执行一遍终极任务]
+b12--&amp;gt;|no|b17[检测任务是否超时,把任务执行状态上报给server服务器]
+b15--&amp;gt;b17
+b16--&amp;gt;b17
+b17--&amp;gt;b18[判断是否存在之前未确认的任务,重新发送未确认任务]
+b18--&amp;gt;b19[检查有多少已宕机的ProcessorTracke,上面的任务重新派发\n删除掉宕机的机器]
+b2--&amp;gt;b21[判断是否需要动态加载新的执行器\n没有执行器或者可用的执行器小于配置的最大执行器数量]
+b21--&amp;gt;b22[向server端发送请求查询当前任务所有的可执行worker]
+b22--&amp;gt;b23[把所有可执行worker注册到ProcessTracker状态管理]
+b3--&amp;gt;b31[从任务管理器中取出所有可以执行的worker地址]
+b31--&amp;gt;b32[从数据库中查出当前根任务下所有等待调度的子任务]
+b32--&amp;gt;b33[通过取模算出当前任务需要执行的机器,给固定机器派发任务]
+b33--&amp;gt;b34[把当前任务更新为已调度,给目标机器发送任务开始命令]
+&lt;/pre&gt;
+&lt;p&gt;&lt;img src="https://vip.helloimg.com/i/2024/08/27/66cd6506a2f47.png"
+loading="lazy"
+alt="66cd6506a2f47.png"
+&gt;&lt;/p&gt;</description></item><item><title>Powerjob开题</title><link>https://thecoolboyhan.github.io/p/powerjob%E5%BC%80%E9%A2%98/</link><pubDate>Mon, 15 Jul 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/powerjob%E5%BC%80%E9%A2%98/</guid><description>&lt;blockquote&gt;
+&lt;p&gt;最近在做Powerjob的调研&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="快速入门"&gt;快速入门
+&lt;/h2&gt;&lt;h3 id="基本概念"&gt;基本概念
+&lt;/h3&gt;&lt;h4 id="分组概念"&gt;分组概念：
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;appName：应用名称，建议和用户实际接入PowerJob 的应用名称保持一致，用于业务分组与隔离，一个appName等于一个业务集群，也就是实际的一个Java项目。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="核心概念"&gt;核心概念：
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;任务（Job）：描述了需要被PowerJob调度的任务信息，包括任务名称、调度时间、处理信息等。&lt;/li&gt;
+&lt;li&gt;任务实例（JobInstance，简称Instance）：任务被调度执行后会生成任务实例，任务实例记录了任务的运行时信息（任务与任务实例的关系类似于类与对象的关系）。&lt;/li&gt;
+&lt;li&gt;作业（Task）：任务实例的执行单元，一个JobInstance存在至少一个Task，具体规则如下：
+&lt;ul&gt;
+&lt;li&gt;单机任务（STANDALONE）：一个JobInstance对应一个Task&lt;/li&gt;
+&lt;li&gt;广播任务（BROADCAST）：一个JobInstance对应N个Task，N为集群机器数量，即每一台机器都会生成一个Task。&lt;/li&gt;
+&lt;li&gt;Map/MapReduce任务：一个JobInstance对应若干个Task，由开发者手动map产生。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;工作流（Workflow）：由DAG（有向无环图）描述的一组任务（Job），用于任务编排。&lt;/li&gt;
+&lt;li&gt;工作流实例（WorkflowInstance）：工作流被调度执行后会生成工作流实例，记录了工作流的运行时信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="扩展概念"&gt;扩展概念
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;JVM容器：以Maven工作项目的维度组织一堆Java文件（开发者开发的众多Java处理器），可以通过前端网页动态发布并被执行器加载，具有极强的扩展能力和灵活性。&lt;/li&gt;
+&lt;li&gt;OpenAPI：允许开发者通过接口来完成手工的操作，让系统整体变得更加灵活。开发者可以基于API便捷地扩展PowerJob原有的功能。&lt;/li&gt;
+&lt;li&gt;轻量级任务：单机执行且不需要以固定频率或者固定延迟执行的任务（&amp;gt;=v4.2.1)&lt;/li&gt;
+&lt;li&gt;重量级任务：非单机执行或者以固定频率/延迟执行的任务（&amp;gt;=v4.2.1)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="定时任务类型"&gt;定时任务类型
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;API：该任务只会由powerjob-client中提供的OpenAPI接口触发，server不会主动调度。&lt;/li&gt;
+&lt;li&gt;CRON：该任务的调度时间由CRON表达式指定。&lt;/li&gt;
+&lt;li&gt;固定频率：秒级任务，每隔多少毫秒运行一次，功能与java.util.concurrent.ScheduledExecutorService#scheduleAtFixedRate相同。&lt;/li&gt;
+&lt;li&gt;固定延迟：秒级任务，延迟多少毫秒运行一次，功能与java.util.concurrent.ScheduledExecutorService#scheduleWithFixedDelay相同。&lt;/li&gt;
+&lt;li&gt;工作流：该任务只会由其所属的工作流调度执行，server不会主动调度该任务。如果该任务不属于任何一个工作流，该任务就不会被调度。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;备注：固定延迟任务和固定频率任务统称秒级任务，这两种任务无法被停止，只有任务被关闭或删除时才能真正停止任务。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="项目结构说明"&gt;项目结构说明：
+&lt;/h4&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-fallback" data-lang="fallback"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── LICENSE
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-client // powerjob-client，普通Jar包，提供 OpenAPI
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-common // 各组件的公共依赖，开发者无需感知
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-remote // 内部通讯层框架，开发者无需感知
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-server // powerjob-server，基于SpringBoot实现的调度服务器
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-worker // powerjob-worker, 普通Jar包，接入powerjob-server的应用需要依赖该Jar包
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-worker-agent // powerjob-agent，可执行Jar文件，可直接接入powerjob-server的代理应用
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-worker-samples // 教程项目，包含了各种Java处理器的编写样例
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-worker-spring-boot-starter // powerjob-worker 的 spring-boot-starter ，spring boot 应用可以通用引入该依赖一键接入 powerjob-server
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── powerjob-official-processors // 官方处理器，包含一系列常用的 Processor，依赖该 jar 包即可使用
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;├── others
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;└── pom.xml
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="正式"&gt;正式
+&lt;/h2&gt;&lt;h3 id="调度中心powerjob-server"&gt;调度中心（Powerjob-server）
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;一个公司统一部署Powerjob-server集群，各业务线应用直接接入使用。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="处理器processor"&gt;处理器（Processor）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;Java处理器可根据代码所处位置划分为内置Java处理器和外置Java处理器，前者直接集成在宿主应用（也就是接入本系统的业务应用）中，一般用来处理业务需求；后者可以在一个独立的轻量级的Java工程中开发，通过JVM容器技术被worker集群热加载，提供Java的“脚本能力”，一般用于处理灵活多变的需求。&lt;/li&gt;
+&lt;li&gt;Java处理器可根据功能划分为单机处理器、广播处理器、Map处理器和MapReduce处理器。
+&lt;ul&gt;
+&lt;li&gt;单机处理器（BasicProcessor）对应了单机任务，即某个任务的某次运行只会有某一台机器的某一个线程参与运算。&lt;/li&gt;
+&lt;li&gt;广播处理器（BroadcastProcessor）对应了广播任务，即某个任务的某次运行会调用集群内所有机器参与运算。&lt;/li&gt;
+&lt;li&gt;Map处理器（MapProcessor）对应了Map任务，即某个任务在运行过程中，允许产生子任务并分发到其他机器进行运算。&lt;/li&gt;
+&lt;li&gt;MapReduce处理器（MapReduceProcessor）对应了MapReduce任务，在Map任务的基础上，增加了所有任务结束后的汇总统计。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>worker的启动流程（第一阶段）</title><link>https://thecoolboyhan.github.io/p/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5/</link><pubDate>Mon, 15 Jul 2024 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/worker%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5/</guid><description>&lt;h2 id="1-新建ohmyworker对象"&gt;1. 新建ohmyworker对象
+&lt;/h2&gt;&lt;p&gt;读取配置文件中的属性。&lt;/p&gt;
+&lt;p&gt;根据配置文件中的属性，新建一个ohmyworker的对象。&lt;/p&gt;
+&lt;h2 id="2通过配置信息尝试连接server并设置值"&gt;2.通过配置信息，尝试连接server并设置值
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;通过配置文件中的server，ip和端口，生成一个真实的服务地址。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;利用OKHttpClient给服务器发送get请求，请求调用的server接口为（/server/assert?appName=%s），appName指当前worker配置的appName&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;server端应当返回&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17216337682811721633768246.png"
+loading="lazy"
+alt="17216337682811721633768246.png"
+&gt;&lt;/p&gt;
+&lt;p&gt;success：成功标识&lt;/p&gt;
+&lt;p&gt;data：一个Long类型的appid（此appId是否是之前传的appName？）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;看到后面操作后，感觉此appId为服务端返回的负责处理此worker的appId&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;将以上得到的所有信息放入workerRuntime对象中。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;这里大胆猜测，workerRuntime是worker端用来存放所有运行时配置的类。此类的生命周期等同于worker应用。如果想要在运行中修改worker的某些配置，可以直接修改此类。（是否就可实现不需要重启服务，修改服务配置？）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol start="3"&gt;
+&lt;li&gt;获取本机的连接信息，也放入WR中。&lt;/li&gt;
+&lt;li&gt;创建一个定时线程池（核心线程数3）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;初始化连接server相关的配置。&lt;/p&gt;
+&lt;p&gt;通过AppId和WR中的配置创建ServerDiscoveryService对象。&lt;/p&gt;
+&lt;p&gt;利用ServerDiscoveryService对象连接sever。&lt;/p&gt;
+&lt;h2 id="3discovery方法"&gt;3.discovery方法
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;用来测试worker和server的连接，并选择出当前worker归哪个server的方法&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;连接前，先将所有的配置文件中的服务器，设置到ip2Address中。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;ServerDiscoveryService对象中有currentServerAddress属性&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;此属性表示worker当前指定的server&lt;/p&gt;
+&lt;p&gt;如果有指定的server，就返回当前server&lt;/p&gt;
+&lt;p&gt;否则通过调用“/server/acquire?appId=%d&amp;amp;currentServer=%s&amp;amp;protocol=AKKA”接口&lt;/p&gt;
+&lt;p&gt;确认当前机器或server服务器是否失活&lt;/p&gt;
+&lt;p&gt;检测失活过程中服务器会重试3次。（如果判断服务器失活，worker会自动关闭当前机器上所有的秒级任务，原因：认为server已将秒级任务分配给了其他worker应用）。&lt;/p&gt;
+&lt;p&gt;之后，通过之前创建的定时线程池每十秒不断递归discovery方法。&lt;/p&gt;
+&lt;h2 id="4初始化-actorsystem"&gt;4.初始化 ActorSystem
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;akka用来传递消息，server与worker&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;通过读取提前准备号的akka配置文件，创建一个ActorSystem，将此ActorSystem交给WR。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;初始化ActorSystem过程中，会将多个参数交给WR。同时给ActorSystem设置了多个指标？？（看不懂）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;只知道如果ActorSystem可以用来交互，同时上面设置的某些指标可以用来主动给server告警。&lt;/p&gt;
+&lt;p&gt;初始化日志系统，创建一个OmsLogHandler交给WR&lt;/p&gt;
+&lt;h2 id="5-初始化存储"&gt;5. 初始化存储
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;从WR中取出之前的配置文件中的存储方式（磁盘or内存），来初始化一个taskPersistenceService对象&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;初始化一个数据库连接，（两种方式磁盘or内存）。初始化连接后，会尝试删除上一次H2_PATH配置的文件。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;创建一个taskDAO对象，通过taskDAO对象初始化任务表（task_info表）每次重启时，此表都会删除并重新创建&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;初始化结束，把taskPersistenceService对象交给WR&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="6初始化定时任务"&gt;6.初始化定时任务
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;初始化Worker健康度定时上报Runnable，每15秒执行一次&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;通过CPU核心数，JVM内存空间，硬盘空间使用率，和用户自定义的指标来给当前机器打分&lt;/p&gt;
+&lt;p&gt;不断地把当前机器的分数提交给sever&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;向定时线程池中添加日志上传任务，每5秒上传一次&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不断地将logQueue中的日志取出，交给ActorSystem中给server&lt;/p&gt;
+&lt;p&gt;logQueue的消费过程中全程上锁。&lt;/p&gt;
+&lt;p&gt;logqueue.poll()&lt;/p&gt;
+&lt;h2 id="流程图"&gt;流程图
+&lt;/h2&gt;&lt;pre class="mermaid"&gt;
+graph TD
+A[PowerJobWorker 类] --&amp;gt; B[setApplicationContext]
+B --&amp;gt; C[SpringUtils.inject applicationContext]
+A --&amp;gt; D[afterPropertiesSet]
+D --&amp;gt; E[init]
+E --&amp;gt; F{initialized 是否为 false?}
+F --&amp;gt;|否| G[log.warn 不重复初始化]
+F --&amp;gt;|是| H[Stopwatch.createStarted]
+H --&amp;gt; I[log.info 初始化开始]
+I --&amp;gt; J[获取 config]
+J --&amp;gt; K{config 是否为 null?}
+K --&amp;gt;|是| L[抛出异常]
+K --&amp;gt;|否| M[PowerBannerPrinter.print]
+M --&amp;gt; N{config.isEnableTestMode?}
+N --&amp;gt;|否| O[assertAppName]
+N --&amp;gt;|是| P[log.warn TestMode]
+P --&amp;gt; Q[获取 workerAddress]
+Q --&amp;gt; R[workerRuntime.setWorkerAddress]
+R --&amp;gt; S[创建定时线程池]
+S --&amp;gt; T[创建 ServerDiscoveryService]
+T --&amp;gt; U[serverDiscoveryService.start]
+U --&amp;gt; V[workerRuntime.setServerDiscoveryService]
+V --&amp;gt; W[初始化 ActorSystem]
+W --&amp;gt; X[overrideConfig.put]
+X --&amp;gt; Y[ConfigFactory.load]
+Y --&amp;gt; Z[ActorSystem.create]
+Z --&amp;gt; AA[workerRuntime.setActorSystem]
+AA --&amp;gt; AB[创建 TaskTrackerActor]
+AB --&amp;gt; AC[创建 ProcessorTrackerActor]
+AC --&amp;gt; AD[创建 WorkerActor]
+AD --&amp;gt; AE[创建 TroubleshootingActor]
+AE --&amp;gt; AF[actorSystem.eventStream.subscribe]
+AF --&amp;gt; AG[log.info akka 地址]
+AG --&amp;gt; AH[log.info ActorSystem 初始化]
+AH --&amp;gt; AI[初始化日志系统]
+AI --&amp;gt; AJ[workerRuntime.setOmsLogHandler]
+AJ --&amp;gt; AK[初始化存储]
+AK --&amp;gt; AL[taskPersistenceService.init]
+AL --&amp;gt; AM[workerRuntime.setTaskPersistenceService]
+AM --&amp;gt; AN[log.info 存储初始化]
+AN --&amp;gt; AO[初始化定时任务]
+AO --&amp;gt; AP[timingPool.scheduleAtFixedRate]
+AP --&amp;gt; AQ[timingPool.scheduleWithFixedDelay]
+AQ --&amp;gt; AR[log.info 初始化完成]
+A --&amp;gt; AS[destroy]
+AS --&amp;gt; AT[timingPool.shutdownNow]
+AT --&amp;gt; AU[workerRuntime.getActorSystem.terminate]
+&lt;/pre&gt;
+&lt;h2 id="小结"&gt;小结
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;ohMyWorker&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;worker的启动类，此类初始化时，会将各种配置信息（config）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;主要会初始化下面几个对象&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;WorkerRuntime&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;类似于spring的ApplicationContext，用来存放所有运行时的配置和信息&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;oms，ActorSystem&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;创建一个ActorSystem，通过oms-worker.akka实现server和worker利用消息来通讯。ActorSystem会创建以下几种消息处理actor&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;任务跟踪器&lt;/li&gt;
+&lt;li&gt;处理器跟踪器&lt;/li&gt;
+&lt;li&gt;worker程序调度器&lt;/li&gt;
+&lt;li&gt;异常处理器&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;定时线程池&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用来存放worker的一些预设定时任务&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;探活任务ServerDiscoveryService.discovery();（用来做服务注册和发现）&lt;/li&gt;
+&lt;li&gt;Worker健康度定时上报（通过CPU核心数，JVM内存空间，硬盘空间使用率，和用户自定义的指标来给当前机器打分）&lt;/li&gt;
+&lt;li&gt;异步上传日志（不断地将logQueue中的日志取出，交给ActorSystem中给server）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/1721887350228Powerjob-worker%E5%88%9D%E5%A7%8B%E5%8C%96%E5%AF%B9%E8%B1%A1.png"
+loading="lazy"
+alt="1721887350228Powerjob-worker初始化对象.png"
+&gt;&lt;/p&gt;</description></item></channel></rss>

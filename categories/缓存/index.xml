@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>缓存 on 韩永发的博客</title><link>https://thecoolboyhan.github.io/categories/%E7%BC%93%E5%AD%98/</link><description>Recent content in 缓存 on 韩永发的博客</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 03 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://thecoolboyhan.github.io/categories/%E7%BC%93%E5%AD%98/index.xml" rel="self" type="application/rss+xml"/><item><title>redis5之前</title><link>https://thecoolboyhan.github.io/p/redis5%E4%B9%8B%E5%89%8D/</link><pubDate>Tue, 03 Oct 2023 00:00:00 +0000</pubDate><guid>https://thecoolboyhan.github.io/p/redis5%E4%B9%8B%E5%89%8D/</guid><description>&lt;img src="https://thecoolboyhan.github.io/p/redis5%E4%B9%8B%E5%89%8D/1.png" alt="Featured image of post redis5之前" /&gt;&lt;h2 id="拉钩的redis"&gt;拉钩的redis
+&lt;/h2&gt;&lt;h3 id="数据结构"&gt;数据结构
+&lt;/h3&gt;&lt;h4 id="基本数据类型"&gt;基本数据类型
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;string字符串&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;list&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;set集合&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;sortedset有序集合&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;hash类型（散列表）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;bitmap位图类型&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;geo地理位置类型&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;stream数据流类型&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="redisdb结构"&gt;redisDB结构
+&lt;/h4&gt;&lt;p&gt;redis会在初始化时，会预先分配16个数据库&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;redisDB的具体结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c++" data-lang="c++"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;redisDb&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//id数据库序号，为0-15（默认redis有16个数据库）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;avg_ttl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储数据库对象的平均ttl（time to live），用于统计
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;dict&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储所有的key-value
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;blocking_keys&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//blpop存储阻塞key和客户端对象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;ready_keys&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//阻塞后push响应阻塞客户端，存储阻塞后push的key和客户端对象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;wathced_keys&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储watch监控的key和客户端对象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h4 id="redis的7种type"&gt;redis的7种type
+&lt;/h4&gt;&lt;h5 id="字符串-sds"&gt;字符串 SDS
+&lt;/h5&gt;&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-412:55:27-1693803326815.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;sdshdr&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//记录buf数据中已使用字节的数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;len&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//记录buf数组中未使用字节的数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;free&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//字符数组，用于保存字符串
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;[];&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;优势：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;通过len和free可以用O（1）的时间复杂度来获取字符串的长度（c语言是O(n)）&lt;/li&gt;
+&lt;li&gt;因为已经记录了长度，所以可以在可能会发生缓冲区溢出时自动重新分配内存。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id="跳跃表重点"&gt;跳跃表（重点)
+&lt;/h5&gt;&lt;p&gt;跳跃表是有序集合（sorted-set）的底层实现，效率高，实现简单。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;思想：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;将有序链表中的部分节点分层，每层都是一个有序链表。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;查找：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;优先从最高层开始向后查找，当到达某个节点时，如果next节点值大于要查找的值或next指针指向null，则从当前节点下降一层继续向后查找。&lt;/p&gt;
+&lt;p&gt;举例：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-512:17:01-1693887420857.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;类似于2分查找&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;插入和删除：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;先从最下层开始构建，除开始和结束节点，每向上一层，都要有1/2的几率解决是否构建当前元素。&lt;/p&gt;
+&lt;p&gt;删除：&lt;/p&gt;
+&lt;p&gt;在每一层都找到指定元素，删除需要删除的元素。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;跳表的特点：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;每层都是一个有序链表&lt;/li&gt;
+&lt;li&gt;查找次数近似于层数的1/2&lt;/li&gt;
+&lt;li&gt;最底层包含所有元素&lt;/li&gt;
+&lt;li&gt;空间复杂度O(n)扩充了一倍&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;Redis的跳表实现：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;span class="lnt"&gt;14
+&lt;/span&gt;&lt;span class="lnt"&gt;15
+&lt;/span&gt;&lt;span class="lnt"&gt;16
+&lt;/span&gt;&lt;span class="lnt"&gt;17
+&lt;/span&gt;&lt;span class="lnt"&gt;18
+&lt;/span&gt;&lt;span class="lnt"&gt;19
+&lt;/span&gt;&lt;span class="lnt"&gt;20
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;sds&lt;/span&gt; &lt;span class="n"&gt;ele&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储字符串类型数据
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;double&lt;/span&gt; &lt;span class="n"&gt;score&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//存储排序的分值
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;backward&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//后退指针，指向当前节点最底层的前一个节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//层，柔性数组，随机生成1-64的值
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistLevel&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;forward&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//指向本层下一个节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;span&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//本层下一个节点到本层的元素个数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;level&lt;/span&gt;&lt;span class="p"&gt;[];&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;//链表
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplist&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//表头节点和为节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zskiplistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;header&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;tail&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//表中节点的数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//表中层数最大的节点的层数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;level&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;zskiplist&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;结构示意图：&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-512:30:46-1693888245130.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;h5 id="字典重点难点"&gt;字典（重点+难点）
+&lt;/h5&gt;&lt;p&gt;字典dict又称散列表（hash），用来存储键值对的一种数据结构。&lt;/p&gt;
+&lt;p&gt;Redis整个数据库是用字典来存储的。&lt;/p&gt;
+&lt;p&gt;对redis进行curd其实就是对字典数据进行curd。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;数组：数据量少时，使用数组加偏移量的方式来存储对象，可以O(1）时间复杂度来获取对象。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果数据变多时，还是需要使用到hash表&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;hash：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;redis解决hash冲突时，采用拉链法来处理。&lt;/p&gt;
+&lt;p&gt;情况类似于java的hashmap（没有树化）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;渐进式rehash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;扩容时需要rehash，但当数据特别大时，rehash是一个非常缓慢的过程，所以需要进行优化。&lt;/p&gt;
+&lt;p&gt;服务器忙，则只对一个节点进行rehash。&lt;/p&gt;
+&lt;p&gt;服务器闲，可批量rehash（100个节点）&lt;/p&gt;
+&lt;p&gt;字典的应用场景：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;数据库存储数据&lt;/li&gt;
+&lt;li&gt;散列表对象&lt;/li&gt;
+&lt;li&gt;哨兵模式的主从节点管理&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id="压缩列表"&gt;压缩列表
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;由一系列特殊编码的连续内存块组成的顺序型数据结构。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-613:26:19-1693977978141.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;zibytes:压缩列表的字节长度&lt;/p&gt;
+&lt;p&gt;zltail：压缩列表的尾元素相对于起始地址的偏移量&lt;/p&gt;
+&lt;p&gt;zlien：压缩列表的元素个数&lt;/p&gt;
+&lt;p&gt;entry1..entryx：压缩列表的各个节点&lt;/p&gt;
+&lt;p&gt;zlend：压缩列表的结尾，占一个字节，恒为0xFF（255）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;entry的编码结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-614:13:54-1693980833194.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;p&gt;previous_entry_length：前一个元素的字节长度&lt;/p&gt;
+&lt;p&gt;encoding：表示当前元素的编码&lt;/p&gt;
+&lt;p&gt;content：数据内容&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;span class="lnt"&gt;9
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;zlentry&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;prevrawlensize&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//previous_entry_length字段的长度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;prevrawlen&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//previous_entry_length字段存储的内容
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;lensize&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//encoding字段的长度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;len&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//数据内容长度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;headersize&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//当前元素的首部长度，即previous_entry_length字段长度与encoding字段长度之和。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="n"&gt;encoding&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//数据类型
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//当前元素首地址
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;zlentry&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;应用场景：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;sroted-set和hash元素个数少且是小整数或短字符串（直接使用）&lt;/p&gt;
+&lt;p&gt;list用快速链表（quicklist）数据结构存储，而快速链表是双向列表和压缩列表的组合（间接使用）&lt;/p&gt;
+&lt;h5 id="整数集合intset"&gt;整数集合（intset)
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;有序的（整数升序），存储整数的连续存储结构。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;当Redis集合类型的元素都是整数并且都处在64位有效符号整数范围内，就使用该结构存储。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-1516:11:05-1694765465742.png"
+loading="lazy"
+alt="2023-9-1516:11:05-1694765465742.png"
+&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;intset&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;encoding&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//编码方式
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//集合包含的元素数量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int8_t&lt;/span&gt; &lt;span class="n"&gt;contents&lt;/span&gt;&lt;span class="p"&gt;[];&lt;/span&gt; &lt;span class="c1"&gt;//保存元素的数组
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;应用场景：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;可以存储整数值，并且保证集合中不会出现重复元素。&lt;/p&gt;
+&lt;h5 id="快速列表重点"&gt;快速列表（重点）
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;快速列表（quicklist）是Redis底层重要的数据结构。是列表的底层实现。（Redis 3.2之前，Redis采用双向链表和压缩列表实现）。在Redis 3.2 之后，结合双向链表和压缩列表的优点，设计出了qucklist。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;快速列表是一个双向链表，链表中的每个节点是一个压缩列表结构。每个节点的压缩列表都可以存储多个数据元素。&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-9-1516:26:51-1694766411320.png"
+loading="lazy"
+alt="2023-9-1516:26:51-1694766411320.png"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;数据结构：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;quicklist&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向quicklist的头部
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;tail&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向quicklist的尾部
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//列表中所有元素项个数的总和
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;len&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//quicklist节点的个数，即ziplist的个数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;fill&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//ziplist大小限定，由list-max-ziplist-size 给定（Redis设定）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;compress&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//节点压缩深度设置，由list-compress-depth给定（redis设定）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;quicklist&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt; 1
+&lt;/span&gt;&lt;span class="lnt"&gt; 2
+&lt;/span&gt;&lt;span class="lnt"&gt; 3
+&lt;/span&gt;&lt;span class="lnt"&gt; 4
+&lt;/span&gt;&lt;span class="lnt"&gt; 5
+&lt;/span&gt;&lt;span class="lnt"&gt; 6
+&lt;/span&gt;&lt;span class="lnt"&gt; 7
+&lt;/span&gt;&lt;span class="lnt"&gt; 8
+&lt;/span&gt;&lt;span class="lnt"&gt; 9
+&lt;/span&gt;&lt;span class="lnt"&gt;10
+&lt;/span&gt;&lt;span class="lnt"&gt;11
+&lt;/span&gt;&lt;span class="lnt"&gt;12
+&lt;/span&gt;&lt;span class="lnt"&gt;13
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="n"&gt;struck&lt;/span&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;prev&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向上一个ziplist节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;quicklistNode&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;next&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向下一个ziplist节点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;zl&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//数据指针，如果没有被压缩，就指向ziplist结构，反之指向qucklistLZF结构。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;sz&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//指向ziplist结构的总长度（内存占用长度）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;count&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//表示ziplist中数据项个数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;encoding&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//编码方式，1--ziplist，2--quicklistLZF
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;container&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//预留字段，存放数据的方式，1--NONE，2--ziplist
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;recompress&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="c1"&gt;//解压标记，当查看一个被压缩的数据时，需要暂时解压缩，标记此参数为1之后再重新进行压缩。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;attempted_compress&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//测试相关
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;unsigned&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nl"&gt;extra&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;//扩展字段，暂时没用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="n"&gt;quicklistNode&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;数据压缩&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;quicklist每个节点的实际数据存储结构为ziplist，这种结构的优势在于节省存储空间。为了进一步降低ziplist的存储空间。还可以对ziplist进行压缩。Redis采用的压缩算法是LZF。其基本思想是：数据与前面重复的记录重复位置及长度。不重复的记录原始数据。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;压缩过后的数据可以分成多个片段，每个片段有两个部分，&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id="过期和淘汰策略"&gt;过期和淘汰策略
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;maxmemory&lt;/p&gt;
+&lt;p&gt;redis服务器物理内存的最大值，如果达到maxmemory设定的值，通过缓存淘汰策略，从内存中删除对象&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;删除策略&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;redis默认采用惰性删除+主动删除的方式。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;定时删除&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在设置key的同时，创建一个定时器，让定时器在key的过期时间来临时，立刻执行对key删除操作。&lt;/p&gt;
+&lt;p&gt;需要创建定时器，而且消耗CPU，一般不推荐。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;惰性删除&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在key被访问时，如果发现他已经失效，那么就删除它。&lt;/p&gt;
+&lt;p&gt;调用expirelfNeeded函数，该函数的意义是：读取数据之前先检查它有没有失效，如果失效了就删除它。&lt;/p&gt;
+&lt;p&gt;代码实现：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-c" data-lang="c"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;expireIfNeeded&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;redisDb&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;db&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;robj&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//获取主键的失效时间， get当前时间-创建时间&amp;gt;ttl
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="kt"&gt;long&lt;/span&gt; &lt;span class="n"&gt;when&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nf"&gt;getExpire&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;db&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;//假如失效时间为负数，说明该主键未设置失效时间（失效时间默认为-1）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id="redis高可用方案"&gt;redis高可用方案
+&lt;/h2&gt;&lt;h3 id="主从同步"&gt;主从同步
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;redis2.8之前&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;从服务器发送SYNC命令给主服务器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;主服务器生成RDB文件给从服务器，同时发送所有写命令给从服务器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;从服务器清空之前的数据，读取RDB文件&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通过命令传播的形式保持数据一致性&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;如果同步过程中断掉，主服务器重新生成RDB文件和mast命令给从服务器，从服务器重新恢复&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;redis 2.8之后&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;redis主从同步，分为全量同步和增量同步&lt;/li&gt;
+&lt;li&gt;从服务器第一次连接上主机是全量同步&lt;/li&gt;
+&lt;li&gt;断线重连可能触发全量同步也可能是增量同步&lt;/li&gt;
+&lt;li&gt;除此之外的情况都是增量同步&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="哨兵模式"&gt;哨兵模式
+&lt;/h3&gt;&lt;p&gt;Sentinel是一个特殊的Redis服务器&lt;/p&gt;
+&lt;p&gt;不会进行持久化&lt;/p&gt;
+&lt;p&gt;每个Sentinel启动后，会创建两个连向主服务器的网络连接&lt;/p&gt;
+&lt;p&gt;命令连接：用于向主服务器发送命令，并接收相应&lt;/p&gt;
+&lt;p&gt;订阅连接：用于订阅主服务器的&amp;ndash;Sentinel&amp;mdash;-Hello频道&lt;/p&gt;
+&lt;p&gt;Sentinel默认每十秒向主服务器发送info命令获取redis的信息&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Sentinel之间只创建命令连接，不创建订阅连接，因为Sentinel在通过订阅主服务器或者从服务器，就可以感知到新的Sentinel的加入。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;检测主观下线状态&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果一个哨兵检测到主服务器没在down-after-milliseconds未响应&lt;/p&gt;
+&lt;p&gt;哨兵就认为该实例主观下线&lt;/p&gt;
+&lt;p&gt;向其他哨兵发送消息确认是否主观下线&lt;/p&gt;
+&lt;p&gt;当哨兵集群的选举数半数以上，该主就客观下线&lt;/p&gt;
+&lt;h4 id="故障转移"&gt;故障转移
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;哨兵leader选举&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当一个主服务器被判断为客观下线后，监视这个主服务器的所有Sentinel会通过选举算法（raft），选出一个Leader 哨兵去执行故障转移操作&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;Raft&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Raft一般有三种身份，主，跟随者，候选人。&lt;/p&gt;
+&lt;p&gt;Raft协议将时间分为一个一个任期（term），可以认为是一种逻辑时间&lt;/p&gt;
+&lt;p&gt;选举流程：&lt;/p&gt;
+&lt;p&gt;Raft采用心跳检测触发Leader选举&lt;/p&gt;
+&lt;p&gt;系统启动后，全部节点初始化为跟随者。term为0&lt;/p&gt;
+&lt;p&gt;节点如果接收到了请求投票命令或者附录命令，就会保持自己的跟随者身份&lt;/p&gt;
+&lt;p&gt;节点如果一段时间内没有收到附录消息，在该节点的超时时间内还没有发现Leader，跟随者会自动转换为候选人，开始竞选leader&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;竞选：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;增加自己的term&lt;/li&gt;
+&lt;li&gt;启动新的定时器&lt;/li&gt;
+&lt;li&gt;给自己投一票（每个节点只能投一票，候选人投给自己，跟随者投给收到的第一个发送投票命令的节点）&lt;/li&gt;
+&lt;li&gt;向 所有其他节点发送投票命令，并等待其他节点回复&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果在计时超时前，节点收到多数节点的同意投票，就转换为Leader，同时向其他所有节点发送附录命令，告知自己成为Leader&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;故障转移&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;把失效的主其中的一个从升级为新的主，并将原失效主和其他的从都改为复制新的主。&lt;/li&gt;
+&lt;li&gt;当客户端连接原失效主失败时，集群会给客户端返回新的master，让客户端重新连接新的master&lt;/li&gt;
+&lt;li&gt;主和从服务器切换后，原主和从的配置文件都会发生改变，也就是原主中会多一行复制新主服务器。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="集群与分区"&gt;集群与分区
+&lt;/h3&gt;&lt;h4 id="客户端分区"&gt;客户端分区
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;普通hash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;客户端在存放数据的时候先做一个hash计算，根据结果来决定存到哪台redis服务器上&lt;/p&gt;
+&lt;p&gt;优点：&lt;/p&gt;
+&lt;p&gt;存放的数据key可以是中文或者字符串&lt;/p&gt;
+&lt;p&gt;热点数据分布均匀，不会存在哪一台机器上key特别多的情况&lt;/p&gt;
+&lt;p&gt;缺点：&lt;/p&gt;
+&lt;p&gt;扩展成本高，添加新redis服务器的时候，所有的数据都需要重新hash计算&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一致性hash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;普通的hash是对主机数取模，而一致性hash是对2^32^取模。我们把2^32^想象成一个圆，就像钟表一样。&lt;/p&gt;
+&lt;p&gt;再把redis服务器的hash（ip）对2^32取模， 确定redis服务器在这个圆上的位置。&lt;/p&gt;
+&lt;p&gt;存入的数据经过hash%2^32^之后，在圆上确定一个位置，当前点向右的第一个服务器就是存放此key 的位置。&lt;/p&gt;
+&lt;p&gt;当有新的redis服务器添加时，取圆上的位置。&lt;/p&gt;
+&lt;p&gt;服务器数据只需要修改新服务器圆上位置向右的第一个服务器的数据重新hash即可。&lt;/p&gt;
+&lt;p&gt;优点：&lt;/p&gt;
+&lt;p&gt;添加或移除节点时，数据只需要进行部分的迁移，其他服务器保持不变。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;虚拟映射&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果上述hash环之后，数据还是分布不均匀，可以在圆上取服务器节点的对角，来映射重排数据，使数据分布均匀。&lt;/p&gt;
+&lt;p&gt;缺点：&lt;/p&gt;
+&lt;p&gt;复杂度高&lt;/p&gt;
+&lt;h4 id="proxy端分区"&gt;proxy端分区
+&lt;/h4&gt;&lt;p&gt;codis豌豆荚提供的redis分区管理工具，推特也有一个叫TwemProxy。&lt;/p&gt;
+&lt;p&gt;codis在redis的基础上做了一层包装，引入了槽的概念。代理提供redis的分区功能。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缺点：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;redis更新后，proxy也要跟着维护&lt;/p&gt;
+&lt;h4 id="官方cluster分区"&gt;官方cluster分区
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;redis-cluster把所有的物理节点映射到（0-26383）个slot上，基本上采用平均分配和连续分配的方式。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;添加一个新的节点时，会自动进行槽迁移，槽中的数据也会跟着移动。&lt;/p&gt;
+&lt;p&gt;cluster采用去中心化设计，每个主节点间都会互相通讯，就算客户端连接到错误的主节点，redis会转发到正确的节点。&lt;/p&gt;
+&lt;h3 id="容灾"&gt;容灾
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;故障检测&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;redis中每个节点都会给其他节点发送ping命令，如果一个节点ping另一个节点超时，他会给其他节点发送pfile命令，当有半数以上的节点都投出pfail票数后，则认为此节点故障。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;cluster失效的判断&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;集群中半数以上的主节点都宕机（无法投票）&lt;/li&gt;
+&lt;li&gt;宕机的主节点的从节点也宕机了（sloct槽分配不连续）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;副本飘逸&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果一个master宕机，它只有一个从节点，从节点成为新的主节点，它没有从节点，会从其他从节点最多的一个主机点那移动一个从节点成为自己的从节点。&lt;/p&gt;
+&lt;h2 id="企业实战"&gt;企业实战
+&lt;/h2&gt;&lt;h3 id="缓存问题"&gt;缓存问题
+&lt;/h3&gt;&lt;h4 id="缓存穿透"&gt;缓存穿透
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;一般的缓存系统，都是按照key去缓存查询，如果不存在对应的value，就应该去后端系统查询（不如DB）。&lt;/p&gt;
+&lt;p&gt;缓存穿透是指在高并发下查询key不存在的数据（不存在的key），会穿过缓存查询数据库。导致数据库压力过大而宕机。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;对查询结果为空的情况也设置缓存，缓存事件设置短一点，或者该key对应的数据insert了之后清除缓存。&lt;/p&gt;
+&lt;p&gt;问题：缓存太多空值，占用了更多空间&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用布隆过滤器，在缓存之前再加一层布隆过滤器，在查询的时候先去布隆过滤器查询key是否存在，如果不存在就直接返回，存在再查询缓存和DB。（一个大数组，对key多次不同hash计算，记录此key分别出现在数组哪个位置，来判断缓存和数据库中是否有此key）&lt;/p&gt;
+&lt;p&gt;如果数据库更新，布隆过滤器一定要添加&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="缓存雪崩"&gt;缓存雪崩
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;当缓存服务器重启或者大量缓存集中在某一时间段失效，这样在失效的时候，也会给后端系统带来很大的压力。（数据库崩溃）&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;key的失效期分散开，不同的key设置不同的有效期&lt;/li&gt;
+&lt;li&gt;设置二级缓存（数据库不一定一致）&lt;/li&gt;
+&lt;li&gt;高可用（脏读）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="缓存击穿"&gt;缓存击穿
+&lt;/h4&gt;&lt;p&gt;对于一些设置了过期时间的key，如果这些key可能会在某些事件点被超高并发的访问，是一种非常“热点”的数据。这个时候需要考虑一个问题，缓存被“击穿”的问题，这个和缓存雪崩的区别在于这里针对某一key缓存，前者则是很多key。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;缓存的某个时间点过期的时候，恰好在这个时间点对这个key有大量的并发请求过来，这些请求发现缓存过期一般都会从后端DB加载数据并回设到缓存，这个时候大并发的缓存可能会瞬间把DB压垮。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;解决方案：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;用分布式锁控制访问的线程&lt;/p&gt;
+&lt;p&gt;使用redis的setnx互斥锁进行判断，这样其他线程就处于等待状态，保证不会有大并发操作去操作数据库&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;不设置超时时间，volatile-lru但会造成写一致问题&lt;/p&gt;
+&lt;p&gt;当数据库数据发生更新时，缓存中的数据不会及时更新，这样会造成数据库中的数据和缓存中的数据的不一致，应用会从缓存中读取到脏数据，可采用延时双删策略处理。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="数据不一致"&gt;数据不一致
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;保持数据最终一致性（延时双删）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;先更新数据库同时删除缓存项（Key），等读的时候再填充缓存。&lt;/li&gt;
+&lt;li&gt;2秒后再删除一次缓存项（key）&lt;/li&gt;
+&lt;li&gt;设置缓存过期时间比如十秒或者1小时&lt;/li&gt;
+&lt;li&gt;将缓存删除失败记录到日志中，利用脚本提取失败记录再次删除（缓存失效期过长7＊24）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;升级方案&lt;/p&gt;
+&lt;p&gt;通过数据库的binlog来异步淘汰key，利用工具（canal）将binlog日志采集发送到mq中，然后通过ACK机制确认处理删除缓存&lt;/p&gt;
+&lt;h4 id="hot-key"&gt;Hot Key
+&lt;/h4&gt;&lt;blockquote&gt;
+&lt;p&gt;当有大量的请求访问某个Redis某个Key时，由于流量集中达到网络上限，从而导致这个redis的服务器宕机。造成缓存击穿，接下来对这个key的访问将直接访问数据库造成数据库崩溃，或者访问数据库回填Redis再访问redis，继续崩溃。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;如何处理热Key：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;变分布式缓存为本地缓存&lt;/p&gt;
+&lt;p&gt;发现热key之后，把缓存取出后，直接加载到本地缓存中，可以采用Ehcache、Guava Cache都可以，这样系统在访问热key数据时就可以直接访问自己的缓存了。（数据不要求实时一致）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在每个redis主节点上备份热Jey数据，这样可以在读取时采用随机读取的方式，将访问压力负载到每个redis上。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;利用对热点数据的限流，熔断保护措施&lt;/p&gt;
+&lt;p&gt;每个系统实例每秒最多请求缓存集群读操作不超过400次，一超过就可以熔断掉，不让请求缓存集群，直接返回一个空白信息，然后用户稍后会自行再次重新刷新页面之类的。（首页不行，系统友好性差）&lt;/p&gt;
+&lt;p&gt;通过系统层自己直接加限流熔断保护措施，可以很好的保护后面的缓存集群。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="big-key"&gt;Big Key
+&lt;/h4&gt;&lt;p&gt;大key指的是存储的值（Value）非常大，常见场景：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;热门话题下的讨论&lt;/li&gt;
+&lt;li&gt;大v的粉丝列表&lt;/li&gt;
+&lt;li&gt;序列化后的图片&lt;/li&gt;
+&lt;li&gt;没有及时处理的垃圾数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;大Key 的影响：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;大key会大量占用内存，在集群中无法均衡&lt;/li&gt;
+&lt;li&gt;Redis的性能下降，主从复制异常&lt;/li&gt;
+&lt;li&gt;在主动删除或过期删除时会操作时间过长而引起服务阻塞&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如何发现大key：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;redis-cli &amp;ndash;bigkeys命令。可以找到某个实例5种数据类型（String,hash,list,set,zset）的最大Key。&lt;/p&gt;
+&lt;p&gt;但如果redis的key比较多，执行该命令会比较慢。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;获取生产redis的RDB文件，通过rdbtools分析rdb生成csv文件，在导入MySQL或其他数据库中进行分析统计，根据size_in_bytes统计bigKey。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;大key的处理：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;String 类型的big Key，尽量不要存入Redis中，可以使用文档型数据库MongoDB或缓存到CDN上。&lt;/p&gt;
+&lt;p&gt;如果必须redis存储，最好单独存储，不要和其他的key一起存储，采用一主一从或多从。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;单个简单的key存储的value很大，可以尝试将对象分拆成几个key-value，使用mget获取值，这样分拆的意义在于分拆单次操作的压力，将单次操作压力平摊到多次操作中，降低对redis的IO影响。&lt;/p&gt;
+&lt;p&gt;hash、set、zset、list中存储过多的元素，可以将这些元素分拆（分页）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;删除大Key时 不要使用del，因为del是阻塞命令，删除时会影响性能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用lazy delete（unlink命令）undel&lt;/p&gt;
+&lt;p&gt;删除指定的key（s），若key不存在则该key被跳过。但是，相比DEl会会产生阻塞，该命令会在另一个线程中回收内存，应为它是非阻塞的。这也是该命令名字的由来，仅将keys从key空间中删除，真正的数据删除会在后续异步操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="分布式锁"&gt;分布式锁
+&lt;/h3&gt;&lt;blockquote&gt;
+&lt;p&gt;分布式锁是控制系统之间的同步访问共享资源的一种方式。&lt;/p&gt;
+&lt;p&gt;利用redis的单线程特性对共享资源进行串行化处理。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id="利用watch实现redis乐观锁"&gt;利用Watch实现redis乐观锁
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;利用redis的watch功能，监控这个rediskey 的状态值&lt;/li&gt;
+&lt;li&gt;获取rediskey的值&lt;/li&gt;
+&lt;li&gt;创建redis事务&lt;/li&gt;
+&lt;li&gt;给这个key的值+1&lt;/li&gt;
+&lt;li&gt;然后去执行 这个事务，如果key的值被修改过则回滚。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id="实现方式"&gt;实现方式
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;使用set命令实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;span class="lnt"&gt;9
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;getLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;expireTime&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//setnx:查询是否有这个key存在，如果没有就设置成功，如果有就不能设置&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;//ex：过期时间，如果上面设置的key没有被当前线程手动删除，到达过期时间此key自动失效（删除）&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;set&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;NX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;EX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;expireTime&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;OK&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;equals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;释放锁：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;void&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;releaseLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;equals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;))){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;del&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;blockquote&gt;
+&lt;p&gt;问题在于如果调用jedis.del()方法的时候，这把锁已经不属于当前客户端的时候会解除他人家的锁。比如客户端A加锁，一段时间后客户端A解锁，在执行jedis.del()之前，锁突然过期了，客户端B尝试加锁成功。然后客户端A在执行del方法，则将客户端B的锁解锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;redis+lua脚本实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;因为lua脚本是原子性的，不存在拿到锁，再误删别人锁的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class="highlight"&gt;&lt;div class="chroma"&gt;
+&lt;table class="lntable"&gt;&lt;tr&gt;&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code&gt;&lt;span class="lnt"&gt;1
+&lt;/span&gt;&lt;span class="lnt"&gt;2
+&lt;/span&gt;&lt;span class="lnt"&gt;3
+&lt;/span&gt;&lt;span class="lnt"&gt;4
+&lt;/span&gt;&lt;span class="lnt"&gt;5
+&lt;/span&gt;&lt;span class="lnt"&gt;6
+&lt;/span&gt;&lt;span class="lnt"&gt;7
+&lt;/span&gt;&lt;span class="lnt"&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class="lntd"&gt;
+&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;static&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;releasLock&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;script&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;if redis.call(&amp;#39;get&amp;#39;,KEYS[1]) == ARGV[1] then return redis.call(&amp;#39;del&amp;#39;,KEYS[1]) else return 0 end&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Object&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;jedis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;eval&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;script&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Collections&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;singletonList&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lockKey&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="n"&gt;Collections&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;singletonList&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;requestId&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;equals&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;1L&lt;/span&gt;&lt;span class="p"&gt;)){&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;return&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h4 id="存在的问题"&gt;存在的问题
+&lt;/h4&gt;&lt;p&gt;无法保证强一致性，在主机宕机的情况下会造成锁的重复获取。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;A在主获得锁，setnx，此时还没有触发主从同步，redis主节点挂了，从变为主，b在新主节点上又获得锁，此时就有两个线程同时获得了同一把锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;redLock&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不要只在一个主节点上获取锁setnx，至少在半数以上的节点通过setnx成功后才能获取锁。&lt;/p&gt;
+&lt;h5 id="redission分布式锁的使用"&gt;Redission分布式锁的使用
+&lt;/h5&gt;&lt;blockquote&gt;
+&lt;p&gt;Redission是架设在Redis基础上的一个java驻内存数据网络。&lt;/p&gt;
+&lt;p&gt;Redission在基于NIO的Netty框架上，生产环境使用分布式锁。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src="https://www.helloimg.com/images/2022/04/29/RMp24A.png"
+loading="lazy"
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;watch dog&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;后台有一个线程，会每隔10秒检查一下，如果客户端1还持有锁key，那么就会不断的延长锁key的生存时间。&lt;/p&gt;
+&lt;h2 id="大厂面试提"&gt;大厂面试提
+&lt;/h2&gt;&lt;h3 id="缓存雪崩缓存穿透缓存击穿"&gt;缓存雪崩，缓存穿透，缓存击穿
+&lt;/h3&gt;&lt;p&gt;穿透： 不存在的key&lt;/p&gt;
+&lt;p&gt;雪崩：大量的key失效&lt;/p&gt;
+&lt;p&gt;击穿： 一个key或一些key 热点数据&lt;/p&gt;
+&lt;h3 id="数据一致性问题"&gt;数据一致性问题
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;延时双删&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不是实时一直，而是最终一致。&lt;/p&gt;
+&lt;p&gt;如果延时双删不成功，就等key失效。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;热点数据和冷数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;热点数据怎么处理&lt;/p&gt;
+&lt;p&gt;冷数据如果淘汰过期&lt;/p&gt;
+&lt;h3 id="redis为什么这么快"&gt;redis为什么这么快
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;redis在内存中操作，正常情况下和硬盘不会频繁swap&lt;/li&gt;
+&lt;li&gt;maxmemory的设置+淘汰策略&lt;/li&gt;
+&lt;li&gt;数据结构简单，有压缩处理，专门设计的&lt;/li&gt;
+&lt;li&gt;单线程没有锁，没有多线程的切换和调度，不会死锁，没有性能消耗&lt;/li&gt;
+&lt;li&gt;使用i/o多路复用模型，非阻塞io&lt;/li&gt;
+&lt;li&gt;构建了多种通讯模式，进一步提升了性能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="如何在多个核心的cpu上利用redis的性能"&gt;如何在多个核心的CPU上利用redis的性能
+&lt;/h3&gt;&lt;p&gt;redis是单线程的，如果想在多个CPU或者多个核心上充分利用redis性能，&lt;/p&gt;
+&lt;p&gt;在单个机器上部署多个redis实例，然后使用taskset指令将不同的redis绑定到不同的核心上。&lt;/p&gt;</description></item></channel></rss>
