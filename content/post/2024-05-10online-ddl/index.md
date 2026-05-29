@@ -93,7 +93,7 @@ alter table tabl_name add column col_name col_type, algorithm=inplace,lock=none;
 
 - share：共享锁，执行DDL的表可以读，但是不可以写。
 - None：没有任何限制，执行DDL的表可读可写。
-- exclusive：排它锁，执行DDL的表不可以读也不可以写。
+- exclusive：排他锁，执行DDL的表不可以读也不可以写。
 - default：默认值，由MySQL来决定是否锁表。不建议使用，如果你确定你的DDL语句不会锁表，你可以不指定lock或者指定它的值为default，否则建议指定它的锁类型。
 
 执行DDL操作时，algorithm选项可以不指定，这时候MySQL按照instant、inplace、copy的顺序自动选择合适的模式。也可以指定algorithm=default，也是同样的效果。如果指定algorithm选项，但不支持的话，会直接报错。
@@ -140,13 +140,13 @@ select * from information_schema.processlist;//数据库连接信息
 
 2. 执行
 
-这个阶段会准备并执行DDL语句，根据阶段1评估的结果来决定是否将元数据锁升级为排它锁（X），如果需要升级为排它锁，则只在DDL的准备阶段短暂的添加排它锁。
+这个阶段会准备并执行DDL语句，根据阶段1评估的结果来决定是否将元数据锁升级为排他锁（X），如果需要升级为排他锁，则只在DDL的准备阶段短暂的添加排他锁。
 
 
 
 3. 提交表定义
 
-元数据锁会升级为排它锁来更新表的定义。独占排他锁的时间非常短。
+元数据锁会升级为排他锁来更新表的定义。独占排他锁的时间非常短。
 
 > 元数据锁（MDL，metadata lock）主要用于DDL和DML操作之间的并发访问控制，保护表结构（表定义）的一致，保证读写的正确性。MDL不需要显式的使用，在访问时会自动加上。
 

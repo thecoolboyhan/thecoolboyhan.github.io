@@ -507,7 +507,7 @@ class SequentialSearchST<Key,Value>{
                 x.val = val;
                 return;
             }
-        //如果没有找到，新建一个节点，新节点的next指针指向老头节点，新节点做为链表新的头节点
+        //如果没有找到，新建一个节点，新节点的next指针指向老头节点，新节点作为链表新的头节点
         first=new Node(key,val,first);
     } 
 }

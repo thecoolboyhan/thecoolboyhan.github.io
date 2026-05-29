@@ -930,7 +930,7 @@ protected final void refreshBeanFactory() throws BeansException {
       //对IoC容器进行定制化，如设置启动参数，开启注解的自动装配等
       customizeBeanFactory(beanFactory);
       //调用再度Bean定义的方法，这里又使用了一个委派模式
-      //在在当前类中只定义了抽象的loadBeanDefinitions()方法，调用子类容器实现
+      //在当前类中只定义了抽象的loadBeanDefinitions()方法，调用子类容器实现
       loadBeanDefinitions(beanFactory);
       synchronized (this.beanFactoryMonitor) {
          this.beanFactory = beanFactory;
@@ -968,7 +968,7 @@ protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throw
 
    // Allow a subclass to provide custom initialization of the reader,
    // then proceed with actually loading the bean definitions.
-   //当Bean读读取器读取Bean定义的xml资源文件时，启用xml的校验机制
+   //当Bean读取器读取Bean定义的xml资源文件时，启用xml的校验机制
    initBeanDefinitionReader(beanDefinitionReader);
    //Bean读取器真正实现加载的方法
    loadBeanDefinitions(beanDefinitionReader);
@@ -1062,7 +1062,7 @@ protected void doRegisterBeanDefinitions(Element root) {
       }
     }
 
-    //在解析Bean定义之前，进行自定义解析，增强解析过程的可扩拽性
+    //在解析Bean定义之前，进行自定义解析，增强解析过程的可扩展性
     preProcessXml(root);
     //从文档的根元素开始进行Bean定义的文档对象的解析
     parseBeanDefinitions(root, this.delegate);

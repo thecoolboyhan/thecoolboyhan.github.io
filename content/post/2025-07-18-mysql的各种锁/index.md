@@ -100,7 +100,7 @@ mysql> INSERT INTO t SELECT * FROM t AS t1;
 
 ### 共享锁(Shared Lock，S Lock)
 
-> 允许多个事务同时读取同一行（<font color='red'>与读锁并不是同一个锁，上锁范围根据where语句有关，一般会锁定固定的行</font>），但禁止任务事务写入。
+> 允许多个事务同时读取同一行（<font color='red'>与读锁并不是同一个锁，上锁范围根据where语句有关，一般会锁定固定的行</font>），但禁止任何事务写入。
 
 
 
@@ -139,7 +139,7 @@ SELECT ... FOR UPDATE或UPDATE/DELETE语句自动获取。
 表示事务打算在表中的某些行上获取共享锁或排他锁
 
 - 锁定范围：整个表，但只表示意图，不锁定具体行。
-- 所用：用来协调表级锁和行级锁的兼容性。
+- 作用：用来协调表级锁和行级锁的兼容性。
 
 
 
@@ -171,7 +171,7 @@ TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
 - 锁定范围：特定的索引记录，如：SELECT c1 FROM t WHERE c1 = 10 FOR UPDATE;会锁定c1=10的行。
 - 使用场景：精确锁定特定的行
 
-> 后续会详细详细讲解锁定方式等
+> 后续会详细讲解锁定方式等
 
 
 
@@ -189,11 +189,11 @@ TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
 
 ### Next-Key Lock
 
-记录锁和间隙锁的组合，及锁定一个索引记录，也锁定该记录前面的间隙。
+记录锁和间隙锁的组合，即锁定一个索引记录，也锁定该记录前面的间隙。
 
-- 上锁范围：一个索引及其前面的间隙，<font color='red'>**左开又必，一定是间隙锁在前，记录锁在后。(negative infinity, 10]**</font>
+- 上锁范围：一个索引及其前面的间隙，<font color='red'>**左开右闭，一定是间隙锁在前，记录锁在后。(negative infinity, 10]**</font>
 
-- 可重复读级别下可以方式幻读。
+- 可重复读级别下可以防止幻读。
 
 
 
@@ -543,7 +543,7 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 
 
 
-**所以推荐，可重复读隔离级别下，劲量只通过主键索引来上锁，不要通过二级索引上锁，否则会导致上锁范围收到影响。**
+**所以推荐，可重复读隔离级别下，尽量只通过主键索引来上锁，不要通过二级索引上锁，否则会导致上锁范围受到影响。**
 
 
 
@@ -551,7 +551,7 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 
 
 
-- 表级的意向排它锁（IX）：lock mode IX。
+- 表级的意向排他锁（IX）：lock mode IX。
 - 表级的插入意向锁（LOCK_INSERT_INTENTION）: lock_mode X locks gap before rec insert intention
 - 行级的记录锁（LOCK_REC_NOT_GAP）: lock_mode X locks rec but not gap
 - 行级的间隙锁（LOCK_GAP）: lock_mode X locks gap before rec
@@ -575,7 +575,7 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 | SHOW ENGINE INNODB STATUS         | ✅        | ✅        | ✅        | ✅        | 需启用 innodb_status_output_locks |
 | SHOW PROCESSLIST                  | ✅        | ✅        | ✅        | ✅        | 显示线程状态，非锁详情            |
 | SHOW OPEN TABLES                  | ✅        | ✅        | ✅        | ✅        | 适合 MyISAM 表锁                 |
-| INNODB_LOCKS/WAITS                | ✅        | ✅        | 废弃      | 废弃      | MySQL 8.0.1 起用 data_locks      |
+| INNODB_LOCKS/WAITS                | ✅        | ✅        | 废弃      | 废弃      | MySQL 8.0.1 起改用 data_locks      |
 | INNODB_TRX                        | ✅        | ✅        | ✅        | ✅        | 查看活跃事务                     |
 | performance_schema.data_locks     | ❌        | ❌        | ✅        | ✅        | 需启用 Performance Schema        |
 | performance_schema.metadata_locks | ❌        | ✅        | ✅        | ✅        | 适合元数据锁和用户锁             |

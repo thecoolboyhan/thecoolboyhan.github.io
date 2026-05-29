@@ -116,7 +116,7 @@ SQL执行时：会现在被seata代理的ConnectionProxy连接代理类中的com
 
 本地AT事务回滚，查询undo_log中记录的回滚日志，循环尝试执行，最大努力交付。
 
-并向seata，sever发送当前事务回滚请求，提示让全局事务回滚。
+并向seata server发送当前事务回滚请求，提示让全局事务回滚。
 
 
 
