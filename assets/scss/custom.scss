@@ -3,12 +3,15 @@
  * 基于 Hugo Theme Stack 的 CSS 变量，自动适配深色 / 浅色模式
  */
 
-/* ========== 1. 全局字体与排版 ========== */
+/* ========== 0. 字体（霞鹜文楷 LXGW，含系统回退） ========== */
 :root {
-    --font-cn: "PingFang SC", "Microsoft YaHei", "Noto Sans SC",
-        "Hiragino Sans GB", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
+    --font-cn: "LXGW WenKai Screen", "PingFang SC", "Microsoft YaHei",
+        "Noto Sans SC", "Hiragino Sans GB", "Source Han Sans SC", sans-serif;
+    /* 让文章标题也使用霞鹜文楷 */
+    --article-font-family: var(--font-cn);
 }
 
+/* ========== 1. 全局字体与排版 ========== */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         "Helvetica Neue", Arial, var(--font-cn);
@@ -154,19 +157,30 @@ html {
     transform: rotate(8deg) scale(1.05);
 }
 
-/* ========== 9. 阅读进度条 ========== */
-.reading-progress-bar {
+/* ========== 9. 顶部品牌渐变条 ========== */
+.site-brand-line {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1000;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #6a8cff, #9b6cff);
+    z-index: 1002;
+}
+
+/* ========== 10. 阅读进度条（位于品牌条下方） ========== */
+.reading-progress-bar {
+    position: fixed;
+    top: 3px;
+    left: 0;
+    z-index: 1001;
     height: 3px;
     width: 0;
     background: linear-gradient(90deg, #6a8cff, #9b6cff);
     transition: width 0.1s ease-out;
 }
 
-/* ========== 10. 不蒜子访问统计 ========== */
+/* ========== 11. 不蒜子访问统计 ========== */
 .busuanzi {
     padding: 0.6em 1em 0;
     text-align: center;
@@ -175,4 +189,154 @@ html {
 }
 .busuanzi .busuanzi-divider {
     margin: 0 0.5em;
+}
+
+/* ========== 12. 返回顶部按钮 ========== */
+#back-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--card-background, #fff);
+    color: var(--accent-color, #6a8cff);
+    box-shadow: var(--shadow-l2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s,
+        background 0.2s ease, color 0.2s ease;
+    z-index: 1000;
+}
+#back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+#back-to-top:hover {
+    background: var(--accent-color, #6a8cff);
+    color: var(--accent-color-text, #fff);
+}
+#back-to-top svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* ========== 13. 文章列表卡片（首页/归档） ========== */
+.article-list article {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.article-list article:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-l2);
+}
+.article-list .article-image img {
+    transition: transform 0.4s ease;
+}
+.article-list article:hover .article-image img {
+    transform: scale(1.04);
+}
+.article-list .article-title a:hover {
+    color: var(--accent-color, #6a8cff);
+    opacity: 1;
+}
+
+/* ========== 14. 标签 / 分类胶囊 ========== */
+.article-category a,
+.article-tags a {
+    transition: background-color 0.3s ease, transform 0.2s ease,
+        box-shadow 0.3s ease;
+}
+.article-category a:hover,
+.article-tags a:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-l2);
+}
+.tagCloud-tags a {
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.tagCloud-tags a:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-l2);
+}
+
+/* ========== 15. 侧边栏个人卡 ========== */
+.sidebar header {
+    position: relative;
+}
+/* 头像上方装饰渐变条 */
+.sidebar header::before {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 4px;
+    margin: 0 auto 1rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6a8cff, #9b6cff);
+}
+.sidebar .emoji {
+    transition: transform 0.3s ease;
+}
+.sidebar .site-avatar:hover .emoji {
+    transform: scale(1.15) rotate(8deg);
+}
+/* 社交 / 菜单图标 hover 放大变色 */
+.sidebar a svg {
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.sidebar a:hover svg {
+    transform: scale(1.15);
+    color: var(--accent-color, #6a8cff);
+}
+
+/* ========== 16. 代码复制按钮 ========== */
+.article-content .copyCodeButton {
+    color: var(--accent-color, #6a8cff);
+    border-radius: 8px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.article-content .copyCodeButton:hover {
+    background: var(--accent-color, #6a8cff);
+    color: var(--accent-color-text, #fff);
+}
+
+/* ========== 17. 自定义滚动条 ========== */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color, #6a8cff) transparent;
+}
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--card-separator-color, #ccc);
+    border-radius: 999px;
+    border: 2px solid var(--card-background, #fff);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color, #6a8cff);
+}
+
+/* ========== 18. 首页 widget 卡片 ========== */
+.widget {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.widget:hover {
+    box-shadow: var(--shadow-l2);
+}
+
+/* ========== 19. 文章页脚（标签/协议/更新时间） ========== */
+.article-footer {
+    border-top: 1px dashed var(--card-separator-color, #eaeaea);
+    padding-top: var(--card-padding, 1.5rem);
 }

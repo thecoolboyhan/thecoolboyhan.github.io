@@ -1,3 +1,6 @@
+{{/* ===== 顶部品牌渐变条 ===== */}}
+<div class="site-brand-line"></div>
+
 {{/* ===== 不蒜子访问统计（国内可用，无需账号） ===== */}}
 <div class="busuanzi">
     <span id="busuanzi_container_site_uv">访客数 <span id="busuanzi_value_site_uv">-</span></span>
@@ -8,19 +11,46 @@
 
 {{/* ===== 顶部阅读进度条 ===== */}}
 <div class="reading-progress-bar" id="reading-progress-bar"></div>
+
+{{/* ===== 返回顶部按钮 ===== */}}
+<button id="back-to-top" aria-label="返回顶部" title="返回顶部">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+</button>
+
 <script>
     (function () {
+        // 阅读进度条
         var bar = document.getElementById('reading-progress-bar');
-        if (!bar) return;
-        var update = function () {
+        // 返回顶部按钮
+        var btn = document.getElementById('back-to-top');
+
+        var onScroll = function () {
             var doc = document.documentElement;
             var scrollTop = doc.scrollTop || document.body.scrollTop;
             var scrollHeight = doc.scrollHeight - doc.clientHeight;
-            var percent = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-            bar.style.width = percent + '%';
+
+            if (bar) {
+                var percent = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                bar.style.width = percent + '%';
+            }
+            if (btn) {
+                if (scrollTop > 400) btn.classList.add('show');
+                else btn.classList.remove('show');
+            }
         };
-        window.addEventListener('scroll', update, { passive: true });
-        window.addEventListener('resize', update);
-        update();
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+
+        if (btn) {
+            btn.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        onScroll();
     })();
 </script>
