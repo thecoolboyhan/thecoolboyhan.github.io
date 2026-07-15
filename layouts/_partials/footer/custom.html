@@ -1,0 +1,26 @@
+{{/* ===== 不蒜子访问统计（国内可用，无需账号） ===== */}}
+<div class="busuanzi">
+    <span id="busuanzi_container_site_uv">访客数 <span id="busuanzi_value_site_uv">-</span></span>
+    <span class="busuanzi-divider">·</span>
+    <span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv">-</span></span>
+</div>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+{{/* ===== 顶部阅读进度条 ===== */}}
+<div class="reading-progress-bar" id="reading-progress-bar"></div>
+<script>
+    (function () {
+        var bar = document.getElementById('reading-progress-bar');
+        if (!bar) return;
+        var update = function () {
+            var doc = document.documentElement;
+            var scrollTop = doc.scrollTop || document.body.scrollTop;
+            var scrollHeight = doc.scrollHeight - doc.clientHeight;
+            var percent = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+            bar.style.width = percent + '%';
+        };
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        update();
+    })();
+</script>
