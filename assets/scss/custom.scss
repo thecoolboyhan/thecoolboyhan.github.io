@@ -3,12 +3,20 @@
  * 基于 Hugo Theme Stack 的 CSS 变量，自动适配深色 / 浅色模式
  */
 
-/* ========== 0. 字体（霞鹜文楷 LXGW，含系统回退） ========== */
+/* ========== 0. 字体（霞鹜文楷 LXGW，含系统回退） & 布局调整 ========== */
 :root {
     --font-cn: "LXGW WenKai Screen", "PingFang SC", "Microsoft YaHei",
         "Noto Sans SC", "Hiragino Sans GB", "Source Han Sans SC", sans-serif;
     /* 让文章标题也使用霞鹜文楷 */
     --article-font-family: var(--font-cn);
+
+    /* 收窄右侧边栏，给正文更多空间
+     * 主题默认: md=30%, lg=30%, xl=25%
+     * 调整后:   md=26%, lg=24%, xl=20%
+     */
+    --right-sidebar-max-width: 26%;
+    @media (min-width: 1024px) { --right-sidebar-max-width: 24%; }
+    @media (min-width: 1280px) { --right-sidebar-max-width: 20%; }
 }
 
 /* ========== 1. 全局字体与排版 ========== */
