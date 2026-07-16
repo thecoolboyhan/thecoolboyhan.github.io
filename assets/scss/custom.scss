@@ -5,10 +5,16 @@
 
 /* ========== 0. 字体（霞鹜文楷 LXGW，含系统回退） & 布局调整 ========== */
 :root {
-    --font-cn: "LXGW WenKai Screen", "PingFang SC", "Microsoft YaHei",
-        "Noto Sans SC", "Hiragino Sans GB", "Source Han Sans SC", sans-serif;
-    /* 让文章标题也使用霞鹜文楷 */
+    /* 正文/标题：干净耐看的无衬线字体栈（零外部加载，首屏更快） */
+    --font-cn: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB",
+        "Source Han Sans SC", sans-serif;
+    /* 文章正文与标题使用简洁无衬线字体 */
     --article-font-family: var(--font-cn);
+
+    /* 代码：JetBrains Mono 等宽字体（程序员友好，由 head/custom.html 加载） */
+    --font-code: "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas,
+        "Liberation Mono", Menlo, monospace;
 
     /* 收窄右侧边栏，给正文更多空间
      * 主题默认: md=30%, lg=30%, xl=25%
@@ -98,8 +104,7 @@ html {
     font-size: 0.88em;
     color: var(--inline-code-color, #c7254e);
     background: var(--code-background-color, #f4f4f5);
-    font-family: "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas,
-        monospace;
+    font-family: var(--font-code);
 }
 
 .article-content pre {
@@ -107,6 +112,7 @@ html {
     border-radius: 10px;
     font-size: 0.9em;
     line-height: 1.6;
+    font-family: var(--font-code);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
