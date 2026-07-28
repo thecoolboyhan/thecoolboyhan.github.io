@@ -124,6 +124,25 @@ html {
     border-radius: 0 8px 8px 0;
     color: var(--card-text-color-secondary, #555);
     background: var(--blockquote-background-color, rgba(106, 140, 255, 0.06));
+
+    /* 修复引用块在窄屏/自定义布局下溢出导致文字截断 */
+    max-width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.article-content blockquote p {
+    margin: 0.6em 0;
+}
+
+.article-content blockquote p:first-child {
+    margin-top: 0;
+}
+
+.article-content blockquote p:last-child {
+    margin-bottom: 0;
 }
 
 /* ========== 6. 表格 ========== */
