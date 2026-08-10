@@ -4,7 +4,7 @@ description:  最近分布式事务又重新刮起了热风，今天就从seata�
 image: 1.png
 date: 2025-10-20
 slug: seataTransactional
-categories: 
+categories:
   - 精选
   - 分布式事务
   - 架构
@@ -14,18 +14,13 @@ tags:
   - 架构
 ---
 
-
 # 从seata源码入手分布式事务
-
-
 
 ## AT模式（可靠消息队列思想）
 
 > 借用本地ACID事务（硬性事务）数据库实现的分布式事务。
 >
 > 通过Seata 在内部做了对数据库操作的代理层，让本地数据库操作时会检测全局事务，插入回滚日志等。（**目前仅java支持**）
-
-
 
 ### 概述
 
@@ -38,8 +33,6 @@ tags:
    1. 提交事务：异步化提交事务，**释放全局锁**
    2. 事务回滚：执行undo_log中记录的回滚sql，回滚后**释放全局锁**
 
-
-
 - 写隔离
 
 对于同一全局锁的数据：一阶段时，A事务持有全局锁，只要A事务不进行二阶段释放全局锁。B事务就始终无法一阶段提交，一阶段提交的必要条件是需要获取全局锁。
@@ -47,8 +40,6 @@ tags:
 **回滚**：如果A事务二阶段回滚，此时B事务持有A事务一阶段相同的本地锁，A事务会回滚失败，但A事务会无限重试回滚（最大努力交付），直到B事务由于获取全局锁超时而回滚释放本地锁。A事务又可以获取本地锁，A事务回滚成功，释放全局锁。（**有效避免了脏写**）
 
 ![Write-Isolation: Rollback](https://seata.apache.org/zh-cn/assets/images/seata_at-2-c7537b8cd8036580215240d037ea4278.png)
-
-
 
 - 读隔离
 
@@ -58,13 +49,7 @@ A事务持有全局锁没有释放，B事务for update查询数据时，会尝�
 
 ![Read Isolation: SELECT FOR UPDATE](https://seata.apache.org/zh-cn/assets/images/seata_at-3-f5d071f55ecde9189c4f2c0d9dec7f5d.png)
 
-
-
-
-
 ### 如何做到代理JDBC操作
-
-
 
 - 前置知识：
 
@@ -78,21 +63,13 @@ public class GlobalTransactionScanner extends AbstractAutoProxyCreator
 
 实现了AbstractAutoProxyCreator从而达到AOP的效果。
 
-
-
 - 如何保证可以拦截@GlobalTransactional注解的类？
 
 > Spring BeanDefinition创建过程中，需通过后置处理器的postProcessAfterInitialization来判断经过哪些后置处理（增加AOP代码或者调用）。
 
 Seata实现了AbstractAutoProxyCreator并重写了wrapIfNecessary方法，来对所有有@GlobalTransactional注解的类，@GlobalLock注解，类型为SeataDataSourceProxy的数据库实现代理。
 
-
-
 > 创建代理类的过程中，会全程对于存放所有BeanName的PROXYED_SET加锁，来避免多线程创建bean出现冲突。
-
-
-
-
 
 ### 本地事务提交
 
@@ -108,8 +85,6 @@ SQL执行时：会现在被seata代理的ConnectionProxy连接代理类中的com
 
 4. 以上获取到锁后，提交本地事务。
 
-
-
 ### 事务回滚
 
 当前事务回滚，直接执行ACID的回滚逻辑。
@@ -117,8 +92,6 @@ SQL执行时：会现在被seata代理的ConnectionProxy连接代理类中的com
 本地AT事务回滚，查询undo_log中记录的回滚日志，循环尝试执行，最大努力交付。
 
 并向seata server发送当前事务回滚请求，提示让全局事务回滚。
-
-
 
 ### 全局事务提交
 
@@ -136,19 +109,11 @@ FileManager.removeUndoLog() 方法：清理 undo_log 文件
 
 ![1759133601762.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-09/1759133601762_1759133601774.png)
 
-
-
 ### Selectforupdate
 
 对于当前读也是和上面类似的逻辑，获取对应sql，在ACID的基础上增加获取锁，释放锁，提交锁等。
 
-
-
-
-
 ## TCC模式
-
-
 
 ### 简介
 
@@ -156,11 +121,7 @@ FileManager.removeUndoLog() 方法：清理 undo_log 文件
 
 ![Overview of a global transaction](https://seata.apache.org/zh-cn/assets/images/seata_tcc-1-1f7a834639aa755d73fa2af435c4f042.png)
 
-
-
 需要业务代码自己实现Try，Confirm，Cancel三个操作，对业务系统有着非常大的侵入性，设计相对复杂。性能高。
-
-
 
 事务管理器分 2 阶段协调所有资源管理器
 
@@ -171,8 +132,6 @@ FileManager.removeUndoLog() 方法：清理 undo_log 文件
 **Cancel**：否则在第二阶段执行所有资源的“回滚”操作。
 
 保证所有资源的最终状态是一致的，要么全部提交要么全部回滚。
-
-
 
 ### SeataTCC的实现方式
 
@@ -195,13 +154,10 @@ prepare、commit、rollback，三个阶段业务逻辑需要代码自己实现�
    - SeataServer如何做到可以调用commit和rollback？
 
      同上TccActionInterceptorHandler在代理类方法运行时，ActionInterceptorHandler为占用方法调用前将调用SeataServer的doTxActionLogStore方法，此方法通过状态机来判断当前事务所处的状态。来判断当前调用原有资源占用方法，commit方法，还是rollback方法。
-     
+
      通过DefaultCoordinator实现调用
-     
+
      > 下文将详细讲解Seata基于状态机实现的全局事务会话类。
-   
-
-
 
 ### 幂等问题
 
@@ -212,8 +168,6 @@ Seata的TCCResourceManager（事务状态管理器）为每个TCC全局事务创
 1. 每个小事务在资源占用时Try阶段：都会向事务状态管理器发起注册registerResource，判断是否可以占用资源，是否已经做过相同操作。
 2. Confirm阶段调用branchCommit方法，先判断当前事务是否已经提交，如果已提交就不会重复执行。
 3. Cancel阶段：调用branchRollback方法，先判断是否存在当前事务，如果不存在就直接返回，存在则执行取消方法。
-
-
 
 ### 空回滚问题
 
@@ -231,8 +185,6 @@ TCC的Aop类TccActionInterceptorHandler中会调用prepareFence方法来通过�
 
 Seata利用上面提到的日志机制，记录每个分支状态，（已try，已cancel等）来防止悬挂。
 
-
-
 ## Saga模式（状态机）
 
 Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业务流程中每个参与者都提交本地事务，当出现某一个参与者失败则补偿前面已经成功的参与者，一阶段正向服务和二阶段补偿服务都由业务开发实现。
@@ -242,8 +194,6 @@ Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业�
 适用于：流程很长的事务，无锁，且一般无法进行资源占用的情况。
 
 **缺点**：无法保证隔离性。
-
-
 
 1. 通过状态图来定义服务调用的流程并生成 json 状态语言定义文件
 
@@ -366,8 +316,6 @@ Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业�
 
 ```
 
-
-
 ``` json
 "ReduceInventory": {
   "Type": "ServiceTask",
@@ -387,24 +335,16 @@ Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业�
 
 由于补偿为用户自己编写，所以需要考虑：**允许空补偿、防悬挂控制、幂等控制**
 
-
-
 > 官方给出的缺乏隔离的应对方案，只能说乏善可陈
 
 - 由于 Saga 事务不保证隔离性, 在极端情况下可能由于脏写无法完成回滚操作, 比如举一个极端的例子, 分布式事务内先给用户 A 充值, 然后给用户 B 扣减余额, 如果在给 A 用户充值成功, 在事务提交以前, A 用户把余额消费掉了, 如果事务发生回滚, 这时则没有办法进行补偿了。这就是缺乏隔离性造成的典型的问题, 实践中一般的应对方法是：
   - 业务流程设计时遵循“宁可长款, 不可短款”的原则, 长款意思是客户少了钱机构多了钱, 以机构信誉可以给客户退款, 反之则是短款, 少的钱可能追不回来了。所以在业务流程设计上一定是先扣款。
   - 有些业务场景可以允许让业务最终成功, 在回滚不了的情况下可以继续重试完成后面的流程, 所以状态机引擎除了提供“回滚”能力还需要提供“向前”恢复上下文继续执行的能力, 让业务最终执行成功, 达到最终一致性的目的。
 
-
-
 ### 状态机引擎
-
-
 
 - 项目启动时：先自动装配SeataSagaAutoConfiguration配置类。
 - 会在此配置类中初始化Bean：stateMachineEngine，此bean通过StateMachineConfig初始化时会扫描statelang目录（视配置情况）下的json文件
-
-
 
 - 初始化
 
@@ -433,8 +373,6 @@ flowchart TD
 
 4. **ScriptEngineManager**：初始化脚本管理器，用来管理和执行json中配置的脚本
 
-
-
 - 创建状态机
 
 ``` mermaid
@@ -452,8 +390,6 @@ flowchart TD
 
 ![1760496927120.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760496927120_1760496955622.png)
 
-
-
 | 状态类型                                                     | 说明             | 特点                                                         |
 | ------------------------------------------------------------ | ---------------- | ------------------------------------------------------------ |
 | [SERVICE_TASK](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L27-L27) | 服务任务状态     | 执行具体的业务逻辑，对应实际的服务调用，是状态机中最常用的状态类型 |
@@ -465,10 +401,6 @@ flowchart TD
 | [SUB_MACHINE_COMPENSATION](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L57-L57) | 子状态机补偿状态 | 专门用于补偿子状态机的执行结果                               |
 | [SCRIPT_TASK](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L62-L62) | 脚本任务状态     | 执行脚本代码，支持通过脚本引擎执行动态逻辑                   |
 | [LOOP_START](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L67-L67) | 循环开始状态     | 支持循环执行某些状态逻辑                                     |
-
-
-
-
 
 - 事务执行
 
@@ -501,12 +433,6 @@ flowchart TD
 
 ![mermaid-diagram (1).png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/mermaid-diagram (1)_1760497128502.png)
 
-
-
-
-
-
-
 - 事务补偿
 
 ``` mermaid
@@ -519,10 +445,6 @@ flowchart TD
 ```
 
 ![1760497180682.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760497180682_1760497180697.png)
-
-
-
-
 
 - 子事务嵌套
 
@@ -537,23 +459,12 @@ flowchart TD
 
 ![1760497211127.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760497211127_1760497211137.png)
 
-
-
-
-
-
-
 ## XA模式
 
 > 以 XA 协议的机制来管理分支事务的一种事务模式。<font color='red'>对业务无侵入，但性能差，属于悲观锁</font>
 
 ![img](https://seata.apache.org/img/doc/TB1hSpccIVl614jSZKPXXaGjpXa-1330-924.png)
 
-
-
 也是一种2PC分布式提交方式，利用数据库等可以手动控制事务提交，回滚，来统一管控整体事务的提交回滚等。
 
 > 由于不同事务执行顺序不固定，可能出现死锁，需考虑事务超时场景。
-
-
-

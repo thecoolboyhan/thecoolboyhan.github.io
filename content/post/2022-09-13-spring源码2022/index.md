@@ -3,7 +3,7 @@ title: spring源码2022
 description: 之前粗读的spring源码
 image: 1.png
 date: 2022-09-13
-categories: 
+categories:
   - 精选
   - spring
 tags:
@@ -15,11 +15,10 @@ tags:
 > 所有交给spring管理的对象默认都是单例的，new对象是一个非常消耗性能的操作。
 在这些spring管理的类中，最好不要有状态属性，如果有的话一定要非常小心的使用，由于他们都是单例的，所以线程不安全，
 
-
-
 ## 动态代理
 
 - spring 的动态代理是由ASM来实现的
+
 ### JDK动态代理
 
 > jdk动态代理使用的是java的反射机制来实现的，jdk的动态代理需要被代理的类实现一个接口，然后继承接口。
@@ -60,6 +59,7 @@ public static void main(String[] args) {
         proGirlDJ.eat();
     }
 ```
+
 ### cglib动态代理
 
 > cglib动态代理是继承需要代理的类，通过增强器来实现动态代理，增强器会继承代理类，cglib的好处是要代理的类不用实现接口。
@@ -74,7 +74,7 @@ public class CGLibFactory implements MethodInterceptor {
 
     public CGLibFactory(Object object) {
         super();
-        this.obj`ect = object;
+        this.object = object;
     }
 
     public Object createProxy(){
@@ -97,24 +97,30 @@ public class CGLibFactory implements MethodInterceptor {
 }
 
 ```
+
 ## Nginx
+
 ### 五种IO模型
 
 - 阻塞IO：当没有获取到资源时，会一直等待，直到获取到资源为止。
-- 非阻塞IO：任然只有一个线程在运行，但当没有获得到资源时，不会一直等待，继续执行，等到空闲时再回来判断是否获得的到资源。
+- 非阻塞IO：仍然只有一个线程在运行，但当没有获得到资源时，不会一直等待，继续执行，等到空闲时再回来判断是否获得的到资源。
 - 异步IO: 会开辟一个新的线程，新的线程负责等待，而原来的继续执行
 - 信号驱动IO：在获取资源时，会给资源发送一个信号值，当获取到资源时，就会收到一个信号值，然后获取。
 - 多通道IO：需要获取资源时，会给多个地方同时发送获取的请求，只要有一个地方可以成功获取到资源，就可以继续执行。
+
 ### Tengine
 
 > nginx是一个高性能的HTTP和反向代理服务器。其特点是占用内存少，并发能力强。
+
 ### nginx和apache的区别
+
 #### nginx相对于apache的优点
 
 - 轻量级： 同样起web服务，比apache占用更少的内存和资源
 - 抗并发：nginx处理请求为异步非阻塞的，而apache则是阻塞的，在高并发下nginx可以保持低资源，低消耗，高性能。
 - 高度模块化的设计，编写模块相对简单。
 - 社区活跃，各种高效能模块出品迅速。
+
 #### apache相对于nginx的优点：
 
 > rewrite：重写url
@@ -138,40 +144,51 @@ nginx 当请求数超过最大进程数时，它会在一个进程中开辟一�
 off时：在网络传输文件中，文件会先被IO操作读到APP，然后APP再通过一次IO操作推给内核去进行网络传输。
 
 on时，会给内核发送一个指令，让内核直接去读文件，然后传输。（异步网络IO）
+
 ### 反向代理
 
 > 用户发送请求给代理代理服务器，代理服务在把这些请求分发给后面的服务器
 
 ![](https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1624416591118-1624416591103.png)
-#### upsteam
+
+#### upstream
 
 给需要负载的服务器分组
 
 如果只写server就是默认轮巡（一人一下）
 
 ![](https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1624426250073-1624426250060.png)
+
 #### 权重
 
 给可以通过weight属性给负载的服务器设置权重，权重（1-10）高的服务器被负载的几率大。
 
 ![](https://cdn.jsdelivr.net/gh/weidadeyongshi2/th_blogs@main/image/1624426551982-1624426551978.png)
+
 #### session共享
 
 tomcat可以通过Memcache来实现多台服务器共享同一个session
 
 ---
+
 ## <spring5核心原理与30个类手写实战>
+
 ### spring内功心法
+
 #### 软件架构设计原则
+
 ##### 开闭原则
 
 一个软件实体，应该对扩展开放，对修改关闭。它强调用抽象构建框架，用实现扩展细节，可以提高软件系统的可复用性和可维护性。
+
 ##### 依赖倒置原则
 
 设计代码结构时，高层代码不应该依赖底层模块，二者都应该依赖其抽象。抽象不应该依赖细节，细节应该依赖抽象。通过依赖倒置，可以减少类与类之间的耦合性，提高系统的稳定性，提高代码的可读性和可维护性，并可以降低修改程序的风险。
+
 ##### 单一职责原则
 
 不要存在多于一个导致类变更的原因。假设一个类负责两个职责，一旦发生需求变更，修改其中一个职责的逻辑代码，有可能导致另一个职责的功能发生故障。一个类，接口或方法只负责一项职责。
+
 ##### 接口隔离原则
 
 用多个专门的接口，而不是依赖一个总接口，客户端不应该依赖他不需要的接口。
@@ -179,6 +196,7 @@ tomcat可以通过Memcache来实现多台服务器共享同一个session
 1. 一个类对另一个类的依赖应该建立在最小的接口之上。
 2. 建立单一接口，不要建立庞大臃肿的接口。
 3. 尽量细化接口，接口中的方法尽量少（不是越少越好，一定要适度）。
+
 ##### 迪米特原则（最少知道原则）
 
 一个对象应该对其他对象保持最少了解。只和朋友交流，不和陌生人说话。
@@ -188,7 +206,8 @@ tomcat可以通过Memcache来实现多台服务器共享同一个session
 出现在成员变量，方法的输入，输出参数中的类。
 
 > 出现在方法内部的类不属于朋友类。
-##### 里式替换
+
+##### 里氏替换
 
 如果对每个类型为T1的对象o1，都有类型为T2的对象o2，使得所有以T1定义的所有程序p，在所有的对象o1都替换成o2时，程序p的行为没有发生变化，那么类型T2是类型T1的子类型。
 
@@ -200,8 +219,11 @@ tomcat可以通过Memcache来实现多台服务器共享同一个session
 2. 子类可以增加其特有的方法。
 3. 当子类的方法重载父类的方法时，方法的前置条件（即方法的输入/入参）要比父类的输入方法更宽松。
 4. 当子类的方法实现父类的方法时，方法的后置条件（即方法的输出/返回值）要比父类更严格或与父类一样。
+
 #### 常用设计模式
+
 ##### 工厂模式
+
 ##### 简单工厂
 
 不属于GoF的23种设计模式，简单工厂模式适用于工厂类负责创建的对象较少的场景，且客户端只需要传入工厂类的参数，对于如何创建对象不需要关心。
@@ -209,25 +231,31 @@ tomcat可以通过Memcache来实现多台服务器共享同一个session
 - 缺点
 
 工厂类职责相对过重，不易于扩展过于复杂的产品结构。
+
 ##### 工厂方法模式
 
 定义一个创建对象的接口，但让实现这个接口的类来决定实例化哪个类，工厂方法模式让类的实例化推迟到了子类中进行。在工厂方法模式中用户只需要关心所需产品对应的工厂，无需关心创建细节，而且加入新的产品时符合开闭原则。
 
 - 缺点
+
 1. 类的个数容易过多，增加复杂度。
 2. 增加了系统的抽象性，和理解难度。
+
 ##### 抽象工厂模式
 
 提供一个创建一系列相关或相互依赖对象的接口，无需指定他们的具体类。客户端（应用层）不依赖产品类如何被创建，如何被实现等细节，强调的是一系列相关的产品对象，一起使用创建对象需要大量重复的代码。需要提供一个产品类的库，所有产品以同样的接口出现，从而使客户端不依赖具体实现。
 
 - 缺点
+
 1. 规定了所有可能被创建的产品集合，产品族中扩展新的产品困难，需要修改抽象工厂的接口。
 2. 增加了系统的抽象性和理解难度。
+
 ##### 单例模式
 
 > 确保一个类在任何情况下都绝对只有一个实例，并提供一个全局访问点。单例模式时创建型模式。
 
 保证内存里只有一个实例，减少了内存的开销，还可以避免对资源的过重占用。
+
 ##### 饿汉式单例模式
 
 在类加载的时候就立即初始化，并且创建单例对象。它绝对线程安全，在线程还没有出现以前就实例化了，不可能存在访问安全问题。
@@ -270,6 +298,7 @@ public class HungrySingleton1 {
     }
 }
 ```
+
 ##### 懒汉式单例模式
 
 ```java
@@ -355,6 +384,7 @@ public class LazyInnerClassSingleton {
     }
 }
 ```
+
 ##### 注册式单例模式
 
 将每一个实例都登记到一个地方，使用唯一的标识获取实例。
@@ -399,9 +429,12 @@ class ThreadLocalSingleton{
         return THREAD_LOCAL_SINGLETON.get();
     }
 }
-```##### 原型模式
+```
+
+##### 原型模式
 
 创建对象的种类，通过复制这些原型创建新的对象.
+
 ##### 浅克隆
 
 > 浅克隆只是完整复制了值类型数据，没有赋值引用对象。换言之，所有的引用对象仍然指向原来的对象，修改任意一个对象的属性，两个对象的值都会改变。
@@ -429,6 +462,7 @@ class ConcretePrototypeA implements Prototype{
     }
 }
 ```
+
 ##### 深克隆
 
 > 利用io来实现深克隆
@@ -454,8 +488,11 @@ public Object deepClone(){
     }
 }
 ```
+
 ##### 代理模式
+
 ##### 动态代理
+
 ##### JDK动态代理
 
 ```java
@@ -487,7 +524,7 @@ public class JDKMeipo implements InvocationHandler {
 }
 ```
 
-> 通过字节码分析，jdk动态代理在字节码层面，创建了一个继承proxy,proxy中有受保护的InvocationHandler，我们自定义未代理类实现了 它的invoke方法。通过实现相同接口，来创建一个新类。
+> 通过字节码分析，jdk动态代理在字节码层面，创建了一个继承 Proxy 的类，Proxy 中有受保护的 InvocationHandler，我们自定义的代理类实现了它的 invoke 方法。通过实现相同接口，来创建一个新类。
 
 ```java
 public final void findLove() throws  {
@@ -510,6 +547,7 @@ JDK动态代理生成对象的步骤：
 3. 动态生成java代码，新加的业务逻辑方法由一定的逻辑代码调用（在代码中体现）。
 4. 编译新生成的java代码.class文件。
 5. 重新加载到JVM中运行。
+
 ##### 自定义JDK动态代理讲解
 
 1.先创建一个自定义的InvocationHandler接口，用来找到不同的代理工具类
@@ -520,7 +558,7 @@ public interface GPInvocationHandler {
 }
 ```
 
-2.创建代理工具类时，要更具传入的代理对象，通过proxy类来生成一个实现了被代理类相同接口的类。利用proxy来实现此类的java源代码，在编译成.class文件，然后通过自定义类加载器把class文件加载到jVM中。
+2.创建代理工具类时，要根据传入的代理对象，通过proxy类来生成一个实现了被代理类相同接口的类。利用proxy来实现此类的java源代码，在编译成.class文件，然后通过自定义类加载器把class文件加载到jVM中。
 
 ```java
 Class proxyClass = classLoader.findClass("$Proxy0");
@@ -557,10 +595,11 @@ throw new UndeclaredThrowableException(e);
 }}}
 
 ```
+
 ##### CGLib动态代理
 
 - 调用过程
-  代理对象调用 this.findLove()方法 ，调用拦截器，methodProxy.invokeSuper，CGLIB$findLove$0，被代理对象findLove()方法。
+  代理对象调用 this.findLove()方法，调用拦截器，methodProxy.invokeSuper，CGLIB$findLove$0，被代理对象 findLove()方法。
 
 > CGlib采用了FastClass机制：为代理类和被代理类各生成一个类，这个类会为代理类和被代理类的方法分配一个index（int类型）；这个index当作一个入参，FastClass就可以直接定位要调用的方法并直接进行调用，省去反射调用，所以调用效率比JDk代理通过反射调用高。
 
@@ -586,14 +625,17 @@ private void init() {
     }
 }
 ```
+
 ##### 对比
 
-1. JDK动态代理实现了被代理对象的接口，GCLib代理继承了被代理对象。
+1. JDK动态代理实现了被代理对象的接口，CGLib代理继承了被代理对象。
 2. JDk动态代理和CGLib代理都在运行期生成字节码，JDK动态代理直接写class字节码，CGLib代理使用ASM框架写Class字节码，CGLib代理实现更复杂，生成代理类比JDK动态代理效率低。
 3. JDK动态代理调用代理方法是通过反射机制调用的，CGLib代理是通过FastClass机制直接调用方法的，CGLib代理的执行效率更高。
-4.##### spring动态代理
+4.
 
-- sspring中的代理选择原则
+##### spring动态代理
+
+- spring中的代理选择原则
 1. 当bean有实现接口时，spring就会用JDK动态代理。
 2. 当bean没有实现接口时，spring会选择CGLib代理。
 3. spring可以通过配置强制使用CGLib代理，只需在spring的配置文件中加入如下代码：
@@ -601,6 +643,7 @@ private void init() {
 ```xml
 <aop:aspectj-autoproxy proxy-target-class="true"/>
 ```
+
 - 代理模式的优缺点
 
 优点：
@@ -615,13 +658,15 @@ private void init() {
 1. 代理模式会造成系统设计中类的数量增加。
 2. 在客户端和目标对象中增加一个代理对象，会导致请求处理速度变慢。
 3. 增加了系统的复杂度。
+
 ##### 委派模式详解
 
 委派模式不属于GoF23种设计模式。委派模式的基本作用就是负责任务的调度和分配，跟代理模式很像，可以看作一种特殊情况下的静态的全权代理，但是代理模式注重过程，而委派模式注重结果。委派模式在spring中应用的非常多，常用的DispatcherServlet就是用到了委派模式。
 
-例如：老板给项目经理下达任务，项目经理会更具实际情况给每个员工派发任务，待员工把任务完成后，再由项目经理汇报结果。
+例如：老板给项目经理下达任务，项目经理会根据实际情况给每个员工派发任务，待员工把任务完成后，再由项目经理汇报结果。
 
 > 在spring源码中，以Delegate结尾的地方都实现了委派模式。
+
 ##### 策略模式
 
 > 定义了算法家族并分别封装起来，让它们之间可以互相替换，此模式使得算法的变化不会影响使用算法的用户。
@@ -638,13 +683,14 @@ private void init() {
 优点：
 
 1. 策略模式符合开闭原则。
-2. 策略模式可以避免使用多重条件语句，如if...else语句，swithc语句。
+2. 策略模式可以避免使用多重条件语句，如if...else语句，switch语句。
 3. 使用策略模式可以提高算法的保密性和安全性。
 
 缺点：
 
 1. 客户端必须知道所有策略，并且自行决定使用哪一个策略类。
 2. 代码中产生非常多的策略类，增加了代码的维护难度。
+
 ##### 模板模式
 
 > 又叫模板方法模式，指定义一个算法骨架，并允许子类为一个或者多个步骤提供实现。模板模式使得子类可以在不改变算法结构的情况下，重新定义算法的某些步骤，属于行为型设计模式。
@@ -671,6 +717,7 @@ HttpServlet的service(),doGet(),doPost()方法。
 1. 每个抽象类都需要一个子类来实现，导致了类的数量增加。
 2. 类数量的增加间接的增加了系统的复杂度。
 3. 因为继承关系自身的缺陷，如果父类添加新的抽象方法，所有子类都要改一遍。
+
 ##### 适配器模式
 
 指将一个类的接口转换成用户期望的另一个接口，使原本接口不兼容的类可以一起工作，属于结构型设计模式。
@@ -690,6 +737,7 @@ HttpServlet的service(),doGet(),doPost()方法。
 
 1. 在适配器代码编写过程中需要进行全面考虑，可能会增加系统的复杂性。
 2. 增加了代码的阅读难度，降低了代码的可读性，过多使用适配器会使代码变得凌乱。
+
 ##### 装饰者模式
 
 > 在不改变原有对象的基础上，将功能附加到对象上，提供了比继承更有弹性的方案（扩展原有对象的功能），属于结构型模式。
@@ -709,7 +757,6 @@ HttpServlet的service(),doGet(),doPost()方法。
 |功能|注重覆盖，扩展|注重兼容，转换|
 |设计|前置考虑|后置考虑|
 
-
 is-a：这种事物(绵羊)是那种事物(羊)中的一个种类。
 
 has-a：这种事物(羊毛)隶属于那种事物(绵羊)，是它的一个部分、部件。
@@ -726,6 +773,7 @@ has-a：这种事物(羊毛)隶属于那种事物(绵羊)，是它的一个部�
 
 1. 会出现更多的代码，更多的类，增加程序的复杂性。
 2. 动态装饰时，多层装饰会更复杂。
+
 ##### 观察者模式
 
 - 场景
@@ -743,6 +791,7 @@ has-a：这种事物(羊毛)隶属于那种事物(绵羊)，是它的一个部�
 
 1. 观察者之间有过多的细节依赖，时间消耗多，程序的复杂性更高。
 2. 使用不当会出现循环调用。
+
 #### 各设计模式的总结与对比
 
 23种设计模式汇总表：
@@ -784,9 +833,11 @@ has-a：这种事物(羊毛)隶属于那种事物(绵羊)，是它的一个部�
 spring中常用的编程思想汇总
 
 ![](https://s2.loli.net/2022/02/15/5i3RENoydaUFusn.png)
+
 ### spring5的系统架构
 
 ![](https://s2.loli.net/2022/02/15/lIEKRoS82rHzdvX.png)
+
 #### 核心容器
 
 > 核心容器由 spring-beans、spring-core、spring-context和spring-expression 4个模块组成。
@@ -795,8 +846,9 @@ spring-beans和spring-core模块是spring框架的核心模块，包含了控制
 
 - spring-context模块架构于核心模块之上，扩展了BeanFactory，为它添加了Bean生命周期控制、架构事件体系及资源加载透明化等功能。此外，该模块还提供了许多企业级支持，如邮件访问、远程访问、任务调度等，ApplicationContext是该模块的核心接口，它的超类是BeanFactory、与BeanFactory不同，ApplicationContext实例化后会自动对所有的单实例Bean进行实例化与依赖关系的装配，使之处于待用状态。
 - Spring-context-support模块是对Spring IoC容器及IoC子容器的扩展支持。
-- spring-context-indeexer模块是Spring的类管理组件和Classpath扫描组件。
+- spring-context-indexer模块是Spring的类管理组件和Classpath扫描组件。
 - spring-expression模块是统一表达式语言（EL）的扩展模块，可以查询、管理运行中的对象，同时也可以方便的调用对象方法，以及操作数组、集合等。它的语法类似于传统EL，但提供了额外功能，最出色的要数函数调用和简单字符串的模块函数。EL的特性是基于Spring产品的需求而设计的，可以非常方便地同Spirng IoC进行交互。
+
 #### AOP和设备支持
 
 > AOP和设备支持由spring-aop、spring-aspects和spring-instrument 3个模块组成。
@@ -804,6 +856,7 @@ spring-beans和spring-core模块是spring框架的核心模块，包含了控制
 - spring-aop是Spring的另一个核心模块，是AOP主要的实现模块。作为继OOP后对程序员影响最大的编程思想之一，AOP极大地扩展了人们的编程思路。Spring以JVM的动态代理技术为基础，设计出了一系列的AOP横切实现，比如前置通知、返回通知、异常通知等。同时，Pointcut接口可以匹配切入点，可以使用现有的切入点来设计横切面，也可以扩展相关方法根据需求进行切入。
 - spring-aspects模块集成自AspectJ框架，主语是为Spring提供了多种AOP实现方法。
 - spring-instrument模块是基于Java SE中的java.lang.instrument进行设计的，应该算AOP的一个支援模块，主要是在JVM启动时生成一个代理类，程序员通过代理类在运行时修改类的字节，从而改变一个类的功能，实现AOP。
+
 #### 数据访问和集成
 
 > 数据访问与集成由spring-jdbc、spring-tx、spring-orm、spring-oxm和spring-jms5个模块组成。
@@ -813,6 +866,7 @@ spring-beans和spring-core模块是spring框架的核心模块，包含了控制
 - spring-orm模块是ORM框架支持模块，主要集成Hibernate，Java Persistence API（JPA）和Java Data Objects（JDO）用于资源管理、数据访问对象（DAO）的实现和事务策略。
 - spring-oxm模块主要提供一个抽象层以支撑OXM（OXM是Object-to-XML-Mapping的缩写，它是一个O/M-mapper，将Java对象映射成XML数据，或者将XML数据映射成Java对象），例如JAXB、Castor、XMLBeans、JiBX和XStream等。
 - spring-jms模块能够发送和接收信息，自Spring 4.1开始，它还提供了对spring-messageing模块的支撑。
+
 #### Web组件
 
 > Web组件由spring-web、spring-webmvc、spring-websocket和spring-webflux 4个模块组成。
@@ -821,19 +875,25 @@ spring-beans和spring-core模块是spring框架的核心模块，包含了控制
 - 众所周知，spring-webmvc模块是一个Web-Servlet模块，实现了spring MVC的Web应用。
 - spring-websocket模块是与Web前端进行全双工通信的协议。
 - spring-webflux是一个新的非阻塞函数式Reactive Web框架，可以用来建立异步的、非阻塞的、事件驱动的服务，并且扩展性非常好。
+
 #### 通信报文
 
 > 通信报文即spring-messaging模块，它是Spring 4新加入的一个模块，主要职责是为Spring框架集成一些基础的报文传送应用。
+
 #### 集成测试
 
 > 集成测试即spring-test模块，主要为测试提供支持，使得在不需要将程序发布到应用服务器或者连接到其他设施的情况下能够进行一些集成测试或者其他测试，这对于任何企业都是非常重要的。
+
 #### 集成兼容
 
 集成兼容即spring-framework-bom模块，主要解决Spring的不同模块依赖版本不同的问题。
+
 #### 各模块之间的依赖关系
 
 ![](https://s2.loli.net/2022/02/16/8tmTVPSNlyqJdpr.png)
+
 ### Spring核心原理
+
 #### Spring核心容器类图
 
 - BeanFactory
@@ -883,6 +943,7 @@ initViewResolvers(context);
 //初始化Flashmap管理器
 initFlashMapManager(context);
 ```
+
 #### 基于XML的IOC容器的初始化
 
 > ApplicationContext允许上下文嵌套，通过保持父上下文可以维护一个上下文体系。对于Bean的查找可以在这个上下文体系中进行，首先检查当前上下文，其次检查父上下文，逐级向上，这样可以为不同的Spring应用提速一个共享的Bean定义环境。
@@ -1031,7 +1092,7 @@ public int registerBeanDefinitions(Document doc, Resource resource) throws BeanD
 BeanDefinitionDocumentReader接口通过registerBeanDefinitions（）方法调用其实现类DefaultBeanDefinitionDocumentReader对文档进行解析。
 
 ```java
-//根据Spring DTD 或者 XSD的自定以规则解析Bean定义的文档对象
+//根据Spring DTD 或者 XSD的自定义规则解析Bean定义的文档对象
 public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
    //获得XML描述符
    this.readerContext = readerContext;
@@ -1096,7 +1157,7 @@ BeanDefinitionParserDelegate调用parsePropertyElements方法解析property元�
 
 BeanDefinitionParserDelegate类中的parsePropertySubElement方法解析。
 
-在Spring配置文件中，对property元素中配置的array，list，set，map，props等集合子元素都通过parsePropertySubElement方法解析，生成对应的数据对象。比如ManagedList，ManagedArray，ManagedSet等。这些Managed类时Spring对象BeanDefinition的数据封装，对集合元素数据类型的解析由各自的解析方法实现。
+在Spring配置文件中，对property元素中配置的array，list，set，map，props等集合子元素都通过parsePropertySubElement方法解析，生成对应的数据对象。比如ManagedList，ManagedArray，ManagedSet等。这些Managed类是Spring对象BeanDefinition的数据封装，对集合元素数据类型的解析由各自的解析方法实现。
 
 - 载入<list>子元素
 
@@ -1167,6 +1228,7 @@ synchronized (this.beanDefinitionMap) {
    }
 }
 ```
+
 #### 基于注解的IoC初始化
 
 ```java
@@ -1183,7 +1245,7 @@ public void register(Class<?>... annotatedClasses) {
 Spring对注解的处理分为两种方式：
 
 1. 直接将注解Bean注册到容器中：可以在初始化容器时注册；也可以在容器创建之后手动调用注册方法向容器注册，然后通过手动刷新容器使容器对注册的注解Bean进行处理。
-2. 通过扫描指定的包及其子包下的所有类处理：在初始化注解容器时指定要自动扫描的路径，如果容器创建以后向给定路径动态添加了注解Bean，则需要手动调用容器扫描的方法手动刷新容器，时容器对所注册的主频Bean进行处理。
+2. 通过扫描指定的包及其子包下的所有类处理：在初始化注解容器时指定要自动扫描的路径，如果容器创建以后向给定路径动态添加了注解Bean，则需要手动调用容器扫描的方法手动刷新容器，使容器对所注册的注解Bean进行处理。
 - 读取注解的元数据
 
 ```java
@@ -1241,6 +1303,7 @@ Spring对注解的处理分为两种方式：
 2. 使用AnnotationConfigUtils的processCommonDefinitionAnnotations()方法处理注解Bean定义类中通用的注解。
 3. 使用AnnotationConfigUtils的applyScopedProxyMode（）方法创建作用域的代理对象。
 4. 通过BeanDefinitionReaderUtils向容器注册Bean。
+
 #### IoC容器初始化小结
 
 1. 初始化的入口由容器实现中的refresh（）方法调用来完成。
@@ -1248,7 +1311,9 @@ Spring对注解的处理分为两种方式：
 - 大致过程
 
 通过ResourceLoader来完成资源文件的定位，DefaultResourceLoader是默认的实现，同时上下文本身就给出了ResourceLoader的实现，可以通过类路径、文件系统、URL等方式来定位资源。如果是XmlBeanFactory作为IoC容器，那么通过为它指定Bean定义的资源，也就是说Bean定义文件时通过抽象成Resource来被IoC容器处理，容器通过BeanDefinitionReader来完成定义信息的解析和Bean信息的注册，往往使用XmlBeanDefinitionReader来解析Bean的XML定义文件--实际的处理过程是委托给BeanDefinitionParserDelegate来完成的，从而得到Bean的定义信息，这些信息在Spring中使用BeanDefinition来表示---这个名字可以让我们想到loadBeanDefinition（）、registerBeanDefinition()这些相关方法。容器解析得到BeanDefinition以后，需要在IoC容器中注册，这由IoC实现BeanDefinitionRegistry接口来实现。注册过程就是在IoC容器内部维护的一个HashMap来保存得到的BeanDefinition的过程。这个HashMap是IoC容器持有Bean信息的场所，以后对Bean的操作都是围绕这个HashMap来实现的。
+
 #### Spring DI
+
 ##### 依赖注入
 
 - 依赖注入发生的时间
@@ -1256,11 +1321,11 @@ Spring对注解的处理分为两种方式：
 当IoC容器完成了Bean定义资源的定位、载入和解析注册，IoC容器就可以管理Bean定义的相关数据了，但此时IoC还没有对Bean进行依赖注入，依赖注入在以下两种情况下发生：
 
 1. 用户第一次调用getBean（）方法时，IoC容器触发依赖注入
-2. 当用户在配置文件中将<Bean>元素配置了 lazy-init=fasle属性时，即让容器在解析注册Bean定义时进行预实例化，触发依赖注入。
+2. 当用户在配置文件中将<Bean>元素配置了 lazy-init=false属性时，即让容器在解析注册Bean定义时进行预实例化，触发依赖注入。
 
-在Spring中如果Bean定义为单例模式的，则容器在创建之前先从缓存中查找，以确保缓存中只存在一个实例对象。如果Bean定义为原型模式的，则容器每次都会创建一个新的实例对象。Bean定义还可以指定器生命周期范围。
+在Spring中如果Bean定义为单例模式的，则容器在创建之前先从缓存中查找，以确保缓存中只存在一个实例对象。如果Bean定义为原型模式的，则容器每次都会创建一个新的实例对象。Bean定义还可以指定其生命周期范围。
 
-具体的Bean实例对象的创建过程由实现了ObjectFactory接口的匿名内部类的createBean方法完成，ObjectFactory接口使用委派模式。具体的Bean实例创建过程交由器实现类AbstractAutowireCapableBeanFactory完成。
+具体的Bean实例对象的创建过程由实现了ObjectFactory接口的匿名内部类的createBean方法完成，ObjectFactory接口使用委派模式。具体的Bean实例创建过程交由其实现类AbstractAutowireCapableBeanFactory完成。
 
 - 开始实例化
 
@@ -1278,7 +1343,7 @@ Spring对注解的处理分为两种方式：
 
 如果Bean的方法被覆盖了，则使用CGLib进行实例化，否则使用JDK的反射机制进行实例化。
 
-CGLib是一个常用的字节码生成器的类库，他提供了一系列API实现Java字节码的生成和转换功能，JDK的动态代理只能针对接口，如果一个类没有实现任何接口，要对器进行动态代理只能使用CGLib。
+CGLib是一个常用的字节码生成器的类库，他提供了一系列API实现Java字节码的生成和转换功能，JDK的动态代理只能针对接口，如果一个类没有实现任何接口，要对其动态代理只能使用CGLib。
 
 - 准备依赖注入
 
@@ -1296,6 +1361,7 @@ CGLib是一个常用的字节码生成器的类库，他提供了一系列API实
 - 注入赋值
 1. 对于集合类型的属性，将属性解析为目标类型的集合后直接赋值给属性。
 2. 对于非集合类型的属性，大量使用JDK反射机制，通过属性的getter（）方法获取指定属性注入前的值，同时调用属性的setter（）方法为属性设置注入后的值。
+
 ##### Spring IoC容器中那些鲜为人知的细节
 
 - 关于延时加载
@@ -1306,7 +1372,7 @@ IoC容器的初始化过程就是对Bean定义资源的定位、载入和注册�
 
 - 关于FactoryBean和BeanFactory
 
-BeanFactory： Spring IoC容器的最高层接口就是BeanFactory，他的作用时管理Bean，即实例化、定位、配置应用程序中的对象及建立这些对象之间的依赖。
+BeanFactory： Spring IoC容器的最高层接口就是BeanFactory，他的作用是管理Bean，即实例化、定位、配置应用程序中的对象及建立这些对象之间的依赖。
 
 FactoryBean： 产生其他Bean实例。
 
@@ -1322,7 +1388,9 @@ autowiring实现过程如下：
 1. 对Bean的属性调用getBean（）方法，完成依赖Bean的初始化和依赖注入。
 2. 将依赖Bean的属性引用设置到被依赖的Bean属性上。
 3. 将依赖Bean的名称和被依赖Bean的名称存储在IoC容器的集合中。
+
 #### Spring AOP
+
 ##### 源码
 
 - 寻找入口
@@ -1333,7 +1401,7 @@ BeanPostProcessor后置处理器的调用发生在Spring IoC容器完成Bean实�
 
 - 选择代理策略
 
-先判断是否代理这个类，是否为基础建设类，判断是否配置了shouldSkip，最终调用的是proxyFactory.getPorxy（）方法。
+先判断是否代理这个类，是否为基础建设类，判断是否配置了shouldSkip，最终调用的是proxyFactory.getProxy（）方法。
 
 - 完整流程
 
@@ -1434,15 +1502,17 @@ AnnotationAwareAspectJAutoProxyCreator【InstantiationAwareBeanPostProcessor】 
         2)、链式获取每一个拦截器，拦截器执行invoke方法，每一个拦截器等待下一个拦截器执行完成返回以后再来执行；
            拦截器链的机制，保证通知方法与目标方法的执行顺序；
 ```
+
 #### SpringMVC
 
 ![](https://s2.loli.net/2022/03/09/DqHvFoPcrNCX5fY.png)
 
 1. dispatcherServlet是Spring MVC中的前端控制器，负责接收request并将request转发给对应的处理组件。
-2. HanlerMapping是Spring MVC中完成URL到Controller映射的组件。dispatcherServlet接收Request，然后从HanlerMapping查找处理request的Controller。
+2. HandlerMapping是Spring MVC中完成URL到Controller映射的组件。dispatcherServlet接收Request，然后从HandlerMapping查找处理request的Controller。
 3. controller处理Request，并返回ModelAndView对象，Controller是Spring MVC中负责处理Request的组件，ModelAndView是封装结果视图的组件。
 
 容器初始化时会建立所有URL和Controller中方法的对应关系，保存到Handler Mapping中，用户请求时根据请求的URL快速定位到Controller中的某个方法。在Spring中现将URL和Controller的对应关系保存到Map<url,Controller>中。web容器启动时会通知Spring初始化容器（加载Bean的定义信息和初始化所有单例Bean），然后Spring MVC会遍历容器中的Bean，获取每个Controller中的所有方法访问的URL，将URL和Controller保存到一个Map中，这样就可以根据请求快速定位到Controller，因为最终处理请求的是Controller中的方法，Map中只保留URL和Controller的对应关系，所以要根据请求的URL近一步确认Controller中的方法。其原理就是拼接Controller的URL和方法的URL，与请求的URL进行匹配，找到匹配的方法。接下来的任务就是参数绑定，把请求中的参数绑定到方法的形参上，这是整个请求处理过程中最复杂的一步。
+
 ##### Spring MVC九大组件
 
 - HandlerMapping
@@ -1457,13 +1527,13 @@ AnnotationAwareAspectJAutoProxyCreator【InstantiationAwareBeanPostProcessor】 
 
 用来处理Handler产生异常的组件。此组件的作用是根据异常设置ModelAndView，之后交给渲染方法进行渲染，渲染方法会把ModelAndView渲染成页面。此组件只用于解析对请求做处理阶段产生的异常，渲染阶段的异常不归它管。
 
-- ViewRessolver
+- ViewResolver
 
 视图解析器，通常在Spring MVC的配置文件中，都会配上一个实现类来进行视图解析。这个组件的主要作用是将Spring类型的视图名和Locale解析为View类型的视图，只有一个resolveViewName（）方法。Controller层返回的String类型的视图名ViewName最终会在这里被解析成View。View是用来渲染页面的，也就是说，它会将程序返回的参数和数据填入模板中，生成HTML文件，ViewResolver在这个过程中主要做两件大事：ViewResolver会找到渲染所用的模板和所用的技术并填入参数。默认情况下Spring MVC会为我们自动配置一个InternalResourceViewResolver,是针对JSP类型视图的。
 
 - RequestToViewNameTranslator
 
-从请求中获取ViewName。因为ViewResolver根据ViewName查找View，但尤的Handler处理完成之后，没有设置View，也没有设置ViewName，便要通过这个组件来从请求中查找ViewName。
+从请求中获取ViewName。因为ViewResolver根据ViewName查找View，但尤的Handler处理完成之后，没有设置View，也没有设置ViewName，便要通过这个组件来从请求中查找ViewName。有的Handler处理完成之后
 
 - LocaleResolver
 
@@ -1484,10 +1554,11 @@ MultipartHttpServletRequest可以通过getFile（）方法直接获取文件。�
     - FlashMap
 
 FlashMapManager就是用来管理FlashMap的。
+
 ##### 源码
 
 1. ApplicationContext初始化时用Map保存所有URL和Controller类的对应关系。
-2. 根据请求URL找到对应的Controller，并从Conntroller中找到处理请求的方法。
+2. 根据请求URL找到对应的Controller，并从Controller中找到处理请求的方法。
 3. 将Request参数绑定到方法的形参上，执行方法处理请求，并返回具体视图。
 - 初始化阶段
 
@@ -1570,7 +1641,7 @@ protected String[] determineUrlsForHandler(String beanName) {
 
 - 运行调用阶段
 
-运行调用是由请求触发的，入口为DispatcherServlet的核心方法doService（），diService的核心由doDispatch（）实现。
+运行调用是由请求触发的，入口为DispatcherServlet的核心方法doService（），doService的核心由doDispatch（）实现。
 
 Spring MVC中提供两种从请求参数到方法中参数的绑定方式：
 
@@ -1582,6 +1653,7 @@ Spring MVC中提供两种从请求参数到方法中参数的绑定方式：
 通过参数名称进行绑定的前提是必须获取方法中参数的名称，java反射只提供了获取方法参数类型的方法，并没有提供获取参数名称的方法。Spring MVC解决这个问题的方法是用asm框架读取字节码文件。
 
 ![](https://s2.loli.net/2022/03/14/sZVNAoLxaCWBtwd.png)
+
 ##### Spring MVC优化建议
 
 1. Controller如果能保持单例模式，尽量使用单例模式
@@ -1591,8 +1663,11 @@ Spring MVC中提供两种从请求参数到方法中参数的绑定方式：
 1. 处理请求的方法中的行参务必加上@RequestParam注解
 
 这样可以避免Spring MVC使用asm框架读取.class文件获取方法行参名。即便Spring MVC对读取出的方法参数名进行了缓存，如果能不读取.class文件当然更好。
+
 #### Spring手写实战
+
 ## 拉钩Spring
+
 ### spring三级缓存（可以解决spring循环依赖问题）
 
 三级缓存：singletonFactorys
@@ -1609,12 +1684,15 @@ Spring MVC中提供两种从请求参数到方法中参数的绑定方式：
 4. A去一级缓存中找创建好的Bean B。
 
 > spring无法解决构造函数的单例bean循环依赖
+
 ### Spring声明式事务
 
 编程式事务：在业务代码中添加业务事务
 
 声明式事务：通过XMl或者注解配置的方式达到控制事务的方式
+
 ## springboot
+
 ### 依赖管理
 
 - 为什么导入依赖是不需要指定版本？
@@ -1624,6 +1702,7 @@ spring-starter-parent父依赖起动器下面已经给部分依赖指定了默�
 - 项目运行依赖的jar包是从何而来的？
 
 Springboot-starter-web直接依赖了json，tomcat，springMVC等相关依赖，会自动导入相关的依赖
+
 ### 自动配置
 
 添加jar包依赖时，自动配置相关信息
@@ -1634,6 +1713,7 @@ Springboot-starter-web直接依赖了json，tomcat，springMVC等相关依赖，
 3. @EnableAutoConfiguration
 4. AutoConfigurationPackage通过Registrar类导入到容器中，registrar扫描主配置信息类同级目录以及子包，并将相应的组件导入springboot创建管理的容器中。
 5. 加载所有依赖包下/META-INF/spring.factories的配置路经来完成自动配置。
+
 ### 执行原理
 
 1. 创建springbootApplication对象
@@ -1648,14 +1728,14 @@ Springboot-starter-web直接依赖了json，tomcat，springMVC等相关依赖，
 10. 执行Runners（执行自定义的stater）
 11. 返回context对象
 
-
 ## Spring迭代史
 
-> spring的第一个版本于2002年10发布，由一个带有易于配置和使用的控制反转（IoC）容器的小型内核组成。多年来spring已经成为JavaEE的主要替代品，并且发展成一个由许多不同项目组成的成熟技术。
+> spring的第一个版本于2002年10月发布，由一个带有易于配置和使用的控制反转（IoC）容器的小型内核组成。多年来spring已经成为JavaEE的主要替代品，并且发展成一个由许多不同项目组成的成熟技术。
 
 Spring 0.9
 
 该框架第一个公开的版本，以Exper One-on-One：J2EE一书为基础，提供了bean配置基础、AOP支持、JDBC抽象框架、抽象事务支持等。该版本没有官方参考文档，但可以在SourceForge上找到现有的源代码和文档。
+
 ### Spring 1.x
 
 第一个带有官方参考文档的版本。它由下图所示的七个模块组成。
@@ -1673,16 +1753,13 @@ Spring 0.9
 - Spring Web：基本集成功能，比如多部分功能、通过servlet监听器进行上下文初始化以及面向Web的应用程序上下文。
 - Spring Web MVC：基于Web 的Model-View-Controller（MVC）框架。
 
-
 ### Spring 2.x
 
 该版本由下图所示六个模块组成。现在Spring Context模块包含在Spring Core中，而在Spring 2.x版本中，所有的Spring Web组件都由单个项目表示。
 
 ![2024-1-1714:16:50-1705472209888.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-1-1714:16:50-1705472209888.png)
 
-
-
-- 通过使用新的基于XML Schema的配置而不是DTO格式来简化XML配置。值得注意的改进方面包括bean定义、AOP以及声明式事务。
+- 通过使用新的基于XML Schema的配置而不是DTD格式来简化XML配置。值得注意的改进方面包括bean定义、AOP以及声明式事务。
 - 用于Web和门户的新bean作用域（请求、会话和全局会话）。
 - 支持AOP开发的@AspectJ注解
 - Java Persistence API（JPA）抽象层。
@@ -1693,7 +1770,7 @@ Spring 0.9
 - JDBC简化包括在使用Java5+时的SimpleJDBCTemplate。
 - JDBC命名参数支持（NamedParameterJdbcTemplate）。
 - 针对Spring MVC的表单标签库。
-- 对Porlet MVC框架的介绍。
+- 对Portlet MVC框架的介绍。
 - 动态语言支持。可以使用JRuby、Groovy以及BeanShell来编写bean。
 - JMX中的通知支持以及可控的MBean注册。
 
@@ -1702,7 +1779,6 @@ Spring 0.9
 - 为调度任务而引入的TaskExecutor注册。
 - 为调度任务而引入的TaskExecutor抽象。
 - Java注解支持，特别针对@Transactional、@Required和@AspectJ。
-
 
 ### Spring 2.5.x
 
@@ -1749,7 +1825,8 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 引入了Spring TestContext Framework，提供注解驱动和集成测试支持，不受所用测试框架的影响。
 - 能够将Spring应用程序上下文部署为JCA配置器。
 
-1. JVA：应用和外部连接的规范。
+1. JCA：应用和外部连接的规范。
+
 ### Spring 3.x
 
 这是基于Java5的第一个版本，旨在充分利用Java5的功能，如泛型、可变参数和其他语言改进。该版本引入基于Java的@Configuration模型。目前已经对框架进行了修改，分别针对每个模块JAR使用一棵源代码树进行管理。
@@ -1758,18 +1835,14 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 
 ![2024-1-1714:53:57-1705474437048.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-1-1714:53:57-1705474437048.png)
 
-
-
 - 支持Java5功能，例如泛型、可变参数以及其他改进。
-- 对Callables、Futures、ExeutoService适配器和ThreadFactory集成提供很好的支持。
+- 对Callables、Futures、ExecutorService适配器和ThreadFactory集成提供很好的支持。
 - 框架模块目前针对每个模块JAR都使用一棵源代码树进行分别管理。
 - Spring Expression Language（SpEL）的引入。
 
 1. SPEL
 
 能在运行时构建复杂表达式、存取对象图属性、对象方法调用等等，并且能与Spring功能完美整合，如能用来配置Bean定义。
-
-
 
 - 核心Java Config功能和注解的集成。
 - 通用型转换系统和字段格式化系统。
@@ -1787,6 +1860,7 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 
 - 验证增强功能和JSR-303（bean验证）支持。
 - 对JavaEE的早期支持，包括@Async @Asynchronous注解、JSR303、JSF2.0、JPA2.0等。
+
 #### @Async
 
 被@Async 标记的方法为异步方法，会在调用方的当前线程之外的独立线程中执行。
@@ -1797,10 +1871,7 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 2. 所使用的Async 注解方法的类对象，应该是Spring容器管理的bean对象。
 3. 调用异步方法类上要配置上注解@EnableAsync
 
-
-
 - 支持嵌入式数据库、例如HSQL、H2和Derby。
-
 
 ### Spring 3.1.x
 
@@ -1814,7 +1885,7 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 
 - 针对统一属性的环境抽象。
 
-- 与常见Spring XML名称空间元素等价的注解，如@ComponentScan、@EnableTransationManagement、@EnableCaching、@EnableScheduling、@EnableAsync、@EnableAspectAutoProxy、@EnableLoadTimeWeaving和@EnableSpringConfigured。
+- 与常见Spring XML名称空间元素等价的注解，如@ComponentScan、@EnableTransactionManagement、@EnableCaching、@EnableScheduling、@EnableAsync、@EnableAspectAutoProxy、@EnableLoadTimeWeaving和@EnableSpringConfigured。
 
 - 支持Hibernate 4.
 
@@ -1829,6 +1900,7 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 将Flash和RedirectAttributes添加到Spring MVC中，从而允许使用HTTP会话重定向属性。
 - URI模块变量增强功能。
 - 能够使用@Valid来注解Spring MVC @RequestBody控制器方法参数。
+
 ### Spring 3.2.x
 
 该版本包含以下功能。
@@ -1848,7 +1920,6 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 迁移到GIthub
 - 在框架和第三方依赖中支持精简的Java SE7/OpenJDK 7。现在，CGLIB和ASM已经成为Spring的一部分。除了AspectJ 1.6，其他版本都支持AspectJ 1.7。
 
-
 ### Spring 4.0.x
 
 这是一个重要的Spring版本，也是第一个完全支持Java 8的版本，虽然仍然可以使用较久版本的Java，但Java SE6已经提出了最低版本要求。弃用的类和方法已经被删除，但模块组织几乎相同。
@@ -1861,7 +1932,8 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - Java EE6及以上版本现在被认为是Spring Framework 4.0的基准。
 - Groovy bean定义DSL，允许通过Groovy语法配置bean定义。
 - 核心容器、测试和一般web改进。
-- WebSocket、SocJS、和STOMP消息。
+- WebSocket、SockJS、和STOMP消息。
+
 ### Spring 4.2.x
 
 该版本包含以下功能。
@@ -1870,11 +1942,10 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 
 @AliaFor用来表示当前注解修饰的属性的别名。
 
-- 全面支持Hiermate ORM 5.0.
+- 全面支持Hibernate ORM 5.0.
 - JMS和Web改进。
 - 对WebSocket消息传递的改进。
 - 测试改进，最引人注目的是引入了@Commit来替换Rollback（false），并引入AopTestUtils使用工具类，允许访问隐藏在Spring代理后面的底层对象。
-
 
 ### Spring 4.3.x
 
@@ -1885,7 +1956,6 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 添加了组合注解。
 - Spring TestContext Framework需要JUnit 4.12或更高版本。
 - 支持新的库，包括Hibernate ORM 5.2、Hibernate Validafor 5.3、Tomcat 8.5和9.0、Jacson 2.8等。
-
 
 ### Spring 5.x
 
@@ -1899,6 +1969,7 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 支持JMS 2.0+和JPA 2.0+。
 - 引入了Spring Web Flow，这是一个用于替代Spring MVC的项目，构建在反应式基础之上，这异味着他完全是异步非阻塞的，主要用于事件循环执行模型，而非传统的每个请求执行模式都带有一个线程的最大线程池（基于Project Reactor构建）。
 - Web和核心模块适用于反应式编程模型。
+
 ### 反应式编程模型
 
 > 反应式编程模型是在命令式编程、面向对象编程之后出现的一种新的编程模型，是一种以更优雅的方式，通过异步和数据流来构建事务关系的编程模型。
@@ -1912,12 +1983,14 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 反应式编程的价值
 
 ![2024-1-2410:24:26-1706063066457.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-1-2410:24:26-1706063066457.png)
+
 #### 反应式系统的特性
 
 1. 即时响应性，对用户有反应：对用户有反应我们才说响应，一般我们说的响应，基本上都说的针对跟用户来交互。只要有可能，系统就会即时响应。
 2. 回弹性，对失败有反应：应用失败了系统不能无动于衷，要有反应，使其具备可恢复性。可恢复性可以通过复制、监控、隔离和委派等方式实现。在可恢复性的系统中，故障被包含在每个组件中，各组件之间相互隔离，从而允许系统的某些部分出故障并且在不连累整个系统的前提下进行恢复。当某个模块出现问题时，需要将这个问题控制在一定范围内，这便需要使用隔绝的技术，避免雪崩等类似问题的发生。或是将出现故障部分的任务委派给其他模块。回弹性主要是系统对错误的容忍。
 3. 弹性，对容量和压力变化有反应：在不同的工作负载下，系统保持响应。系统可以根据输入的工作负载，动态的增加或减少系统使用的资源。这意味着系统在设计上可以通过分片、复制等途径来动态申请系统资源并进行负载均衡，从而去中心化，避免节点瓶颈。如果没有状态的话，就进行水平扩展，如果存在状态，就使用分片技术，将数据分至不同的机器上。
 4. 消息驱动，对输入有反应：响应系统的输入，也可以叫做消息驱动。反应式系统依赖异步消息传递机制，从而在组件之间建立边界，这些边界可以保证系统之间的松耦合、隔离性、位置透明性，还提供了以消息的形势把故障委派出去的手段。
+
 #### 回压（backpressure）
 
 在数据流从上游生产者到下游消费者传输的过程中，上游生产速度大于下游消费速度，导致下游的buffer溢出，这种现象叫做回压。（重点是下游buffer溢出）
@@ -1928,10 +2001,9 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 
 2、
 
-
-
 - Spring测试模块有了很大的改进。现在支持JUnit5，引入了新的注解来支持Jupiter编程和扩展模型，例如@SpringUnitConfig、@SpringJUnitWebConfig、@Enabledlf和Disabledlf
 - 支持在Spring TestContext Framework 中实现并行测试执行。
+
 ### Spring 6.x
 
 - 整个代码库基于JDK17
@@ -1939,12 +2011,14 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 运行时与Jakarta EE 9以及Jakarta EE 10 API的兼容性。
 - 与最新的Web服务器兼容：Tomcat 10.1，Jetty 11，Undertow 2.3，
 - 早期兼容虚拟线程（JDK19预览）。
+
 #### 核心修改
 
 - 升级到ASM 9.4和Kotlin 1.7
 - 完整的CGLIB fork，支持捕获CGLIB生成的类。
 - 全面的向AOT（Ahead-Of-Time Porcessing，提前处理）转型。
 - 对GraalVM原生映像的一流支持。
+
 #### 核心容器
 
 - 默认情况下，无需java.beans.Introspector来确定基本bean属性。
@@ -1953,18 +2027,19 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 支持AOP代理和配置类的早期代理类确定。
 - PathMatchingResourcePatternResolver使用NIO和模块路径API进行扫描，分别支持GraalVM本机映像和Java模块路径中的类路径扫描。
 - DefaultFormattingConversionService支持基于ISO的默认Java.time类型解析。
+
 #### 数据访问和事务
 
 - 支持预定JPA托管类型（用于包含AOT处理中）。
 - JPA支持Hibernate ORM 6.1 （保持与Hibernate ORM 5.6的兼容）。
 - 升级到R2DBC 1.0 （包括R2DBC事务定义）。
 - 删除JCA CCI支持。
+
 #### Spring消息传递
 
 - 基于@RSocketExchange服务接口的RSocket接口客户端。
 - 基于Netty 5 Alpha的Reactor Netty 2的早期支持。
 - 支持Jakarta WebSocket 2.1以及其标准WebSocket协议升级机制。
-
 
 #### 通用Web修订
 
@@ -1973,11 +2048,11 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 统一HTTP状态码处理。
 - 支持Jackson 2.14
 - 与Servlet 6.0对齐（同时保留与Servlet 5.0的运行时兼容性）。
+
 #### Spring MVC
 
 - 默认情况下使用PathPatternParser（能够选择进入PathMathcer）
 - 删除过时的Tiles和FreeMarker JSP支持。
-
 
 #### Spring WebFlux
 
@@ -1986,6 +2061,7 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - 非流媒体类型的Flux返回值（写入前不再收集到List）。
 - 基于Netty 5 Alpha的Reactor Netty 2的早期支持。
 - JDK HttpClient与WebClient集成。
+
 #### 可观察性
 
 - Micrometer Observation 直接可观察性在Spring框架中的部分应用。Spring-web模块现在需要io.micrometer:micrometer-observation:1.10+作为编译依赖项。
@@ -1993,7 +2069,6 @@ Construct（构造方法）-》@Autowired（依赖注入）-> @PostConstruct（�
 - Spring MVC可以使用新的org.springframework.web.filter.ServerHttpObservationFilter检测HTTP服务器观察。
 - Spring WebFlux可以使用新的org.springframework.web.filter.reactive.ServerHttpObservationFilter检测HTTP服务器观察。
 - 对于Flux和Mono的Micrometer Context Propagation集成，从控制器方法返回值。
-
 
 #### 测试
 

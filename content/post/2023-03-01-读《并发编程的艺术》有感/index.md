@@ -3,14 +3,16 @@ title:  读《并发编程的艺术》有感
 description: JUC入门书籍
 image: 1.png
 date: 2023-03-01
-categories: 
+categories:
   - 精选
 tags:
   - 多线程
   - book
   - 读后感
 ---
+
 ## 并发编程的挑战
+
 ### 上下文切换
 
 在并发量不超过百万次时，并行速度要比串行慢，因为线程有创建和上下文切换的开销
@@ -35,7 +37,9 @@ tags:
 - 如何解决资源受限的问题
   如果是硬件资源受限，可以考虑使用集群并行执行程序。既然单机执行受限，那么就让程序在多机上运行。
   如果软件资源受限，那么可以考虑使用资源池将资源复用。比如使用连接池来使数据库和Socket连接复用，或者在调用对方web-Service接口时，只建立一个连接
+
 ## java并发机制的底层实现原理
+
 ### volatile
 
 > volatile是轻量级的synchronized，它在多处理器并发中保证了共享变量的“可见性”。（它不会引起线程上下文的切换和调度）
@@ -47,6 +51,7 @@ tags:
 - volatile的优化
   64位的CPU会一次读取64个字节的数据，所以可以通过追加字节来保证一次读取只会读到一个共享变量，来保证多个cpu同时操作不会互相锁定。
   JDK7会自动优化去除无用的对象引用，JDK8提供了@Contended注解来实现套接字
+
 ### synchronized
 
 > JVM基于进入和退出Monitor对象来实现方法同步和代码块同步。
@@ -99,6 +104,7 @@ tags:
   1.ABA问题：给数据加版本号
   2.循环时长，开销大：给每次自旋循环加一个等待时间。
   3.多个对象被CAS，无法保证一个对象同时CAS所有对象：可以将对象封装成一个对象，一次CAS完成所有操作。（类似数据库事务）
+
 ## 线程：
 
 线程的状态：
@@ -112,24 +118,24 @@ tags:
 
 - 等待（WAITING）不占用CPU
   需要其他线程通知才能返回运行状态，阻塞在Lock接口的线程状态是等待状态，因为Lock接口对于阻塞的实现均使用了LockSupport类中的相关方法。
-  进入：Object.wait() ,Object.jion(), LockSupport.park()
+  进入：Object.wait() ,Object.join(), LockSupport.park()
   离开：Object.notify(), Object.notifyAll(), LockSupport.unpark(Thread)
 
 - 超时等待(TIMED_WAITING) 不占用CPU
   在等待的状态上加了超时限制，达到超时时间自动返回运行状态
-  进入：Thread.sleep(long), Object.wait(long), Thread.jion(long), LockSupport.parkNanos(),LockSupport.parkUntil()
+  进入：Thread.sleep(long), Object.wait(long), Thread.join(long), LockSupport.parkNanos(),LockSupport.parkUntil()
   离开：Object.notify(), Object.notifyAll(), LockSupport.unpark(Thread), 超时时间到
 
 - 阻塞(BLOCKED)：不占用CPU
   当线程调用同步方法时，在没有获得锁的情况下，线程就会进入阻塞状态。
-  进入：等待进入synchronized方法，等待进入synachronized代码块
+  进入：等待进入synchronized方法，等待进入synchronized代码块
   离开：获取到锁。
 
 - 终止（TERMINATED）不占用CPU
   线程执行完成进入终止状态。
 
 - wait,sleep,yield
-  wait：会释放CPU资源和锁释放monitor对象，wait只能在synachronized同步环境中调用，wait是针对同步代码块，让某个资源的锁被释放，退出CPU，wait后能够被notify(),和notifyAll()唤醒。
+  wait：会释放CPU资源和锁释放monitor对象，wait只能在synchronized同步环境中调用，wait是针对同步代码块，让某个资源的锁被释放，退出CPU，wait后能够被notify(),和notifyAll()唤醒。
   sleep：会释放CPU但不释放锁不释放monitor对象，sleep是针对线程的静态方法，sleep不能被notify方法唤醒
   yield仅仅是释放CPU，来和其他线程一起争抢CPU。
 
@@ -155,6 +161,7 @@ tags:
 
 - ThreadLocal（可以在单个线程上传递值）
   是一个以ThreadLocal为键，任意对象为值得存储结构。这个结构被附带在线程上，一个线程可以根据一个ThreadLocal查询到绑定在这个线程上的值。
+
 ## 队列同步器（AQS）
 
 - 常用的方法：
@@ -183,7 +190,7 @@ tags:
 同步器依赖内部的同步队列（一个FIFO双向队列）来完成同步状态的管理，当前线程获取同步状态失败时，同步器会将当前线程以及等待状态等信息构造成为一个节点（Node）并将其加入同步队列，同时会阻塞当前线程，当同步状态释放时，会把首节点中的线程唤醒，使其再次尝试获取同步状态。
 
 - 独占式同步状态获取和释放：
-  在获取同步状态时，同步器维护一个同步队列，获取状态失败的线程都会被加入到队列中进行自旋，移除队列（或停止自旋）的条件是前驱节点是头节点且成功获取了同步状态。在释放同步状态时，同步器调用tryReiease(int arg)方法释放同步状态，然后唤醒头节点的后继节点
+  在获取同步状态时，同步器维护一个同步队列，获取状态失败的线程都会被加入到队列中进行自旋，移除队列（或停止自旋）的条件是前驱节点是头节点且成功获取了同步状态。在释放同步状态时，同步器调用tryRelease(int arg)方法释放同步状态，然后唤醒头节点的后继节点
 
 - 共享式同步状态获取与释放
   同步器先调用tryAcquireShared(int arg)方法尝试获取同步状态，返回值大于等于0，表示能够获取到同步状态。
@@ -193,10 +200,12 @@ tags:
 
 - Condition接口
   Condition是AQS工具的一个内部类，可以实现类似Object的通知/等待模型。await（）当前线程进入等待状态，直到被通知signal或被中断。signal（）唤醒一个等待的线程，signalAll（）唤醒所有等待的线程。
+
 ## 并发工具和集合
 
 - ConcurrentLinkedQueue ：非阻塞队列
   由head节点和tail节点组成，入队时的条件，如果tail节点的next节点不为空，则新入队的节点为tail节点。入队时先定位出尾节点，然后使用CAS算法将新入队的节点设置为尾节点的next节点，如果不成功则重试。
+
 ### 阻塞队列
 
 阻塞队列java提供了四种处理方式：
@@ -216,6 +225,7 @@ tags:
 
 - 阻塞队列的实现
   多数阻塞队列是由Condition实现的，上锁过程由LockSupport的park方法实现，LockSupport调用unsafe的park方法来上锁。
+
 ## java中的并发工具类
 
 - CountDownLatch（只能用一次）
@@ -229,6 +239,7 @@ tags:
 
 - Exchager
   线程间数据交换的工具。它提供了一个同步点，当两个线程都到达同步点后，交换数据，线程继续运行。如果一个先到达同步点，会一直等到另一个也到达然后交换再运行。
+
 ## 线程池
 
 - 核心线程数:先来的任务由核心线程执行，如果核心线程满，把任务放入等待队列

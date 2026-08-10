@@ -4,7 +4,7 @@ description:  小傅哥的金典书籍，对设计模式有个笼统的了解。
 image: 1.png
 date: 2025-09-09
 slug: java-Ontwerp-patroon
-categories: 
+categories:
   - 精选
   - 设计模式
   - 架构
@@ -14,7 +14,6 @@ tags:
   - 架构
 ---
 
-
 > 设计模式的原则
 
 ## 第二章、6大设计原则
@@ -23,13 +22,9 @@ tags:
 
 对于常需要修改的类，不应当维护两个以上的职责。如一个客户类，不应当维护普通客户，同时也维护VIP客户。
 
-
-
 - 常见做法
 
 构造客户功能的接口，不同的客户有不同客户的实现类。在实现客户功能时，每种客户都有不同的实现。客户之间相互独立，不会应为修改了普通客户的功能而影响到VIP客户的功能。
-
-
 
 - 优点
 
@@ -43,15 +38,11 @@ tags:
 
 需要新建大量实现类和代码。
 
-
-
 ![1745222013194.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1745222013194_1745222013217.png)
 
 - bad
 
 https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147e4353dff1f/design_patterns/src/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/Section2/%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E5%8E%9F%E5%88%99/bad
-
-
 
 - good
 
@@ -63,17 +54,11 @@ https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147
 
 应用只定义抽象结构，用实现来扩展细节。如应用自己的方法，和调用其他方法，因只调用其抽象类，具体的执行都由实现类来编写。
 
-
-
 如果想添加或修改原有的功能，可以采用不同的实现类来编写。
-
-
 
 - 问题
 
 如果所有的方法都用实现类来实现，是否在修改时，还要修改调用时创建的实现类。如果代码运行时间常，是否会多出许多无用的实现类。
-
-
 
 - 案例代码
 
@@ -85,11 +70,7 @@ https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147
 >
 > “正方形不是长方形”
 
-
-
 子类可以扩展父类的功能，但不能改变父类原有的功能。
-
-
 
 1. 子类可以实现父类的抽象方法，但不能覆盖父类的非抽象方法
 2. 子类可以增加父类特有的方法
@@ -103,8 +84,6 @@ https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147
 3. 为修改提供了正确性的保证，类的扩展不会给已有的系统引入新的错误，降低了代码出错的可能性。
 4. 增加健壮性，同时变更时可以做到非常好的兼容性，降低风险。
 
-
-
 - 案例代码
 
   https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147e4353dff1f/design_patterns/src/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/Section2/%E9%87%8C%E6%B0%8F%E6%9B%BF%E6%8D%A2%E5%8E%9F%E5%88%99
@@ -117,43 +96,29 @@ https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147
 
 每个层级的类都之和与自己直接关联的层级类来调用，不要出现跨级调用。（如：controller中调用repository）
 
-
-
 #### 5、接口隔离原则
 
 > 客户端不应该被迫依赖它不使用的方法。
 
 一个类对另一个类的依赖应该建立在最小的接口上。
 
-
-
 - bad
 
-
-
 接口设计时，不应该让多数实现此接口的类要实现一些无用的接口。
-
-
 
 - good
 
 一个有多个方法的接口，应当拆成多个接口，需要使用对应功能时，才去实现对应的接口。
 
-
-
 - 案例代码
 
   https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147e4353dff1f/design_patterns/src/%E9%87%8D%E5%AD%A6%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/Section2/%E6%8E%A5%E5%8F%A3%E9%9A%94%E7%A6%BB%E5%8E%9F%E5%88%99
-
-
 
 #### 6、依赖倒置原则
 
 高层模块不应该依赖于底层模块，二者都应该依赖于抽象。抽象不应该依赖于细节，细节应该依赖于抽象。
 
-
 ## 第四章、工厂模式
-
 
 ### 介绍
 
@@ -165,7 +130,6 @@ https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147
 
 需要治理，如果实现的类比较多、难以维护、开发成本高。（需要结合不同的设计模式逐步优化）
 
-
 ### 模拟发放多种奖品
 
 ![1748401855514.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/1748401855514_1748401855529.png)
@@ -176,10 +140,7 @@ https://github.com/thecoolboyhan/personStudy/tree/c831c28ba2b994c38d066ef825c147
 
 需要发货位置（对象中含有）
 
-
 #### 反例
-
-
 
 ``` java
 public class PrizeController {
@@ -242,10 +203,7 @@ public class PrizeController {
 }
 ```
 
-
-
 上面代码中一共有三种类型的营销方式，就通过三个if..else来实现功能。如果后续添加的新的模式，自然就是新的if..else
-
 
 #### 正例
 
@@ -258,8 +216,6 @@ public interface ICommodity {
     void sendCommodity(String uId, String commodityId, String bizId, Map<String, String> extMap) throws Exception;
 }
 ```
-
-
 
 - 兑换卡
 
@@ -287,8 +243,6 @@ public class CardCommodityService implements ICommodity {
 }
 ```
 
-
-
 - 优惠券
 
 ```java
@@ -309,8 +263,6 @@ public class CouponCommodityService implements ICommodity {
 
 }
 ```
-
-
 
 - 实物
 
@@ -352,8 +304,6 @@ public class GoodsCommodityService implements ICommodity {
 }
 ```
 
-
-
 - 商品工厂
 
 ```java
@@ -370,14 +320,9 @@ public class StoreFactory {
 }
 ```
 
-
-
 方法调用者只需要向工厂中输入服务类型，就可以得到不同的实现。后续想要扩展也只需要在工厂方法中添加，调用者不需要关心。
 
-
 ### 总结
-
-
 
 - 优点
 
@@ -385,28 +330,16 @@ public class StoreFactory {
 2. 满足单一职责，每个业务逻辑实现都在所属自己的类中完成
 3. 满足开闭原则，无需修改调用方，就可以在程序中加入新的产品类型
 
-
 ## 抽象工厂模式
-
-
 
 > 抽象工厂也称其他工厂的工厂，可以在抽象工厂中创建出其他工厂，与工厂模式一样，都是用来解决接口选择的问题，同样属于创建型模式。
 
-
-
-
 ### 案例1
-
-
-
-
 
 1. 很多服务用到了Redis需要一起升级到集群。
 2. 需要兼容集群A和集群B，便于后续的灾备。
 3. 两套集群提供的接口和方法各有差异，需要做适配。
 4. 不能影响到目前正常运行的系统。
-
-
 
 目前有两个集群和一个单机redis现在需要做整合
 
@@ -424,35 +357,17 @@ itstack-demo-design-2-00
                 └── RedisUtils.java
 ```
 
-
-
-
-
-
-
 - 原单机redis代码
 
 ![1753252779932.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753252779932_1753252779958.png)
-
-
 
 - 集群EGM
 
 ![1753253037454.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753253037454_1753253037498.png)
 
-
-
-
-
 - 集群IIR
 
 ![1753253072855.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753253072855_1753253072871.png)
-
-
-
-
-
-
 
 - 传统if-else模式来实现调用
 
@@ -498,24 +413,13 @@ public class CacheServiceImpl implements CacheService {
 }
 ```
 
-
-
 > 按照上面模式修改，如果添加新集群，后续运维会非常困难。
-
 
 ### 利用抽象工厂来重构代码
 
-
-
-
-
 ![1753263026952.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753263026952_1753263026973.png)
 
-
-
 利用代理类来实现抽象工厂的创建和获取，利用适配器来适配不同redis集群中的不同API。
-
-
 
 - 结构图
 
@@ -541,18 +445,8 @@ itstack-demo-design-2-02
                  └── ApiTest.java
 ```
 
-
-
-
-
-
-
 1. ICacheAdapter:适配接口，分别包装两个集群中差异化的接口名称。EGMCacheAdapter`、`IIRCacheAdapter
 2. `JDKProxy`、`JDKInvocationHandler`，是代理类的定义和实现，这部分也就是抽象工厂的另外一种实现方式。通过这样的方式可以很好的把原有操作Redis的方法进行代理操作，通过控制不同的入参对象，控制缓存的使用。
-
-
-
-
 
 - 适配器接口
 
@@ -569,10 +463,6 @@ public interface ICacheAdapter {
 
 }
 ```
-
-
-
-
 
 - 两个集群对于适配器的不同实现
 
@@ -599,8 +489,6 @@ public class EGMCacheAdapter implements ICacheAdapter {
 }
 ```
 
-
-
 ``` java
 public class IIRCacheAdapter implements ICacheAdapter {
 
@@ -625,8 +513,6 @@ public class IIRCacheAdapter implements ICacheAdapter {
 }
 ```
 
-
-
 - 抽象工厂的代理类
 
 JDK动态代理JDKProxy
@@ -639,8 +525,6 @@ public static <T> T getProxy(Class<T> interfaceClass, ICacheAdapter cacheAdapter
     return (T) Proxy.newProxyInstance(classLoader, new Class[]{classes[0]}, handler);
 }
 ```
-
-
 
 - **JDKInvocationHandler**详细invoke的方法，通过适配器来进行调用
 
@@ -660,10 +544,6 @@ public class JDKInvocationHandler implements InvocationHandler {
 }
 ```
 
-
-
-
-
 - 后续扩展
 
 1. 添加新的适配器，实现ICacheAdapter接口，并实现相应的方法
@@ -674,14 +554,9 @@ JDKProxy.getProxy(CacheServiceImpl.class, new EGMCacheAdapter());
 
 > 真正意义上对现有代码完全无侵入
 
-
-
-
 ### 总结
 
 抽象工厂模式，解决的问题为在一个产品族中，存在多个不同类型的产品（redis集群，操作系统）情况下，接口选择问题。
-
-
 
 本设计满足：单一职责、开闭原则、解耦等优点，但如果说随着业务的不断拓展，可能会造成类实现上的复杂度。但也可以说算不上缺点，因为可以随着其他设计方式的引入和代理类以及自动生成加载的方式降低此项缺点。
 
@@ -689,16 +564,9 @@ JDKProxy.getProxy(CacheServiceImpl.class, new EGMCacheAdapter());
 
 > 原型模式主要解决的问题就是创建重复对象，而这部分对象内容比较复杂，生成过程可能从库或者RPC接口中获取数据的耗时比较长，因此采用克隆的方式节省时间。
 
-
-
-
 ### 上机考试案例
 
-
-
 > 需要实现一个上级考试抽题的服务
-
-
 
 ``` xml
 itstack-demo-design-4-00
@@ -709,8 +577,6 @@ itstack-demo-design-4-00
                 ├── AnswerQuestion.java
                 └── ChoiceQuestion.java
 ```
-
-
 
 - 选择题
 
@@ -734,10 +600,6 @@ public class ChoiceQuestion {
 }
 ```
 
-
-
-
-
 - 问答题
 
 ``` java
@@ -758,7 +620,6 @@ public class AnswerQuestion {
 }
 ```
 
-
 ### bad
 
 ```xml
@@ -769,10 +630,6 @@ itstack-demo-design-4-01
             └── org.itstack.demo.design
                 └── QuestionBankController.java
 ```
-
-
-
-
 
 - 梭哈
 
@@ -854,24 +711,13 @@ public class QuestionBankController {
 }
 ```
 
-
-
-
-
-
 ### good
-
-
 
 原型模式解决的问题为创建大量重复的类。
 
 重复创建有时需要用到远程RPC调用，将消耗大量的时间。原型模式利用本地克隆的方式。
 
-
-
 > 在需要用到克隆的类中都需要实现 `implements Cloneable` 接口。
-
-
 
 ``` xml
 itstack-demo-design-4-02
@@ -890,13 +736,7 @@ itstack-demo-design-4-02
                  └── ApiTest.java
 ```
 
-
-
-
-
 ![1753345440048.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753345440048_1753345440072.png)
-
-
 
 - 题目选项打乱
 
@@ -924,10 +764,6 @@ static public Topic random(Map<String, String> option, String key) {
     return new Topic(optionNew, keyNew);
 }
 ```
-
-
-
-
 
 - 克隆对象处理
 
@@ -1007,10 +843,6 @@ public class QuestionBank implements Cloneable {
 }
 ```
 
-
-
-
-
 - 初始化试卷
 
 ``` java
@@ -1072,12 +904,7 @@ public class QuestionBankController {
 }
 ```
 
-
-
-
 ### 总结
-
-
 
 > 原型模式使用的场景并不是很高。
 
@@ -1088,13 +915,10 @@ public class QuestionBankController {
 - 缺点
 
 如果对象中包括了循环引用的克隆，以及类中深度使用对象的克隆，都会使此模式变得异常麻烦。
+
 ## 建造者模式
 
-
-
 > 将多个简单对象通过一步步的组装构建出一个复杂对象的过程。
-
-
 
 ### 通过代码模拟一次装修
 
@@ -1122,8 +946,6 @@ itstack-demo-design-3-00
 
 在模拟工程中提供了装修中所需要的物料；`ceilling(吊顶)`、`coat(涂料)`、`floor(地板)`、`tile(地砖)`，这么四项内容。
 
-
-
 - 物料接口
 
 ``` java
@@ -1143,12 +965,6 @@ public interface Matter {
 ```
 
 每个单独的物料都具有的公共属性，保证所有的装修材料都可以按照统一标准进行获取。
-
-
-
-
-
-
 
 - 吊顶
 
@@ -1180,10 +996,6 @@ public class LevelOneCeiling implements Matter {
 }
 ```
 
-
-
-
-
 - 二级顶
 
 ``` java
@@ -1211,10 +1023,6 @@ public class LevelTwoCeiling  implements Matter {
     
 }
 ```
-
-
-
-
 
 - 涂料(coat)
 
@@ -1390,18 +1198,9 @@ public class MarcoPoloTile implements Matter {
 }
 ```
 
-
-
-
-
-
-
-
 ### bad
 
 > 使用if-else来实现
-
-
 
 ``` xml
 itstack-demo-design-3-01
@@ -1411,8 +1210,6 @@ itstack-demo-design-3-01
             └── org.itstack.demo.design
                 └── DecorationPackageController.java
 ```
-
-
 
 ``` java
 public class DecorationPackageController {
@@ -1490,12 +1287,7 @@ public class DecorationPackageController {
 }
 ```
 
-
 ### good
-
-
-
-
 
 ``` xml
 itstack-demo-design-3-02
@@ -1512,11 +1304,7 @@ itstack-demo-design-3-02
                  └── ApiTest.java
 ```
 
-
-
 ![1753342260336.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753342260336_1753342260357.png)
-
-
 
 - 装修包接口
 
@@ -1535,8 +1323,6 @@ public interface IMenu {
 
 }
 ```
-
-
 
 - 装修包实现
 
@@ -1600,10 +1386,6 @@ public class DecorationPackageMenu implements IMenu {
 }
 ```
 
-
-
-
-
 - 调用方法
 
 ``` java
@@ -1633,39 +1415,25 @@ public class Builder {
 }
 ```
 
-
-
-
 ### 总结
-
-
 
 - 什么时候适合建造者模式？
 
 一些基本物料不会变，而其组合经常变化的时候。
 
-
-
 - 此设计模式满足了单一职责原则以及可复用的技术、建造者独立、易扩展、便于控制细节风险。但同时当出现特别多的物料以及很多的组合后，类的不断扩展也会造成难以维护的问题。但这种设计结构模型可以把重复的内容抽象到数据库中，按照需要配置。这样就可以减少代码中大量的重复。
-
-
 
 > 下面是小博哥的原话，太金典了
 
-
-
 - 设计模式能带给你的是一些思想，但在平时的开发中怎么样清晰的提炼出符合此思路的建造模块，是比较难的。需要经过一些锻炼和不断承接更多的项目，从而获得这部分经验。有的时候你的代码写的好，往往是倒逼的，复杂的业务频繁的变化，不断的挑战！
+
 ## 单例模式
+
 > 创建型设计模式
 >
 > 避免一个全局使用的类频繁的创建和消费，从而提升整体代码的性能。
 
-
-
-
-
 七种不同的单例模式
-
 
 ### 0、静态类（非单例模式）
 
@@ -1681,10 +1449,7 @@ public class Singleton_00 {
 
 但如果需要被继承以及需要维持状态时，就需要使用到单例模式
 
-
 ### 懒汉模式（线程不安全）
-
-
 
 ``` java
 public class Singleton_01 {
@@ -1703,22 +1468,15 @@ public class Singleton_01 {
 }
 ```
 
-
-
 > 使构造函数为private，不允许直接创建对象，只能通过getInstance来创建
 
 懒加载，只有在需要使用时才会创建对象。
-
-
 
 - 为什么线程不安全？
 
 当多个线程同时调用getInstance时，可能得到多个不同的对象。
 
-
 ### 懒汉模式（线程安全）
-
-
 
 ``` java
 public class Singleton_02 {
@@ -1739,12 +1497,9 @@ public class Singleton_02 {
 
 利用synchronized保证同时只能有一个线程来创建对象
 
-
-
 - 存在问题
 
 所有线程在获取此单例类时，都会被synchronized锁定，导致资源浪费。
-
 
 ### 饿汉模式（线程安全）
 
@@ -1763,11 +1518,7 @@ public class Singleton_03 {
 }
 ```
 
-
-
 类似于最开始的静态类，当程序启动的时候，就直接运行加载，无论是否使用，直接创建对象。
-
-
 
 - 为什么线程安全？
 
@@ -1776,14 +1527,9 @@ JVM在类加载的过程中
 
 在初始化阶段就直接执行静态代码块，直接创建对象。后续其他类使用时就是已经创建好的对象。
 
-
-
 - 存在的问题
 
 程序启动，所有的单例类全部被创建，如果单例类特别多，会导致大量的资源占用。
-
-
-
 
 ### 类的内部类（线程安全）
 
@@ -1804,11 +1550,7 @@ public class Singleton_04 {
 }
 ```
 
-
-
 使用静态内部类，即保证了线程安全，也保证了懒加载，同时也没有锁来消耗性能。
-
-
 
 - 如何被创建
 
@@ -1818,24 +1560,15 @@ public class Singleton_04 {
 
 有栈（线程）需要加载SingletonHolder.instance对象，JVM第一次把指向class的符号引用改成正常加载到JVM单例池中的直接引用。（此时相当于触发了类的饿汉式单例）
 
-
-
 - 为什么线程安全？
 
 > 《深入理解java虚拟机》中的原话：
 
 虚拟机会保证一个类的()方法在多线程环境中被正确地加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的()方法，其他线程都需要阻塞等待，直到活动线程执行()方法完毕。如果在一个类的()方法中有耗时很长的操作，就可能造成多个进程阻塞(需要注意的是，其他线程虽然会被阻塞，但如果执行()方法后，其他线程唤醒之后不会再次进入()方法。同一个加载器下，一个类型只会初始化一次。)，在实际应用中，这种阻塞往往是很隐蔽的。
 
-
-
-
-
 - 存在的问题
 
 普通使用是非常推荐的。但是由于使用了静态内部类，无法从外部直接传递参数进去
-
-
-
 
 ### 双重锁校验（线程安全）DCL
 
@@ -1860,18 +1593,9 @@ public class Singleton_05 {
 }
 ```
 
-
-
 满足懒加载，会在初始化阶段上锁，后续操作无锁。
 
-
 ### CAS单例（线程安全）
-
-
-
-
-
-
 
 ``` java
 public class Singleton_06 {
@@ -1898,18 +1622,11 @@ public class Singleton_06 {
 }
 ```
 
-
-
 通过里用原子类中的CAS操作，实现CAS创建对象
-
-
 
 - 存在的问题
 
 CAS是一个忙等操作，会一直循环尝试，直到成功。但如果对象创建一直失败，就会无限重试。
-
-
-
 
 ### Effective Java作者推荐的枚举单例(线程安全)
 
@@ -1924,15 +1641,12 @@ public enum Singleton_07 {
 }
 ```
 
-
-
 利用枚举类创建的单例对象，即使用过反射业务创建相同的对象。
 
 *偿地提供了串行化机制，绝对防止对此实例化，即使是在面对复杂的串行化或者反射攻击的时候。*
 
-
-
 ## 适配器模式
+
 > 结构型模式
 >
 > 把原本不兼容的接口，通过适配器修改做到统一。使得用户方便使用。
@@ -1954,8 +1668,6 @@ public interface OrderAdapterService {
 
 }
 ```
-
-
 
 > 不同的两种实现
 
@@ -1987,8 +1699,6 @@ public class POPOrderAdapterServiceImpl implements OrderAdapterService {
 }
 ```
 
-
-
 在这两个接口中都实现了各自的判断方式，尤其像是提供订单数量的接口，需要自己判断当前接到mq时订单数量是否`<= 1`，以此判断是否为首单。
 
 > 测试类
@@ -2011,7 +1721,6 @@ public void test_itfAdapter() {
 > 在A类中含有B类的接口，通过构造函数传递B类的实现。
 
 ![场景模拟：多种支付和模式](https://camo.githubusercontent.com/1ce215061a2a6f355e046365659815e1126a172c3dfce827edee3ee3b9055945/68747470733a2f2f627567737461636b2e636e2f6173736574732f696d616765732f323032302f6974737461636b2d64656d6f2d64657369676e2d372d30322e706e67)
-
 
 ### 实现支付和支付模式的模式(反例)
 
@@ -2049,7 +1758,6 @@ public class PayController {
 }
 ```
 
-
 ### 使用桥接模式重构代码
 
 > 把支付方式和支付模式进行分离，通过抽象类依赖实现类的方式进行桥接
@@ -2073,8 +1781,6 @@ public abstract class Pay {
 
 }
 ```
-
-
 
 - 微信支付
 
@@ -2149,8 +1855,6 @@ public class PayFaceMode implements IPayMode{
 
 指举例一个，其他大差不差
 
-
-
 > 桥接模式满足单一职责和开闭原则，让每一部分的内容都很清晰易于维护和拓展。
 
 ## 组合模式
@@ -2160,6 +1864,7 @@ public class PayFaceMode implements IPayMode{
 > **经常在决策树中使用**
 
 ![场景模式；营销决策树](https://camo.githubusercontent.com/ffa8e4042a41740aa4c35fc65dbb90834b441a4856598998fc4c8787b117ac06/68747470733a2f2f627567737461636b2e636e2f6173736574732f696d616765732f323032302f6974737461636b2d64656d6f2d64657369676e2d382d30322e706e67)
+
 ### 组合模式反例
 
 ``` java
@@ -2197,7 +1902,6 @@ public class EngineController {
 
 }
 ```
-
 
 ### 利用组合模式重构代码
 
@@ -2296,8 +2000,6 @@ public class UserGenderFilter extends BaseLogic {
 }
 ```
 
-
-
 - 决策引擎接口
 
 ``` java
@@ -2307,8 +2009,6 @@ public interface IEngine {
 
 }
 ```
-
-
 
 - 决策节点配置或管理
 
@@ -2335,8 +2035,6 @@ public class EngineConfig {
 
 }
 ```
-
-
 
 - 决策引擎的功能抽象
 
@@ -2384,8 +2082,6 @@ public class TreeEngineHandle extends EngineBase {
 
 }
 ```
-
-
 
 - 决策树建树
 
@@ -2504,7 +2200,3 @@ public void init() {
     treeRich = new TreeRich(treeRoot, treeNodeMap);
 }
 ```
-
-
-
-

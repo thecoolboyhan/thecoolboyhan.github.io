@@ -3,7 +3,7 @@ title:  RPC和分布式一致性协议
 description: 分布式一致性协议
 image: 1.png
 date: 2023-05-06
-categories: 
+categories:
   - 精选
 tags:
   - RPC
@@ -21,15 +21,9 @@ tags:
 - 如果有多个提供者，消费者该如何选择？
 - 消费者如何得知服务提供者的健康状态？
 
-
-
 ![](https://files.catbox.moe/6u23v0.png)
 
-
-
 ![](https://i.loli.net/2021/09/13/HxGozhLEkCmOIdR.png)
-
-
 
 ## Eureka步骤
 
@@ -37,21 +31,15 @@ tags:
 
 ![](https://i.loli.net/2021/09/13/lEWqJ3bXQMoe6Ot.png)
 
-
-
 - 服务注册
 
 ![](https://i.loli.net/2021/09/13/NqiCh978pdXIkQU.png)
-
-
 
 # Ribbon负载均衡
 
 - 整体流程
 
 ![](https://i.loli.net/2021/09/13/dUHt74hZoxCBKvq.png)
-
-
 
 ##  IRule接口的策略
 
@@ -63,13 +51,9 @@ tags:
 6. RandomRule：随机选择一个可用的服务器。
 7. RetryRule：重试机制的选择逻辑。
 
-
-
 - 配置负载均衡的方法：
 
 ![](https://i.loli.net/2021/09/14/DfgvCZ2GWR4Eqpc.png)
-
-
 
 - Ribbon饥饿加载
 
@@ -77,33 +61,23 @@ tags:
 
 ![](https://i.loli.net/2021/09/14/l5UMncZFiQvVJw4.png)
 
-
-
 ## 总结
 
 ![](https://i.loli.net/2021/09/14/h5XeUkC3EStzTuj.png)
-
-
 
 # Nacos注册中心
 
 > Nacos是阿里巴巴的产品，现在是springcloud中的一个组件。相比Eureka功能更加丰富，在国内更受欢迎。
 
-
-
 ## Nacos服务多级概念
 
 > Nacos将相同的地区的机房的多个服务统一在一起作为一个集群，一个中心服务下有多个集群，一个集群对应一个地区的多个服务。相同集群的服务尽量调用相同集群的其他服务，本集群这样在地理上尽可能的减少了延迟。
-
-
 
 Nacos默认不会采用集群就近调用，需要配置开启。
 
 ![](https://i.loli.net/2021/09/15/XxZbBQhEesg7CmJ.png)
 
 优先访问本地集群，在本地集群内随机访问服务。
-
-
 
 - 权重
 
@@ -115,11 +89,7 @@ Nacos中服务存储和数据存储的最外层都是一个名为namespace的东
 
 >  两个命名隔间之间的服务无法互相访问。
 
-
-
 ## Nacos和Eureka的区别
-
-
 
 - 生产者
 
@@ -135,15 +105,11 @@ Nacos会把服务分为临时实例和非临时实例。
 
 ![](https://i.loli.net/2021/09/15/L3HnvsjkaQN1B4g.png)
 
-
-
 - 消费者
 
 Eureka如果发现生产者服务有所改变，需要消费者主动去向Eureka去拉去服务信息。
 
 Nacos采用pull和push两种，既可以消费者主动去拉取服务信息，也可以由Nacos主动去通知消费者服务变动信息。
-
-
 
 ## 统一配置管理
 
@@ -155,22 +121,16 @@ Nacos采用pull和push两种，既可以消费者主动去拉取服务信息，�
 
 ![](https://i.loli.net/2021/09/15/JudWmk1LNevFlT7.png)
 
-
-
 - 配置热更新
 
 1. 在对应服务的controller上加@RefreshScope注解
 2. 加入configurationProperties（prefix="变量"），约定大于配置。
-
-
 
 ## 多环境配置共享
 
 - 配置文件的优先级
 
 ![](https://i.loli.net/2021/09/15/4OHEAXzUaItn6ZR.png)
-
-
 
 # Feign
 
@@ -182,11 +142,7 @@ Nacos采用pull和push两种，既可以消费者主动去拉取服务信息，�
 
 ![](https://i.loli.net/2021/09/15/Omjlzwx4SHQGYef.png)
 
-
-
 ![](https://i.loli.net/2021/09/15/ucfMK5LeNJ2rOIj.png)
-
-
 
 - Feign的日志配置
 
@@ -196,8 +152,6 @@ Nacos采用pull和push两种，既可以消费者主动去拉取服务信息，�
 
 > zuul是基于servlet的实现，属于阻塞式编程。而springCloudGateway则是基于spring5中提供的webFlux，属于响应式编程的实现，具备更好的性能。
 
-
-
 - 统一网关的搭建
 
 ![](https://i.loli.net/2021/09/16/LSucfhNUkx12wgM.png)
@@ -205,10 +159,6 @@ Nacos采用pull和push两种，既可以消费者主动去拉取服务信息，�
 - 断言工厂
 
 ![](https://i.loli.net/2021/09/16/RSOzkCm3QUlJYZq.png)
-
-
-
-
 
 # Docker
 
@@ -218,14 +168,10 @@ Nacos采用pull和push两种，既可以消费者主动去拉取服务信息，�
 > 2. 运行时利用沙箱机制形成隔离容器，各个应用互不干扰。
 > 3. 启动，移除都可以通过一行命令完成，方便快捷。
 
-
-
 Docker如何解决依赖的兼容性问题的？
 
 - 将应用的Libs（函数库），Deps（依赖）、配置与应用一起打包。
 - 将每一个应用放到一个隔离容器中去运行，避免互相干扰。
-
-
 
 不同环境的操作系统不同，Docker如何解决？
 
@@ -238,17 +184,11 @@ Docker和虚拟机的差异：
 
 ![](https://i.loli.net/2021/09/22/krGsg3iZOzYepWt.png)
 
-
-
 > docker镜像都是只读的。
-
-
 
 docker的架构
 
 ![](https://i.loli.net/2021/09/22/ZsbzvwWAVJyigmu.png)
-
-
 
 ## docker命令
 
@@ -263,10 +203,6 @@ docker save -o /home/rose/work/docker_redis.tar redis:latest
 - 删除docker中的镜像：docker rmi redis：latest
 - 把本地的镜像读取到doker中：docker load -i /home/rose/work/docker-redis.tar
 
-
-
-
-
 ### docker 创建运行一个容器
 
 > docker run --name containerName -p 80:80 -d nginx
@@ -277,29 +213,17 @@ docker save -o /home/rose/work/docker_redis.tar redis:latest
 - -d：后台运行容器
 - nginx：镜像名字，不加版本默认latest
 
-
-
 ![](https://i.loli.net/2021/09/23/mYHlORLFtZfgz8k.png)
-
-
 
 - docker容器挂在
 
 ![](https://i.loli.net/2021/09/26/41VTnoJwKuyteIk.png)
 
-
-
 ## Dockerfile自定义镜像
 
 ![](https://i.loli.net/2021/09/26/OqxoAg74fmUpY1M.png)
 
-
-
-
-
 # RPC设计
-
-
 
 ## 几种IO
 
@@ -315,8 +239,6 @@ docker save -o /home/rose/work/docker_redis.tar redis:latest
 
 > 有一个中间应用，此应用要先根据客户端发送来的请求，处理完成之后再告诉对应的下游应用需要执行什么操作。就是说响应不是立即完成的，需要有一定的时间来返回响应。
 
-
-
 ### NIO
 
 - NIO和BIO的比较
@@ -324,8 +246,6 @@ docker save -o /home/rose/work/docker_redis.tar redis:latest
 1. BIO是用流的方式来处理数据，而NIO以缓冲区的方式处理数据，缓冲区IO的效率比流IO的效率高很多。
 2. BIO是阻塞的，NIO则是非阻塞的
 3. BIO基于字节流和字符流进行操作，而NIO基于Channel（通道）和Buffer（缓冲区）进行操作，数据总是从通道读取到缓冲区中。Selector（选择器）用于监听多个通道的事件（比如：连接请求，数据到达等），因此使用单个线程就可以监听多个客户端通道
-
-
 
 ## Netty
 
@@ -339,7 +259,6 @@ docker save -o /home/rose/work/docker_redis.tar redis:latest
 4. JDKNIO的Bug：臭名昭著的Epoll Bug，它会导致Selector空轮询，最终导致CPU 100%。直到JDK1.7该问题仍旧存在，没有被根本解决。（在LINUX环境下选择器可能直接返回。）
 
 > NIO是基于NIO的网络编程框架，是当前最流行的NIO框架，知名的Elasticsearch，Dubbo框架内部都采用了Netty。
-
 
 #### 优点
 
@@ -363,8 +282,6 @@ docker save -o /home/rose/work/docker_redis.tar redis:latest
 
 Reactor模型，通过一个活多个输入同时传递给服务处理器的模式，服务器端程序处理传入的多个请求，并将它们同步分派到相应的处理线程，因此Reactor模式也叫Dispatcher模式。Reactor模式使用IO复用监听事件，收到事件后，分发给某个线程（进程），这点就是网络服务器高并发处理关键。
 
-
-
 - 单Reactor单线程
 
 ![](https://www.helloimg.com/images/2022/04/29/RMpwaq.png)
@@ -383,8 +300,6 @@ Reactor对象通过Selector监控客户端请求事件，收到事件后通过Di
 
   > 1. 性能问题，只有一个线程，无法完全发挥多核CPU的性能，Handler在处理某个连接的业务时，整个线程无法处理其他连接事件，很容易导致性能瓶颈。
   > 2. 可靠性问题：线程意外终止或者进入死循环，会导致整个系统通讯模块不可用，不能接收和处理外部消息，造成节点故障。
-
-
 
 - 单Reactor多线程
 
@@ -410,13 +325,9 @@ Handler收到相应后，通过send将结果返回给client
 
   > 多线程数据共享和访问比较复杂，reactor处理所有的事件的监听和响应，在单线程运行，在高并发场景容易出现性能瓶颈
 
-
-
 - 主从Reactor多线程
 
 ![](https://www.helloimg.com/images/2022/04/29/RMpNDT.png)
-
-
 
 Reactor主线程MainReactor对象通过select监听客户端连接事件，收到事件后，通过Acceptor处理客户端连接事件
 
@@ -496,8 +407,6 @@ WorkerNioEventLoop：
 
 > 在以上两个ProcessSekectedKeys步骤中，会使用PipeLine（管道），PipeLine中引用了Channel，即通过PipeLine可以获取到对应的Channel，PipeLine中维护了很多的处理器（拦截处理器，过滤处理器，自定义处理等）。
 
-
-
 #### Netty高级运用
 
 - java的编解码
@@ -509,8 +418,6 @@ java序列化对象只需要实现java.io.Serializable;接口，并生产序列�
 
 缺点：无法跨语言，序列化后码流太大，序列化性能太低
 
-
-
 - Netty编解码器
 
 > Netty编解码器是由两部分组成的：编码器和解码器。
@@ -520,8 +427,6 @@ java序列化对象只需要实现java.io.Serializable;接口，并生产序列�
 >
 > Netty的编解码器是一种特殊的ChannelHandler（通道），所以依赖于ChannelPipline（管道），可以将多个编解码器连接在一起，以实现复杂的转换逻辑。
 
-
-
 ### WebSocket
 
 > WebSocket是一种在单个TCP连接上进行全双工通讯的协议，WebSocket使得客户端和服务器之间的数据交换变得更加简单，允许服务端主动向客户端推送数据。在WebSocket API中，客户端和服务端只需要完成一次握手，两者之间就可以直接创建持久性的连接，并进行双向数据传输。
@@ -530,11 +435,7 @@ java序列化对象只需要实现java.io.Serializable;接口，并生产序列�
 
 http协议是用在应用层的协议，他是基于tcp协议的。http协议建立连接也必须要有三次握手才能发送信息。http协议分为短连接，长连接，短连接是每次请求都要三次握手才能发送自己的信息。即每一个request对应一个response，长连接实在一定的期限内保持连接，保持TCP连接不断开。客户端与服务器通信，必须要由客户端先发起，然后服务端返回结果。客户端是主动的，服务器是被动的。客户端要想实时获取服务端消息就得不断发送长连接到服务端。
 
-
-
 WebSocket实现了多路复用，他是全双工通道。在WebSocket协议下服务端和客户端可以同时发送信息。建立了WebSocket连接之后，服务端可以主动发送信息到客户端。而且信息当中不必再带有head的部分信息了与http的长连接通信来说，这种方式，不仅能降低服务器的压力。而且信息当中也减少了部分多余的信息。
-
-
 
 ### Netty中粘包和拆包的解决方案
 
@@ -543,8 +444,6 @@ WebSocket实现了多路复用，他是全双工通道。在WebSocket协议下�
 粘包和拆包是TCP网络中不可避免的，无论是服务端还是客户端。当我们读取或者发送消息的时候，都需要考虑TCP底层粘包/拆包机制。
 
 TCP是个流协议，所谓流，就是没有界限的一串数据。TCP底层并不了解上次业务数据的具体含义，它会根据TCP缓冲区的实际情况进行包的划分，所以在业务上认为，一个完整的包可能会被TCP拆分成多个包进行发送，也可能把多个小的包封装成一个大的数据包发送，这就是所谓的TCP粘包和拆包问题。
-
-
 
 #### 粘包和拆包的解决方案
 
@@ -557,8 +456,6 @@ TCP是个流协议，所谓流，就是没有界限的一串数据。TCP底层�
 3. 将特殊的分隔符作为消息结束的标志，回车换行符就是一种特殊的结束分隔符
 4. 通过在消息头中定义长度字段来标识消息的总长度
 
-
-
 - Netty中的粘包和拆包解决方案
 
 > Netty提供了4种解码器来解决，分别如下：
@@ -568,35 +465,23 @@ TCP是个流协议，所谓流，就是没有界限的一串数据。TCP底层�
 3. 分隔符拆包器，每个应用层数据包，都通过自定义的分隔符，进行分割拆分
 4. 基于数据包长度的拆包器，将应用层数据包的长度，作为接收端应用层数据包的拆分依据，按照应用层数据包的大小，拆包。这个拆包器有一个要求，就是应用层协议中包含应用层的长度
 
-
-
 ### Netty源码
 
 #### 线程组源码
 
 > EventLoopGroup是一组EventLoop的抽象，Netty为了方便的利用多核CPU资源，一般会有多个EventLoop同时工作，每个EventLoop维护着一个Selector实例。
 
-
-
 - 线程组源码流程图
 
 ![](https://www.helloimg.com/images/2022/04/29/RMpKkC.png)
 
-
-
 创建NioEventLoopGroup线程组，首先判断有没有传线程数量，如果没有就取默认值（CPU核心数*2），利用for循环创建线程数量的NioEventLoop，每个NioEventLoop对应一个任务队列和选择器，创建任务队列和选择器，生成EventBootStrap对象。设置启动参数，绑定端口。
-
-
-
-
 
 ## 什么是RPC
 
 > 远程过程调用，借助RPC可以想本地调用一样调用远程服务，是一种进程间的通讯方式，
 >
 > 比如两台服务器A和B，A服务器上部署一个应用，B服务器上部署一个应用，A服务器上的应用想调用B服务器上应用提供的方法，由于两个应用不在一个内存空间，不能直接调用，所以需要通过网络来表达调用的语义和表达调用的数据，需要主意嗯是RPC并不是一个具体的技术，而是指整个网络调用过程。
-
-
 
 #### RPC架构
 
@@ -622,10 +507,6 @@ TCP是个流协议，所谓流，就是没有界限的一串数据。TCP底层�
 7. 如果远程方法调用之后有返回值，则服务器将这些结果又沿用“骨架->远程引用->传输层”向下传递。
 8. 客户端的传输层接收到返回值后，又沿用“传输层->远程引用层->桩”向上传递，然后由桩来饭序列化这些返回值，并将最后的结果传递给客户端程序。
 
-
-
-
-
 # 分布式理论与分布式架构设计理论
 
 ## 一致性协议
@@ -646,13 +527,9 @@ TCP是个流协议，所谓流，就是没有界限的一串数据。TCP底层�
 
    ![](https://www.helloimg.com/images/2022/06/15/ZS3YMz.png)
 
-
-
 ### 两阶段提交协议2PC
 
 > 所有事务先全部运行但是不提交，当所有的服务都返回成功之后，同一改革提交事务。
-
-
 
 ![](https://www.helloimg.com/images/2022/06/16/ZSsdkM.png)
 
@@ -710,11 +587,9 @@ W=2:	对数据的修改操作只需要在3个副本中的2个上面完成就返�
 
 R=2:	从3个对象中要读取到2个数据对象，才能返回
 
-> 在分布式系统中，数据的单点是不允许存在的。即线上正常存在的备份数量N设置1的情况是非常危险的，因为一旦这个备份发生了错误，就可能发生数据的永久性错误。假如把N设置成2，只要有一个节点发成损坏，就会有单点的存在。所以N必须大于3。N越高，系统的维护和整体成本就越高，工业界通常把N设置为3.
+> 在分布式系统中，数据的单点是不允许存在的。即线上正常存在的备份数量N设置1的情况是非常危险的，因为一旦这个备份发生了错误，就可能发生数据的永久性错误。假如把N设置成2，只要有一个节点发生损坏，就会有单点的存在。所以N必须大于3。N越高，系统的维护和整体成本就越高，工业界通常把N设置为3.
 
 ![](https://www.helloimg.com/images/2022/06/18/ZSWBBD.png)
-
-
 
 ### Gossip协议（病毒式传播）
 
@@ -736,19 +611,13 @@ R=2:	从3个对象中要读取到2个数据对象，才能返回
 
 消息冗余：节点定期随机选择周围节点发送消息，而收到消息的节点也会重复该步骤，不可避免的引起同一节点消息多次接收，增加消息处理压力。
 
-
-
 > 常见应用有：p2p网络通信，redis cluster，Consul。
-
-
 
 ### paxos协议
 
 > 就是paxos算法，paxos算法是基于消息传递且具有高度容错特性的一致性算法，是目前公认的解决分布式一致性问题最有效的算法之一。
 
 应用：谷歌的很多大型系统，Zookeeper，Mysql5.7之后的主从复制，都采用paxos来解决分布式一致性问题。
-
-
 
 - 角色介绍：
 
@@ -758,7 +627,7 @@ client客户端：
 
 prposer提案发起者
 
-提案者提倡客户端请求，视图说服Acceptor对此达成一致，并在发成冲突是充当协调者，以推动协议向前发展。
+提案者提倡客户端请求，视图说服Acceptor对此达成一致，并在发生冲突时充当协调者，以推动协议向前发展。
 
 Acceptor决策者，可以批准提案
 
@@ -767,8 +636,6 @@ Acceptor可以接受提案，并进行投票，投票结果是否通过以多数
 learnner：最终决策的学习者：
 
 学习者充当该决策的复制因素（不参与投票）
-
-
 
 - basic paxos流程
 
@@ -782,8 +649,6 @@ learnner：最终决策的学习者：
 ![](https://www.helloimg.com/images/2022/06/18/ZSWJhP.png)
 
 ![](https://www.helloimg.com/images/2022/06/18/ZSW4gR.png)
-
-
 
 ![](https://www.helloimg.com/images/2022/06/18/ZSWLPz.png)
 
@@ -843,21 +708,15 @@ Server端每隔t秒向Node集群发起检测请求，设定超时时间，如果
 
 场景：Mysql。Redis等通过主从复制来保证高可用。
 
-
-
 - 互备模式
 
 两台主机同时运行各自的服务工作且相互检测情况。每个master都有读写能力，会根据时间戳或业务逻辑来合并版本。
 
 场景：数据库双主模式。
 
-
-
 - 集群模式
 
 有多个节点在运行，同时可以通过主控节点分担服务请求。集群模式需要解决主控节点本身的高可用问题，一般采用主从模式。
-
-
 
 #### 脑裂问题
 
@@ -867,8 +726,6 @@ Server端每隔t秒向Node集群发起检测请求，设定超时时间，如果
 
 1. 共享资源被瓜分，两边服务都起不来了。
 2. 两边服务都起来了，但同时读写共享存储，导致数据损坏。
-
-
 
 - 预防脑裂的方案
 
@@ -881,8 +738,6 @@ Server端每隔t秒向Node集群发起检测请求，设定超时时间，如果
     2. 客户端：确保只有一个master可以响应客户端的请求。
     3. Slave：确保只有一个主节点可以向从节点发送命令。
 
-
-
 ### 容错性
 
 系统对于错误包容的能力。非常典型案例就是缓存穿透问题。
@@ -894,8 +749,6 @@ Server端每隔t秒向Node集群发起检测请求，设定超时时间，如果
 使用多台服务器共同分担计算任务，把网络请求或计算分配到集群可用的不同服务器节点上，从而达到高可用性和较好的用户操作体验。
 
 应用：硬件有著名的F5。 软件：nginx，LV5，HAProxy。
-
-
 
 ## 分布式架构服务调用
 
@@ -935,9 +788,6 @@ Server端每隔t秒向Node集群发起检测请求，设定超时时间，如果
 
    spring Cloud Feign
 
-
-
 - RPC框架
 
 RPC全称为remote procedure call，远程过程调用，借助RPC可以做到像本地调用一样调用远程服务，是一种进程间的通信方式。
-

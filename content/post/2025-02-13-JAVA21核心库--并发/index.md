@@ -1,9 +1,9 @@
 ---
 title: JAVA21核心库--并发
 date: 2025-02-13
-description: 根据21版本的JDK，重新认识java的并发 
+description: 根据21版本的JDK，重新认识java的并发
 image: java21c.png
-categories: 
+categories:
   - 精选
 tags:
   - java
@@ -16,10 +16,10 @@ tags:
 > 根据21版本的JDK，重新认识java的并发
 
 https://docs.oracle.com/en/java/javase/21/core/concurrency.html
+
 ## Concurrency(并发)
 
 > Java SE 的并发 API 提供了一个强大的可扩展框架高性能线程实用程序，例如线程池和阻塞队列。此软件包使程序员无需手动编写这些实用程序，其方式与集合框架对数据结构所做的方式大致相同。此外，这些软件包还提供用于高级并发编程的低级基元。
-
 
 ### 并发包组成
 
@@ -27,38 +27,27 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 
 >  a high-performance, flexible thread pool;
 
-
-
 - 异步执行任务框架
 
 > a framework for asynchronous execution of tasks
-
-
 
 - 针对大量并发访问优化的集合类
 
 > a host of collection classes optimized for concurrent access;
 
-
-
 - 实时同步器（信号量）
 
 > synchronization utilities such as counting semaphores
 
-
-
 - 原子类
 
 > atomic variables
-
-
 
 - 锁
 
 > locks
 
 - condition
-
 
 ### 常用API
 
@@ -75,7 +64,6 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 | 纳秒级计时器（nanoTime） | [`System.nanoTime`](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#nanoTime--) 允许访问纳秒级时间源，用来操作各种锁时间。实现精度主要取决于操作系统平台。 |
 | 线程局部变量             | 与常规变量不同，每个访问线程局部变量的线程，都有自己独立初始化的变量副本。 |
 
-
 ## 虚拟线程（Virtual threads）
 
 虚拟线程是轻量级线程，可减少编写、维护和调试高吞吐量并发应用程序的工作量。
@@ -84,50 +72,33 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 
 线程是可以调度的最小单元。它们彼此之间独立。线程主要分两种：平台线程和虚拟线程。
 
-
 ### 什么是平台线程？
 
 平台线程被是操作系统的包装实现。平台线程在底层的操作系统线程上运行java代码，并且平台线程整个生命周期都是由操作系统线程完成的。因此，可用的平台线程数量受限于操作系统线程数量。
 
 平台线程通常具有较大的线程栈和其他由操作系统维护的资源。它们适合执行各种任务，但是可能是一种有限的资源。（操作系统的线程数有限）
 
-
 ### 什么是虚拟线程？
-
-
 
 像平台线程一样，虚拟线程也是java.lang.Thread类的一个实例。然而虚拟线程并不绑定特定的操作系统线程上。虚拟线程仍然在操作系统线程上运行。然而，当在虚拟线程中运行的代码调用阻塞I/O操作时，java会暂停该虚拟线程，知道它可以恢复。与被暂停的虚拟线程相关联的操作系统线程可以自由的为其他虚拟线程执行操作。
 
-
-
 虚拟线程的实现方式类似于虚拟内存。为了模拟大量内存，操作系统将一个大的虚拟空间映射到有限的RAM上。同样，为了模拟大量线程，java将大量虚拟线程映射到少量的操作系统线程上。
-
-
 
 与平台线程不同，虚拟线程通常具有较浅的调用栈，只执行少量操作，例如：单个HTTP客户端调用或单个JDBC查询。虽然虚拟线程支持线程局部变量和可继承线程局部变量，但需要谨慎使用，因为单个JVM可能支持数百万个虚拟线程。
 
-
-
 > 虚拟线程适合运行大部分时间被阻塞的任务，这些任务通常在等待i/o操作完成。虚拟线程不适合运行长时间的CPU密集型操作。
-
 
 ### 为什么使用虚拟线程？
 
-
-
 在高吞吐量的并发应用程序中使用虚拟线程，特别是那些由大量并发任务组成的应用程序，这些任务大部分时间都在等待。服务器应用程序就是高吞吐量应用程序的例子，因为它们通常执行许多阻塞I/O操作的客户端请求。
 
-
-
 > 虚拟线程并不是更快的线程：它的运行速度和平台线程没有区别。虚拟线程存在的目的是为了提供规模（更高的吞吐量），而不是速度（更低的延迟）。
-
 
 ### 创建和使用虚拟线程
 
 > 以下项目代码可以我的另一个项目(personStudy)中找到
+
 #### 使用Thread类和使用Thread.Builder 接口来创建虚拟线程
-
-
 
 - 使用Thread类创建虚拟线程
 
@@ -139,11 +110,7 @@ private static void createByThread() throws InterruptedException {
     }
 ```
 
-
-
 - 通过Thread.Builder创建
-
-
 
 ```java
 //创建一个线程
@@ -161,11 +128,7 @@ private static void createByThreadBuilder1() throws InterruptedException {
 
 ```
 
-
-
 - 通过builder快速创建两个虚拟线程并启动
-
-
 
 ```java
 private static void createByThreadBuilder2() throws InterruptedException {
@@ -183,7 +146,6 @@ private static void createByThreadBuilder2() throws InterruptedException {
     }
 ```
 
-
 #### 使用Executors创建虚拟线程
 
 > Future.get()会自动上锁等待任务返回，所以不需要join方法
@@ -199,7 +161,6 @@ private static void createByExecutors(){
     }
 }
 ```
-
 
 #### 实例
 
@@ -282,11 +243,9 @@ public class EchoClient {
 }
 ```
 
-
 ### 调度虚拟线程和固定虚拟线程
 
 当虚拟线程开始运行时，java runtime会将虚拟线程分配或挂载到平台线程上，然后操作系统会像往常一样调度该平台线程。虚拟线程运行一段代码后，java runtime可以将该虚拟线程从平台线程上卸载。（在虚拟线程发生IO操作阻塞时）空闲的平台线程可以被java运行时重新挂载一个新的虚拟线程。
-
 
 #### 虚拟线程无法被卸载的情况
 
@@ -295,10 +254,7 @@ public class EchoClient {
 - 当执行被synchronized修饰的同步代码块（被上锁的代码）
 - 运行本地方法或外部函数时
 
-
 ### 虚拟线程使用指南
-
-
 
 - 非阻塞风格开发的代码，即使使用虚拟线程，也不会有多大提升
 
@@ -311,8 +267,6 @@ CompletableFuture.supplyAsync(info::getUrl, pool)
    .thenAccept(this::process)
    .exceptionally(t -> { t.printStackTrace(); return null; });
 ```
-
-
 
 - 以同步风格开发的代码，使用虚拟线程将带来极大的提升
 
@@ -327,8 +281,6 @@ try {
    t.printStackTrace();
 }
 ```
-
-
 
 - 将每个并发任务表示为一个虚拟线程；<font color='red'>永远不用对虚拟线程进行池化</font>
 
@@ -348,11 +300,7 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 }
 ```
 
-
-
 Executors.newVirtualThreadPerTaskExecutor()不会返回线程池，它为每个提交的任务都创建一个新的虚拟线程。
-
-
 
 - 同时向多个服务器发起注销操作
 
@@ -376,7 +324,6 @@ String fetchURL(URL url) throws IOException {
     }
 }
 ```
-
 
 #### 使用信号量限制并发
 
@@ -410,14 +357,9 @@ Result foo() {
 }
 ```
 
-
-
 ![67bc238255790.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/67bc238255790_1747189632774.png)
 
-
 - 不要在虚拟线程中创建复杂的线程独享变量
-
-
 
 - 在虚拟线程内部使用synchronized代码块，会阻塞OS线程。可以试着把synchronized放到虚拟线程外面或者使用ReentrantLock
 
@@ -438,28 +380,22 @@ try {
 }
 ```
 
-
 ## 结构化并发
 
 > 将运行在不同线程中的相关任务组视为一个工作单元，从而简化错误处理和取消操作，提高可靠性，增强可观察性。
 
-
-
 - StructuredTaskScope
 
 可以将每个子任务分叉，让它们在各自独立线程中运行。StructuredTaskScope可以确保在主任务继续之前完成所有子任务。或者可以指定某个子任务成功时程序继续运行。
-
 
 ### StructuredTaskScope的用法
 
 1. 创建一个StructuredTaskScope，使用“try-with-resources”语法一起（自动关闭）
 2. 将子任务定义为callable实例。
 3. 使用“StructuredTaskScope::fork”语法在各自线程中为每个子任务创建分支。
-4. 调用StructuredTaskScope::join 
+4. 调用StructuredTaskScope::join
 5. 处理子任务的结果
 6. 关闭StructuredTaskScope
-
-
 
 ![67bd253b95065.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/67bd253b95065_1747189902643.png)
 
@@ -479,20 +415,15 @@ try {
     } // close
 ```
 
-
 ### ShutdownOnSuccess和ShutdownOnFailure
 
 - ShutdownOnFailure
 
 其中一个子任务失败，就取消所有子任务。
 
-
-
 - ShutdownOnSuccess
 
 其中一个子任务成功，就取消剩余所有的子任务。
-
-
 
 ``` java
 public class SCRandomTasks {
@@ -565,7 +496,6 @@ public class SCRandomTasks {
 }
 ```
 
-
 ### 自定义结构化任务策略
 
 ```java
@@ -596,6 +526,4 @@ public class CollectingScope<T> extends StructuredTaskScope<T> {
 }
 ```
 
-
 ## Task scheduling framework
-

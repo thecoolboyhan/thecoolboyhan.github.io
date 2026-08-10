@@ -3,7 +3,7 @@ title:  算法-排序
 description: 常见的排序汇总
 image: 1.png
 date: 2023-11-18
-categories: 
+categories:
   - 精选
   - 算法
 tags:
@@ -13,7 +13,9 @@ tags:
 ---
 
 ## OI WIKI
+
 ### 字符串
+
 #### 字典树（Trie）
 
 - 模版
@@ -66,17 +68,12 @@ class Trie {
 }
 ```
 
-
-
-
-
-
-
 > 记录算法书籍感悟，用心理解每一种套路
+
 ## 读《算法》有感
 
-
 ### 排序
+
 #### 初级排序
 
 - 排序算法的模版，后续所有排序遵守此模版
@@ -118,7 +115,6 @@ private static class Example{
 }
 ```
 
-
 ##### 选择排序
 
 > 最简单的排序算法，首先，找到最小的那个元素，其次，将它和数组的第一个元素交换位置。再次，在剩下的元素中找到最小的元素。
@@ -137,14 +133,11 @@ public   void sort(Comparable[] a){
 }
 ```
 
-
 ##### 插入排序
 
 > 选择每一个数，把它放到正确的位置去 。保证当前指针左侧的数据一定是按照顺序排好的。
 
 这种排序对于常见如果已知有一定顺序的东西排序效率更高，
-
-
 
 ```java
 public   void sort(Comparable[] a){
@@ -158,14 +151,11 @@ public   void sort(Comparable[] a){
 
 ![2023-11-1116:18:12-1699690691965.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1116:18:12-1699690691965.png)
 
-
 ##### 希尔排序
 
 > 让数组中任意间隔为h的元素都是有序的。依次减少h的大小，来实现全部有序。
 
 可以减少数组元素交换的次数。
-
-
 
 ```java
 public   void sort(Comparable[] a){
@@ -186,10 +176,7 @@ public   void sort(Comparable[] a){
 }
 ```
 
-
-
 ![2023-11-1116:36:02-1699691761837.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1116:36:02-1699691761837.png)
-
 
 #### 归并排序（分治）
 
@@ -200,13 +187,12 @@ public   void sort(Comparable[] a){
 空间复杂度：N
 
 ![2023-11-1116:54:30-1699692869952.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1116:54:30-1699692869952.png)
+
 ##### 原地归并
 
 > 把两个数组中的元素直接归并到第三个数组里
 
 已知两个需要归并的数组都是排好序的，直接从这两个数组里依次取最小值，加入到结果里。
-
-
 
 ```java
 public void merge(Comparable[] a,int lo,int mid, int hi){
@@ -235,12 +221,9 @@ public void merge(Comparable[] a,int lo,int mid, int hi){
 
 ![2023-11-1117:11:19-1699693878701.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1117:11:19-1699693878701.png)
 
-
 ##### 自顶向下的归并排序
 
 > 把数组不断地拆成两个数组，最后通过归并两个数组来组合所有数组
-
-
 
 ```java
 public void sort(Comparable[] a){
@@ -257,12 +240,9 @@ public   void sort(Comparable[] a,int lo,int hi){
 
 ![2023-11-1117:24:44-1699694684157.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1117:24:44-1699694684157.png)
 
-
 ##### 自低向上的归并排序
 
 > 先排列小的两个数组，可以有效的减少代码量
-
-
 
 ```java
 //辅助数组
@@ -280,6 +260,7 @@ public void sort(Comparable[] a){
 ```
 
 ![2023-11-1117:35:09-1699695308672.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1117:35:09-1699695308672.png)
+
 ####   快速排序
 
 > 应用最广泛的排序算法，只需要很小的辅助空间就可以在原地实现排序。
@@ -287,8 +268,6 @@ public void sort(Comparable[] a){
 只需要O1的空间就可以在NlogN的时间内完成排序
 
 ![2023-11-1210:14:21-1699755261111.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1210:14:21-1699755261111.png)
-
-
 
 - 快排基类
 
@@ -307,6 +286,7 @@ private void sort(Comparable[] a, int lo, int hi) {
     sort(a,j+1,hi);
 }
 ```
+
 ##### 原地切分
 
 选出要切分范围的第一个数字，把它放到合适的位置。
@@ -334,7 +314,6 @@ private int partition(Comparable[] a, int lo, int hi) {
     return j;
 }
 ```
-
 
 ##### 三向切分的快速排序
 
@@ -369,9 +348,7 @@ private void sort(Comparable[] a, int lo, int hi) {
 
 ![2023-11-1420:33:11-1699965191109.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2023-11-1420:33:11-1699965191109.png)
 
-
 #### 优先队列
-
 
 ##### 堆实现
 
@@ -450,9 +427,8 @@ class MaxPQ<Key extends  Comparable<Key>>{
     }
 }
 ```
+
 #### 各种排序总结
-
-
 
 | 算法         | 是否稳定 | 是否原地排序 | 时间复杂度       | 空间复杂度 | 备注                                               |
 | ------------ | -------- | ------------ | ---------------- | ---------- | -------------------------------------------------- |
@@ -464,9 +440,7 @@ class MaxPQ<Key extends  Comparable<Key>>{
 | 归并排序     | 是       | 否           | NlogN            | N          |                                                    |
 | 堆排序       | 否       | 是           | NlogN            | 1          |                                                    |
 
-
 ### 查找
-
 
 #### 顺序查找
 
@@ -512,9 +486,8 @@ class SequentialSearchST<Key,Value>{
     } 
 }
 ```
+
 #### 有序数组中的二分查找
-
-
 
 ```java
  //二分查找（基于有序数组）
@@ -594,16 +567,14 @@ class SequentialSearchST<Key,Value>{
     }
 ```
 
-
 #### 两种查找的总结
-
-
 
 | 算法                 | 最坏查找 | 最坏插入 | 平均查找 | 平均插入 | 是否支持有序性相关的操作 |
 | -------------------- | -------- | -------- | -------- | -------- | ------------------------ |
 | 顺序查找（无序链表） | N        | N        | N/2      | N        | 否                       |
 | 二分查找（有序数组） | logN     | 2*N      | logN     | N        | 是                       |
 |                      |          |          |          |          |                          |
+
 #### 符号表查找（key-val）的各种实现的优缺点
 
 | 使用的数据结构       | 优点                                               | 缺点                                                         |
@@ -614,6 +585,4 @@ class SequentialSearchST<Key,Value>{
 | 平衡二叉查找树       | 最优的查找和插入效率，能够进行有序性相关的操作     | 连接需要额外的空间                                           |
 | 散列表               | 能够快速的查找和插入常见类型的数据                 | 需要计算每种类型的数据的散列，无法进行有序性相关的操作，链接和空节点需要额外的空间 |
 
-
 #### 二分查找树
-

@@ -8,14 +8,9 @@ tags:
   - 读后感
 ---
 
-
 ## 第六章、ChannelHandler和ChannelPipeline
 
-
-
 ### Channelhandler家族
-
-
 
 #### Channel的生命周期
 
@@ -26,16 +21,12 @@ tags:
 | ChannelActive       | Channel处于活动状态（已经连接到它的远程节点）可以接收和发送数据了 |
 | ChannelInactive     | Channel没有连接到远程节点                                    |
 
-
-
 ``` mermaid
 graph TD
 	a[ChannelUnregistered]-->b[ChannelRegistered]
 	b-->c[ChannelActive]
 	c-->d[ChannelInactive]
 ```
-
-
 
 #### ChannelHandler的生命周期
 
@@ -47,13 +38,9 @@ graph TD
 
 ChannelHandler下有两个重要的子接口
 
-
-
 - ChannelInboundHandler 接口
 
 > 处理入站数据以及各种状态变化
-
-
 
 ```java
 //利用ChannelInboundHandlerAdapter显式的释放内存
@@ -76,17 +63,11 @@ class SimpleDiscardHandler extends SimpleChannelInboundHandler<Object>{
 }
 ```
 
-
-
 - ChannelOutboundHandler 接口
 
 > 处理出站操作的接口，可以按需推迟操作或者事件
 
-
-
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231143465381723114345744.png"  />
-
-
 
 ``` mermaid
 graph TD
@@ -100,21 +81,13 @@ graph TD
 	
 ```
 
-
-
 ### ChannelPipeline接口
 
 > ChannelPipeline是一个拦截流经Channel的入站和出站事件的ChannelHandler实例链。
 
-
-
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231156625241723115661886.png"  />
 
-
-
 ChannelPipeline的头部和尾部取决于该事件是入站还是出站的。Netty总是将ChannelPipeline的入站口作为头部，将出站口作为尾部。
-
-
 
 - 修改ChannelPipeline
 
@@ -123,8 +96,6 @@ ChannelPipeline的头部和尾部取决于该事件是入站还是出站的。Ne
 | addFirstaddBefore \n addAfteraddLast | 将一个ChannelHandler添加到ChannelPipeline中                  |
 | remove                               | 将一个ChannelHandler从ChannelPipeline中移除                  |
 | replace                              | 将ChannelPipeline中的一个ChannelHandler替换为另一个ChannelHandler |
-
-
 
 > 下面举例中每个Handler应为不同的Handler，这里为了方便全部使用相同的了。
 
@@ -148,28 +119,20 @@ public class ChangeChannelPipeline {
 }
 ```
 
-
-
 #### 总结
 
 - ChannelPipeline保存了与Channel相关联的ChannelHandler
 - ChannelPipeline可以根据需要，通过添加或者删除ChannelHandler来动态地修改
 - ChannelPipeline有丰富的API可以响应入站和出站事件。
 
-
-
 ### ChannelHandlerContext接口
 
 > 管理它所关联的ChannelHandler和在同一个ChannelPipeline中的其他ChannelHandler之间的交互。
-
-
 
 - ChannelHandlerContext和ChannelHandler之间的关联是永远不会改变的，所以缓存对它的引用是安全的。
 - ChannelHandlerContext的方法将产生更短的事件流，应该尽可能地利用这个特性来提高性能。
 
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231181995261723118199395.png"  />
-
-
 
 - 通过ChannelHandlerContext访问Handler和Pipeline
 
@@ -192,17 +155,11 @@ public class DemoChannelHandlerContext {
 }
 ```
 
-
-
 #### 一个事件是如何传递的
 
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231187695351723118769210.png"  />
 
-
-
 ### 异常处理
-
-
 
 > 入站异常
 
@@ -222,14 +179,10 @@ public class P6InboundExceptionHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-
-
 > 出站异常
 
 - 每个出站操作都将返回一个ChannelFuture。注册到ChannelFuture的ChannelFutureListener将在操作完成时被通知该操作是成功还是失败。
 - 几乎所有的ChannelOutboundHandler上的方法都会被传入一个ChannelPromise实例。作为ChannelFuture的子类，ChannelPromise也可以被分配用于异步通知的监听器。（也可以立即通知）
-
-
 
 ```java
 //自定义出站规则异常处理
@@ -264,4 +217,3 @@ public class P6OutboundExceptionHandler extends ChannelOutboundHandlerAdapter {
     }
 }
 ```
-

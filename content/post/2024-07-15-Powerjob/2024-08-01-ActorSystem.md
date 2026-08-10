@@ -34,8 +34,6 @@ private List<Object> actorList;
 
 重点是其中的actorList对象，其中包含三个Actor对象：TaskTrackerActor、ProcessorTrackerActor、WorkerActor。
 
-
-
 ## ActorInfo对象
 
 所有的actor对象拆解后的对象。其中包含所有actor对象，和它下面所有的Handler方法
@@ -48,8 +46,6 @@ private List<Object> actorList;
 //当前actor类中所有的HandlerInfo对象
     private List<HandlerInfo> handlerInfos;
 ```
-
-
 
 ## HandlerInfo对象
 
@@ -68,10 +64,6 @@ private Method method;
 private Handler anno;
 ```
 
-
-
-
-
 ## LightTaskTrackerManager
 
 > 轻量级任务管理器
@@ -81,10 +73,6 @@ private Handler anno;
 private static final Map<Long, LightTaskTracker> INSTANCE_ID_2_TASK_TRACKER = Maps.newConcurrentMap();
 ```
 
-
-
-
-
 ## HeavyTaskTrackerManager
 
 > 重量级任务管理器
@@ -93,8 +81,6 @@ private static final Map<Long, LightTaskTracker> INSTANCE_ID_2_TASK_TRACKER = Ma
 //    用来存放所有的重量级任务
     private static final Map<Long, HeavyTaskTracker> INSTANCE_ID_2_TASK_TRACKER = Maps.newConcurrentMap();
 ```
-
-
 
 ## 初始化
 
@@ -107,11 +93,7 @@ private static final Map<Long, LightTaskTracker> INSTANCE_ID_2_TASK_TRACKER = Ma
 3. 将所有的ActorInfo和对应的HandlerInfo交给PowerjobRemoteEngine来实现响应式编程（分为阻塞和非阻塞）两种处理方式。利用事件来触发
 4. 后续所有的操作，均通过PowerjobRemoteEngine来触发worker和给server发消息。
 
-
-
 ## TaskTrackerActor
-
-
 
 ### 服务器任务调度处理器（onReceiveServerScheduleJobReq）
 
@@ -135,17 +117,11 @@ graph TD
 
 > 轻量级任务，重量级任务这里分析完全可以单独再做一次研究报告，暂时就不展开了。
 
-
-
-
-
 ### ProcessorTracker 心跳处理器
 
 由"reportProcessorTrackerStatus"命令触发，请求参数中包含实例id
 
 > 由代码推断，只有重量级任务需要上报心跳
-
-
 
 ``` mermaid
 graph TD
@@ -175,8 +151,6 @@ private boolean dispatched;
 private boolean connected;
 ```
 
-
-
 ### 停止任务实例
 
 由“stopInstance”命令触发，请求参数中包含实例id
@@ -197,19 +171,11 @@ graph TD
 	e-->e2[尝试打断任务]
 ```
 
-
-
-
-
 ### 查询任务的运行状态
 
 由“queryInstanceStatus”命令触发，请求参数中包含实例id
 
 查询任务状态的方法，方法设计2中重量级任务和一种轻量级任务的不同查询方式。
-
-
-
-
 
 ### 子任务状态上报处理器
 
@@ -225,15 +191,11 @@ graph TD
 	c-->d[更新工作流上下文]
 ```
 
-
-
 ### 子任务 map 处理器
 
 由"mapTask"命令触发，请求参数中包含实例id，和所有的子任务：List<SubTask> subTasks
 
 > 只有重量级任务存在子任务map
-
-
 
 ``` mermaid
 graph TD
@@ -241,6 +203,3 @@ graph TD
 	b-->c[把所有分给当前worker的子任务实例id设置为当前实例id\n把所有的任务状态设置为'等待调度器调度']
 	c-->d[将所有任务全部持久化到当前worker的数据库or内存]
 ```
-
-
-

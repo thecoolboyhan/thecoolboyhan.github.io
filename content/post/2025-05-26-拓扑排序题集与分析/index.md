@@ -8,25 +8,17 @@ tags: [算法,力扣,拓扑排序,图]
 
 > 详细解释拓扑排序
 
-
-
-
-
 ## 定义
 
 如何给一个有向无环图的所有节点排序
 
 > 如果有向图中存在环，就无法进行拓扑排序
 
-
-
 ## 拓扑排序的步骤
 
 1. 从图中选择一个入度为零的点
 2. 输出该顶点，从图中删除此顶点及其所有的出边
 3. 重复上面两步，直到所有顶点都输出，拓扑排序完成。或图中不存在入度为零的点（图中有环），拓扑排序无法完成，进入死循环。
-
-
 
 ## Kahn算法（BFS）
 
@@ -40,19 +32,13 @@ tags: [算法,力扣,拓扑排序,图]
 
 ![topo](https://oi-wiki.org/graph/images/topo-example.svg)
 
-
-
 对其排序的结果就是：2 -> 8 -> 0 -> 3 -> 7 -> 1 -> 5 -> 6 -> 9 -> 4 -> 11 -> 10 -> 12
-
-
 
 ### 时间复杂度
 
 图G=（V，E） 一共需要遍历两遍图
 
 总时间复杂度O（E+V）
-
-
 
 ``` c++
 int n, m;
@@ -81,8 +67,6 @@ bool toposort() {
   return false;
 }
 ```
-
-
 
 ``` java
 public class TopoSort {
@@ -126,10 +110,6 @@ public class TopoSort {
 }
 ```
 
-
-
-
-
 ## DFS
 
 能BFS就一定能DFS
@@ -172,8 +152,6 @@ struct TopoSort {
   }
 };
 ```
-
-
 
 ``` java
 public class TopoSort {
@@ -224,8 +202,6 @@ public class TopoSort {
 }
 ```
 
-
-
 ## 应用
 
 可以判定图中是否有环
@@ -234,11 +210,7 @@ public class TopoSort {
 
 估算工程完成的最短时间。
 
-
-
 ## 模板
-
-
 
 ### P1347 排序
 
@@ -322,8 +294,6 @@ Sorted sequence cannot be determined.
 #### 说明/提示
 
 $2 \leq n \leq 26,1 \leq m \leq 600$。
-
-
 
 ``` java
 import java.util.*;
@@ -446,17 +416,9 @@ class Main {
 }
 ```
 
-
-
-
-
 ## [2192. 有向无环图中一个节点的所有祖先](https://leetcode.cn/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/)
 
-
-
 **中等**
-
-
 
 给你一个正整数 `n` ，它表示一个 **有向无环图** 中节点的数目，节点编号为 `0` 到 `n - 1` （包括两者）。
 
@@ -465,8 +427,6 @@ class Main {
 请你返回一个数组 `answer`，其中 `answer[i]`是第 `i` 个节点的所有 **祖先** ，这些祖先节点 **升序** 排序。
 
 如果 `u` 通过一系列边，能够到达 `v` ，那么我们称节点 `u` 是节点 `v` 的 **祖先** 节点。
-
- 
 
 **示例 1：**
 
@@ -501,8 +461,6 @@ class Main {
 - 节点 4 有 4 个祖先 0 ，1 ，2 和 3 。
 ```
 
- 
-
 **提示：**
 
 - `1 <= n <= 1000`
@@ -513,11 +471,7 @@ class Main {
 - 图中不会有重边。
 - 图是 **有向** 且 **无环** 的。
 
-
-
 > 拓扑排序重点需要记录哪些是没有依赖的（可以被搜索的），哪个节点的入度还有没有归零（表示当前节点还有依赖没有被搜索）。可以快速的查出，所有依赖关系和最小代价。
-
-
 
 ``` java
 class Solution {
@@ -576,11 +530,7 @@ class Solution {
 }
 ```
 
-
-
 > 老规矩，能rust尽量rust
-
-
 
 ``` rust
 use std::collections::{HashSet,VecDeque};
@@ -632,6 +582,3 @@ impl Solution {
     }
 }
 ```
-
-
-

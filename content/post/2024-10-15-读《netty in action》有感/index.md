@@ -10,13 +10,12 @@ tags:
   - 读后感
   - rpc
 ---
+
 ## 第一部分、Netty的概念及体系结构
+
 ### 第一章、Netty--异步和事件驱动
 
-
 #### java早期BIO处理请求方式
-
-
 
 早期java阻塞函数处理请求的方式：
 
@@ -43,10 +42,7 @@ public void execute(int port) throws IOException {
 
 ![2024-7-1015_46_08-1720597567759.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-7-1015_46_08-1720597567759_1747187950026.png)
 
-
 上方代码只能同时处理一个连接，要管理多个并发客户端，需要为每个新的客户端Socket创建一个新的Thread。
-
-
 
 - 缺点：
 
@@ -55,14 +51,11 @@ public void execute(int port) throws IOException {
 2. 创建的每个线程都需要创建一个栈，每个栈至少都要盛情默认空间的内存。
 3. 如果线程多，上下文切换成本高。
 
-
 #### java NIO
 
 > new or Non-blocking
 >
 > NIO最开始是新的输入/输出（new Input/output)的英文缩写，但该API已经出现足够长的时间，不再是“新的”了，因此，如今大多数的用户认为NIO代表非阻塞I/O，而阻塞IO是旧的输入/输出。
-
-
 
 - NIO的两个优化
 
@@ -73,21 +66,14 @@ public void execute(int port) throws IOException {
 
 java.nio.channels.Selector是java的非阻塞IO实现的关键。它使用了事件通知API（IO多路复用）以确认一组非阻塞套接字中有哪些已经就绪能够进行IO相关的操作。因此可以在任何的时间检查任意的读写操作的完成状态。所以可以实现一个线程处理多个并发的连接。
 
-
-
 - 优点：
 
 1. 使用较少的线程可以处理许多的连接，减少了内存管理和上下文切换带来的开销。
 2. 当没有IO操作需要处理的时候，线程也可以被用于其他任务。
 
-
 #### Netty简介
 
-
-
 Netty的特性总结
-
-
 
 | 分类     | Netty的特性                                                  |
 | -------- | ------------------------------------------------------------ |
@@ -98,27 +84,19 @@ Netty的特性总结
 | 安全性   | 完整的SSL/TLS 以及StartTLS支持 \n 可用于受限制环境下         |
 | 社区驱动 | 发布快速而且频繁                                             |
 
-
-
-
-
 - 异步和可伸缩性
 
 异步：我们不必等待一个操作的完成。异步方法会立刻返回，并且在它完成时，会直接或稍后的某个时间点通知用户。
 
 可伸缩性：一种系统、网络或者进程在需要处理的工作不断增长时，可以通过某种可行的方式或扩大它的处理能力来适应这种增长的能力。
 
-
 ##### Channel
 
 它表示一个实体（一个硬件设备、一个文件、一个网络套接字或者一个能够执行一个或多个不同IO的操作程序组件）的开放连接，如读操作和写操作。
 
-
 ##### 回调
 
 一个回调其实就是一个方法，一个指向已经被提供给另一个方法的方法引用。这使得被调用者在适当的时候可以回调调用者。是在操作完成后通知相关方常用的方式。
-
-
 
 - 回调示例：
 
@@ -134,18 +112,13 @@ public class ConnectHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-
 ##### Future
 
 Future是另一种在操作完成时通知应用程序的方式。这个对象可以看做是一个异步操作的结果占位符，它将在未来的某个时刻完成，并提供对其结果的访问。
 
-
-
 - JDK预设的Future
 
 只允许手动检查对应的操作是否已经完成，或者一直阻塞知道它完成。
-
-
 
 - Netty的ChannelFuture
 
@@ -156,8 +129,6 @@ Future是另一种在操作完成时通知应用程序的方式。这个对象�
 3. 通过ChannelFutureListener提供的通知机制，消除了手动检查对应的操作是否完成的必要。
 
 每个IO操作都不会阻塞，所以Netty是完全异步和事件驱动的。
-
-
 
 ```java
 /**
@@ -184,30 +155,19 @@ public class ChannelFuture1 {
 }
 ```
 
-
 ##### 事件和ChannelHandler
-
-
 
 ![2024-7-1115_46_48-1720684007367.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-7-1115_46_48-1720684007367_1747188019882.png)
 
-
-
 ##### 总结
-
-
 
 Netty的异步编程模型建立在Future和回调的概念之上的，而将事件派发到ChannelHandler的方法则发生在更深的层次上。
 
 拦截操作以及高速地转换入站数据和出站数据，都只需要你提供回调或者利用操作所返回的Future。这使得链接操作变得既简单又高效，并且促进了可重用的通用代码的编写。
 
-
-
 Netty通过触发事件将selector从应用程序中抽象出来，消除了所有本来将需要手动编写的派发代码。
 
-
 ### 第二章、你的第一个Netty应用程序
-
 
 #### 不同的事件处理，读取数据的示例
 
@@ -243,20 +203,13 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-
-
 - 如果不捕获异常，会发生什么？
 
 每个Channel都拥有一个与之相关联的ChannelPipeline，其持有一个ChannelHandler的实例链。
 
 在默认情况下，ChannelHandler会把它的方法的调用转发给链中的下一个ChannelHandler。因此，如果exceptionCaught（）方法没有被该链中的某处实现，那么所接收的异常将会被传递到ChannelPipeline的尾端并被记录。为此，你的应用程序至少与有一个实现了exceptionCaught（）方法的ChannelHandler。
 
-
-
-
 #### 服务端代码
-
-
 
 ```java
 //服务端主启动类，用来创建channel，绑定通道，实例处理等
@@ -312,8 +265,6 @@ public class EchoServer {
 }
 ```
 
-
-
 1. EchoServerHandler实现了业务逻辑
 2. main方法引导服务器
 3. 创建一个ServerBootstrap的实例以引导和绑定服务器
@@ -322,10 +273,7 @@ public class EchoServer {
 6. 使用一个EchoServerHandler的实例初始化每一个新的channel
 7. 调用ServerBootstrap.bind()方法来绑定服务器。
 
-
 #### 客户端代码
-
-
 
 - 客户端事件处理代码
 
@@ -353,11 +301,7 @@ public class EchoClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 }
 ```
 
-
-
 - 引导客户端代码
-
-
 
 ```java
 public class EchoClient {
@@ -399,8 +343,6 @@ public class EchoClient {
 }
 ```
 
-
-
 1. 初始化客户端，创建一个bootstrap实例
 2. 为事件处理分配一个nioEventLoopGroup实例，其中事件处理包括创建新的连接以及处理入站和出站数据
 3. 为服务器连接创建一个InetSocketAddress实例。
@@ -409,10 +351,7 @@ public class EchoClient {
 
 ### 第三章、Netty的组件和设计
 
-
 #### Channel、EventLoop和ChannelFuture
-
-
 
 Channel：socket
 
@@ -420,21 +359,13 @@ EventLoop：控制流、多线程处理、并发；
 
 ChannelFuture：异步通知。
 
-
-
 - Channel接口
 
 用来处理socket连接
 
-
-
 - EventLoop接口
 
-
-
 ![2024-7-1216_14_58-1720772097636.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-7-1216_14_58-1720772097636_1747188058262.png)
-
-
 
 1. 一个EventLoopGroup包含一个或者多个EventLoop
 2. 一个EventLoop在它的生命周期内只和一个Thread绑定
@@ -442,36 +373,23 @@ ChannelFuture：异步通知。
 4. 一个Channel在它的生命周期内只注册于一个EventLoop
 5. 一个EventLoop可能会被分配给一个或多个Channel
 
-
-
 > 一个给定的Channel的io操作都是由相同的Thread执行的，这样消除了对于同步的需要。
-
-
 
 - ChannelFuture接口
 
 一个操作可能不会立刻返回，ChannelFuture接口用来确认其结果。（无论成功还是失败）
 
-
 #### ChannelHandler和ChannelPipeline
-
-
 
 - ChannelHandler接口
 
 Netty的主要组件就是ChannelHandler，他是所有处理入站、出站数据的应用程序逻辑的容器。
 
-
-
 - ChannelPipeline接口
 
 ChannelPipeline提供了ChannelHandler链的容器，并定义了用于在该链上传播入站、出站事件流的API。当Channel被创建，它会自动被分配到它专属的ChannelPipeline。
 
-
-
 > ChannelHandler安装到ChannelPipeline的过程：
-
-
 
 1. 一个ChannelInitializer的实现被注册到ServerBootstrap中。
 2. 当ChannelInitializer.initChannel()方法被调用，ChannelInitializer将在ChannelPipeline中安装一组自定义的ChannelHandler；
@@ -479,29 +397,19 @@ ChannelPipeline提供了ChannelHandler链的容器，并定义了用于在该链
 
 ![2024-7-1223_26_27-1720797986303.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-7-1223_26_27-1720797986303_1747188083571.png)
 
-
 - 编码器和解码器
 
 一般，入站数据会从字节转换为我们需要的编码，出站数据要从当前编码转换成字节。
 
-
-
-
 #### 引导
 
-
-
 ![2024-7-1617_32_17-1721122336933.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-7-1617_32_17-1721122336933_1747188106888.png)
-### 第四章、传输
 
+### 第四章、传输
 
 #### 案例研究：传输迁移
 
-
-
 > 演示一次从阻塞OIO连接处理到非阻塞NIO迁移，java原生和Netty的迁移成本对比。
-
-
 
 - 不通过Netty使用OIO和NIO
 
@@ -549,11 +457,7 @@ public class PlainOioServer {
 }
 ```
 
-
-
 上方代码可以处理中等数量的并发客户端。但随着应用程序流行起来，它并不能很好的伸缩到支撑成千上万的并发连入连接。
-
-
 
 - 基于java NIO的非阻塞版本
 
@@ -634,11 +538,7 @@ public class PlainNioServer {
 }
 ```
 
-
-
 - 使用Netty的阻塞网络编程
-
-
 
 ```java
 /**
@@ -688,8 +588,6 @@ public class NettyOioServer {
     }
 }
 ```
-
-
 
 - 基于Netty的异步网络处理
 
@@ -749,36 +647,25 @@ public class NettyNioServer {
 
 其他无需修改。
 
-
-
 Netty每种传输的实现都暴露相同的API，所以无论选择哪种实现，其他代码几乎都不受影响。
-
 
 #### 传输API
 
 传输api的核心是Channel接口，它被用于所有的IO操作。
 
-
-
 ![17213748431541721374842200.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17213748431541721374842200.png)
 
 每个Channel都会分配一个ChannelPipeline和ChannelConfig。
 
-
-
 - ChannelConfig
 
 包含了该Channel的所有配置设置，并且支持热更新。
-
-
 
 - ChannelPipeline
 
 持有所有用于入站和出站数据以及事件的ChannelHandler实例。
 
 ChannelHandler实现了应用程序处理状态变化以及数据处理的逻辑。
-
-
 
 - ChannelHandler的用途：
 
@@ -788,11 +675,7 @@ ChannelHandler实现了应用程序处理状态变化以及数据处理的逻辑
 4. 当Channel注册到EventLoop或者从EventLoop注销时的通知
 5. 用户自定义事件的通知。
 
-
-
 - Channel的几个重要方法
-
-
 
 | 方法名        | 描述                                                         |
 | ------------- | ------------------------------------------------------------ |
@@ -804,8 +687,6 @@ ChannelHandler实现了应用程序处理状态变化以及数据处理的逻辑
 | write         | 把数据写到远程节点。这个数据将被传递给ChannelPipeline，并且排队直到它被冲刷 |
 | flush         | 将之前已写的数据冲刷到底层传输，如一个socket                 |
 | writeAndFlush | 先调用write然后调用flush                                     |
-
-
 
 ```java
 //    写出数据到Channel
@@ -846,18 +727,11 @@ ChannelHandler实现了应用程序处理状态变化以及数据处理的逻辑
     }
 ```
 
-
-
 Netty的Channel是线程安全的，所以无论是提交给一个线程还是多个线程同时调用，都不会有问题。
-
 
 #### 内置的传输
 
-
-
 - Netty所提供的传输
-
-
 
 | 名称     | 包                             | 描述                                                         |
 | -------- | ------------------------------ | ------------------------------------------------------------ |
@@ -867,8 +741,6 @@ Netty的Channel是线程安全的，所以无论是提交给一个线程还是�
 | local    | io.netty.channel.local         | 可以在VM内部通过管道进行通信的本地传输                       |
 | embedded | io.netty.channel.embedded      | 允许使用ChannelHandler而又不需要一个真正基于网络的传输。     |
 | kqueue   |                                |                                                              |
-
-
 
 - NIO----非阻塞IO
 
@@ -883,8 +755,6 @@ NIO一个所有IO操作完全异步的实现。
 3. Channel有已经就绪的可供读取的数据
 4. Channel可用于写数据
 
-
-
 > 选择操作的位模式
 
 | 名称       | 描述                                            |
@@ -894,11 +764,7 @@ NIO一个所有IO操作完全异步的实现。
 | OP_READ    | 请求当数据已就绪，可以从Channel中读取时获得通知 |
 | OP_WRITE   | 请求当可以想Channel中写更多数据时获得通知。     |
 
-
-
 ![17213824004291721382399481.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17213824004291721382399481.png)
-
-
 
 > 零拷贝（Zero-copy）
 
@@ -906,27 +772,19 @@ NIO一个所有IO操作完全异步的实现。
 
 > 零拷贝对于实现了数据加密或者压缩的文件系统是不可用的（只能传输文件的原始内容）
 
-
-
 - Epoll--用于Linux的本地非阻塞传输
 
 > Linux专属的NIO API，在高负载下它的性能要优于JDK的NIO实现。
 
 原理和图4-2完全相同。
 
-
-
 - OIO-旧的阻塞IO（已废弃）
 
 建立在java.net包的阻塞实现之上的，非异步。
 
-
-
 - 用于JVM内部通信的Local传输
 
 用于在同一个JVM中运行的客户端和服务器程序之间的异步通信。
-
-
 
 ![17219082813701721908281040.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17219082813701721908281040.png)
 
@@ -934,18 +792,13 @@ NIO一个所有IO操作完全异步的实现。
 
 Netty提供的额外的传输，可以将一组ChannelHandler作为帮助类嵌入到其他的ChannelHandler内部。
 
-
 #### 传输的用例
-
-
 
 | 传输           | TCP  | UDP  | SCTP | UDT  |
 | -------------- | ---- | ---- | ---- | ---- |
 | NIO            | Y    | Y    | Y    | Y    |
 | Epoll(仅linux) | Y    | Y    | N    | N    |
 | OIO            | Y    | Y    | Y    | Y    |
-
-
 
 - 每种应用程序推荐的传输方式
 
@@ -955,12 +808,10 @@ Netty提供的额外的传输，可以将一组ChannelHandler作为帮助类嵌�
 | 阻塞代码库                         | OIO                           |
 | 同一个JVM内部                      | Local                         |
 | 测试ChannelHandler的实现           | Embedded                      |
+
 ### 第五章、Bytebuf
 
-
 #### ByteBuf的API
-
-
 
 - 优点
 
@@ -973,10 +824,7 @@ Netty提供的额外的传输，可以将一组ChannelHandler作为帮助类嵌�
 7. 支持引用计数
 8. 支持池化
 
-
 #### ByteBuf类--Netty的数据容器
-
-
 
 - 原理
 
@@ -986,19 +834,13 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
 
 当写入bytebuf时，它的writerIndex也会被递增。
 
-
-
 - 下标越界异常
 
 > 当你读取到“可以读取的”数据的末尾（读取指针等于当前写入指针的位置），如果仍试图读取超出该点的数据，会触发IndexOutOfBoundsException
 
-
-
 - 堆缓冲区（支撑数组backing array）
 
 > 将数据存储在JVM的堆内存中，可以在没有使用池化的情况下提供快速的分配和释放。
-
-
 
 ``` java
 /**
@@ -1019,8 +861,6 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
     }
 ```
 
-
-
 - 直接缓冲区
 
 > 通过直接内存来访问数据，由于缓冲区中的数据不是在JVM内部的所以不会自动垃圾回收。
@@ -1033,8 +873,6 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
 
 1. 由于数据在堆外，所以分配和释放空间都比较昂贵。
 2. 因为数据不在堆上，所以不得不进行一次复制。
-
-
 
 ``` java
 /**
@@ -1055,8 +893,6 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
     }
 ```
 
-
-
 - 复合缓冲区
 
 > Netty通过一个byteBuf子类--CompositeByteBuf--实现了这个模式，它提供了一个将多个缓冲区表示为单个合并缓冲区的虚拟表示。
@@ -1070,8 +906,6 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
 将不同的主体和头部组合在一起，可以看做一个不同的缓冲区。
 
 > 这样操作可以避免没有必要的复制。（主体缓冲区始终只有一份）
-
-
 
 ``` java
 /**
@@ -1096,10 +930,7 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
     }
 ```
 
-
 #### 字节级操作 ByteBuf相关的操作
-
-
 
 - 随机访问索引
 
@@ -1121,8 +952,6 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
 
 > 会导致内存复制。
 
-
-
 - 可读字节
 
 可读字节中的内存存放了真正的数据。
@@ -1131,12 +960,9 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
 
 可写字节表示为被定义、或者写入就绪的内存区域。（这个区域中有可能有部分脏数据）
 
-
 #### ByteBufHolder接口
 
 > Netty用来管理ByteBuf的接口
-
-
 
 | 名称      | 描述                                                         |
 | --------- | ------------------------------------------------------------ |
@@ -1144,10 +970,10 @@ ByteBuf维护了两个不同的索引：一个用于读取，一个用于写入�
 | copy      | 返回ByteBufHolder的一个深拷贝，包括含有一个其包含的ByteBuf的非共享拷贝 |
 | duplicate | 返回ByteBufHolder的一个浅拷贝，包括一个其所包含的ByteBuf的共享拷贝 |
 
-
 #### ByteBuf分配和管理
 
 > 管理ByteBuf实例的不同方式
+
 ##### 按需分配ByteBufAllocator接口
 
 > 实现了ByteBuf的池化技术
@@ -1171,21 +997,18 @@ Netty提供了两种ByteBufAllocator的实现：
 - UnpooledByteBufAllocator
 
 非池化技术
+
 ##### Unpooled缓冲区
 
 有静态的辅助方法，来提供未池化的ByteBuf实例。
-
 
 ##### ByteBufUtil类
 
 提供了用于操作ByteBuf的辅助方法。
 
-
 #### 引用计数
 
 Netty使用ReferenceCounted实现的引用计数，来管理池化ByteBuf中是否要回收内存。
-
-
 
 ```java
 //    释放ByteBuf的空间
@@ -1200,11 +1023,10 @@ Netty使用ReferenceCounted实现的引用计数，来管理池化ByteBuf中是�
         boolean release = buffer.release();
     }
 ```
+
 ### 第六章、ChannelHandler和ChannelPipeline
 
-
 #### Channelhandler家族
-
 
 ##### Channel的生命周期
 
@@ -1215,15 +1037,12 @@ Netty使用ReferenceCounted实现的引用计数，来管理池化ByteBuf中是�
 | ChannelActive       | Channel处于活动状态（已经连接到它的远程节点）可以接收和发送数据了 |
 | ChannelInactive     | Channel没有连接到远程节点                                    |
 
-
-
 ``` mermaid
 graph TD
 	a[ChannelUnregistered]-->b[ChannelRegistered]
 	b-->c[ChannelActive]
 	c-->d[ChannelInactive]
 ```
-
 
 ##### ChannelHandler的生命周期
 
@@ -1235,13 +1054,9 @@ graph TD
 
 ChannelHandler下有两个重要的子接口
 
-
-
 - ChannelInboundHandler 接口
 
 > 处理入站数据以及各种状态变化
-
-
 
 ```java
 //利用ChannelInboundHandlerAdapter显式的释放内存
@@ -1264,17 +1079,11 @@ class SimpleDiscardHandler extends SimpleChannelInboundHandler<Object>{
 }
 ```
 
-
-
 - ChannelOutboundHandler 接口
 
 > 处理出站操作的接口，可以按需推迟操作或者事件
 
-
-
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231143465381723114345744.png"  />
-
-
 
 ``` mermaid
 graph TD
@@ -1288,20 +1097,13 @@ graph TD
 	
 ```
 
-
 #### ChannelPipeline接口
 
 > ChannelPipeline是一个拦截流经Channel的入站和出站事件的ChannelHandler实例链。
 
-
-
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231156625241723115661886.png"  />
 
-
-
 ChannelPipeline的头部和尾部取决于该事件是入站还是出站的。Netty总是将ChannelPipeline的入站口作为头部，将出站口作为尾部。
-
-
 
 - 修改ChannelPipeline
 
@@ -1310,8 +1112,6 @@ ChannelPipeline的头部和尾部取决于该事件是入站还是出站的。Ne
 | addFirstaddBefore \n addAfteraddLast | 将一个ChannelHandler添加到ChannelPipeline中                  |
 | remove                               | 将一个ChannelHandler从ChannelPipeline中移除                  |
 | replace                              | 将ChannelPipeline中的一个ChannelHandler替换为另一个ChannelHandler |
-
-
 
 > 下面举例中每个Handler应为不同的Handler，这里为了方便全部使用相同的了。
 
@@ -1335,26 +1135,20 @@ public class ChangeChannelPipeline {
 }
 ```
 
-
 ##### 总结
 
 - ChannelPipeline保存了与Channel相关联的ChannelHandler
 - ChannelPipeline可以根据需要，通过添加或者删除ChannelHandler来动态地修改
 - ChannelPipeline有丰富的API可以响应入站和出站事件。
 
-
 #### ChannelHandlerContext接口
 
 > 管理它所关联的ChannelHandler和在同一个ChannelPipeline中的其他ChannelHandler之间的交互。
-
-
 
 - ChannelHandlerContext和ChannelHandler之间的关联是永远不会改变的，所以缓存对它的引用是安全的。
 - ChannelHandlerContext的方法将产生更短的事件流，应该尽可能地利用这个特性来提高性能。
 
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231181995261723118199395.png"  />
-
-
 
 - 通过ChannelHandlerContext访问Handler和Pipeline
 
@@ -1377,15 +1171,11 @@ public class DemoChannelHandlerContext {
 }
 ```
 
-
 ##### 一个事件是如何传递的
 
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231187695351723118769210.png"  />
 
-
 #### 异常处理
-
-
 
 > 入站异常
 
@@ -1405,14 +1195,10 @@ public class P6InboundExceptionHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-
-
 > 出站异常
 
 - 每个出站操作都将返回一个ChannelFuture。注册到ChannelFuture的ChannelFutureListener将在操作完成时被通知该操作是成功还是失败。
 - 几乎所有的ChannelOutboundHandler上的方法都会被传入一个ChannelPromise实例。作为ChannelFuture的子类，ChannelPromise也可以被分配用于异步通知的监听器。（也可以立即通知）
-
-
 
 ```java
 //自定义出站规则异常处理
@@ -1447,24 +1233,18 @@ public class P6OutboundExceptionHandler extends ChannelOutboundHandlerAdapter {
     }
 }
 ```
+
 ### 第七章、EventLoop和线程模型
-
-
 
 - java5的线程池化技术
 
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231877659461723187765894.png"  />
 
-
-
 - 存在的问题
 
 虽然可以重用线程，但是并不能消除由上下文切换带来的开销。性能影响将随着线程数量的增加变得明显，且在高负载下愈演愈烈。
 
-
 #### EventLoop接口
-
-
 
 <img src="https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17231933815271723193380788.png"/>
 
@@ -1491,8 +1271,6 @@ graph TD
 
 一个EventLoop将由一个永远不会改变的Thread驱动，同时任务（Runnable或者Callable）可以直接提交给EventLoop实现，以立即执行或者调度执行。
 
-
-
 - Netty4中的IO事件处理
 
 I/O 操作触发的事件将流经安装了一个或者多个 ChannelHandler 的 ChannelPipeline。传播这些事件的方法调用可以随后被Channel-  Handler 所拦截，并且可以按需地处理事件。
@@ -1503,10 +1281,7 @@ I/O 操作触发的事件将流经安装了一个或者多个 ChannelHandler 的
 
 入站事件会在IO线程中执行，所有的出站事件由调用线程处理。（需要额外的线程，导致上下文切换带来损耗）。
 
-
 #### 任务调度
-
-
 
 - JDK的任务调度
 
@@ -1526,11 +1301,7 @@ jdk提供了JUC包，可以定义一个任务调度线程池
     }
 ```
 
-
-
 - EventLoop任务调度
-
-
 
 ```java
 //    利用EventLoop停止一个任务
@@ -1544,12 +1315,9 @@ jdk提供了JUC包，可以定义一个任务调度线程池
     }
 ```
 
-
-
 - EventLoop的优势
 
 Netty的EventLoop扩展了ScheduledExecutorService，它实现了JDK可用的所有方法。
-
 
 #### 实现细节
 
@@ -1559,25 +1327,15 @@ Netty线程模型的卓越取决于对于当前Thread的确定。可以确定它
 
 如果（当前）调用线程正是支撑EventLoop的线程，那么所提交的代码块将会被（直接）执行。否则EventLoop将调度该任务以便稍后执行，并将它放入到内部队列中。当EventLoop下次处理它的事件时，它会执行队列中的那些任务。
 
-
-
 ![66f61fa9ee54e.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/66f61fa9ee54e_1747188214067.png)
 
 > 永远不要将一个长时间运行的任务放入到执行队列中，因为它将阻塞需要在同一线程上执行的任何其他任务。如果需要执行长时间运行的任务，建议新建一个专门的EventExecutor
-
-
-
-
 
 - EventLoop/线程的分配
 
 EventLoop包含在EventLoopGroup中，根据不同的传输实现，EventLoop的创建和分配方式不同。
 
-
-
 1. 异步传输
-
-
 
 ![66f621bd511f9.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/66f621bd511f9_1747188389323.png)
 
@@ -1587,18 +1345,11 @@ EventLoopGroup负责为每个新创建的Channel分配一个EventLoop。使用�
 
 > 因为一个EventLoop支撑了多个Channel，所以对于所有相关的Channel来说，ThreadLocal都是相同的。
 
-
-
-
-
 2. 阻塞传输
-
-
 
 ![6704cdd404a5a.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/6704cdd404a5a_1747188395147.png)
 
 每个Channel的事件都由一个Thread处理
-
 
 #### 总结
 

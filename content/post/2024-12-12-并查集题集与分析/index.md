@@ -12,20 +12,19 @@ tags:
 ---
 
 关于并查集原理解析和练习题单
+
 ## 并查集原理
+
 ### 什么是并查集？
 
 > [数据来源](https://oi-wiki.org/ds/dsu/#__tabbed_1_1)
 
 并查集是一种用于管理元素所属集合的数据结构，实现为一个森林，其中每棵树表示一个集合，树中的节点表示对应集合中的元素。
 
-
-
 - 并查集支持两种操作
 
 1. 合并：合并两个元素所属的集合
 2. 查询：查询某个元素所属集合，这可以用于判断两个元素是否属于同一集合。
-
 
 ### 初始化
 
@@ -49,7 +48,6 @@ class DSU {
 
 ```
 
-
 ### 查询
 
 ![1741766809746.png](https://www.helloimg.com/i/2025/03/12/67d13e1746c0f.png)
@@ -67,6 +65,7 @@ public int find(int x) {
 }
 
 ```
+
 ### 合并
 
 ![1741767430299.png](https://www.helloimg.com/i/2025/03/12/67d14086b56d6.png)
@@ -79,7 +78,6 @@ public void unite(int x, int y) {
 }
 
 ```
-
 
 ### 删除
 
@@ -123,7 +121,6 @@ class DSU {
 
 ```
 
-
 ### 移动
 
 一边增加一边减少
@@ -142,23 +139,17 @@ public void move(int x, int y) {
 
 ```
 
-
 ## 例题
-
 
 ### [2709. 最大公约数遍历](https://leetcode.cn/problems/greatest-common-divisor-traversal/)
 
 困难
-
-
 
 给你一个下标从 **0** 开始的整数数组 `nums` ，你可以在一些下标之间遍历。对于两个下标 `i` 和 `j`（`i != j`），当且仅当 `gcd(nums[i], nums[j]) > 1` 时，我们可以在两个下标之间通行，其中 `gcd` 是两个数的 **最大公约数** 。
 
 你需要判断 `nums` 数组中 **任意** 两个满足 `i < j` 的下标 `i` 和 `j` ，是否存在若干次通行可以从 `i` 遍历到 `j` 。
 
 如果任意满足条件的下标对都可以遍历，那么返回 `true` ，否则返回 `false` 。
-
- 
 
 **示例 1：**
 
@@ -186,14 +177,10 @@ public void move(int x, int y) {
 解释：总共有 6 个下标对：(0, 1) ，(0, 2) ，(0, 3) ，(1, 2) ，(1, 3) 和 (2, 3) 。所有下标对之间都存在可行的遍历，所以返回 true 。
 ```
 
- 
-
 **提示：**
 
 - `1 <= nums.length <= 105`
 - `1 <= nums[i] <= 105`
-
-
 
 - java
 
@@ -272,8 +259,6 @@ class Solution {
     }
 }
 ```
-
-
 
 - rust
 
@@ -366,12 +351,9 @@ impl Solution {
 
 ```
 
-
 ### [1627. 带阈值的图连通性](https://leetcode.cn/problems/graph-connectivity-with-threshold/)
 
 困难
-
-
 
 有 `n` 座城市，编号从 `1` 到 `n` 。编号为 `x` 和 `y` 的两座城市直接连通的前提是： `x` 和 `y` 的公因数中，至少有一个 **严格大于** 某个阈值 `threshold` 。更正式地说，如果存在整数 `z` ，且满足以下所有条件，则编号 `x` 和 `y` 的城市之间有一条道路：
 
@@ -383,13 +365,9 @@ impl Solution {
 
 返回数组 `answer` ，其中`answer.length == queries.length` 。如果第 `i` 个查询中指向的城市 `ai` 和 `bi` 连通，则 `answer[i]` 为 `true` ；如果不连通，则 `answer[i]` 为 `false` 。
 
- 
-
 **示例 1：**
 
 ![img](https://assets.leetcode-cn.com/aliyun-lc-upload/uploads/2020/10/18/ex1.jpg)
-
- 
 
 ```
 输入：n = 6, threshold = 2, queries = [[1,4],[2,5],[3,6]]
@@ -411,8 +389,6 @@ impl Solution {
 
 ![img](https://assets.leetcode-cn.com/aliyun-lc-upload/uploads/2020/10/18/tmp.jpg)
 
- 
-
 ```
 输入：n = 6, threshold = 0, queries = [[4,5],[3,4],[3,2],[2,6],[1,3]]
 输出：[true,true,true,true,true]
@@ -423,16 +399,12 @@ impl Solution {
 
 ![img](https://assets.leetcode-cn.com/aliyun-lc-upload/uploads/2020/10/16/ex3.jpg)
 
- 
-
 ```
 输入：n = 5, threshold = 1, queries = [[4,5],[4,5],[3,2],[2,3],[3,4]]
 输出：[false,false,false,false,false]
 解释：只有城市 2 和 4 共享的公约数 2 严格大于阈值 1 ，所以只有这两座城市是连通的。
 注意，同一对节点 [x, y] 可以有多个查询，并且查询 [x，y] 等同于查询 [y，x] 。
 ```
-
- 
 
 **提示：**
 
@@ -442,8 +414,6 @@ impl Solution {
 - `queries[i].length == 2`
 - `1 <= ai, bi <= cities`
 - `ai != bi`
-
-
 
 ```java
 class Solution {
@@ -494,8 +464,6 @@ class Solution {
     }
 }
 ```
-
-
 
 - rust
 
@@ -565,16 +533,9 @@ impl Solution {
 //memory:8.6 MB
 ```
 
-
-
-
-
-
 ### [952. 按公因数计算最大组件大小](https://leetcode.cn/problems/largest-component-size-by-common-factor/)
 
 困难
-
-
 
 给定一个由不同正整数的组成的非空数组 `nums` ，考虑下面的图：
 
@@ -582,10 +543,6 @@ impl Solution {
 - 只有当 `nums[i]` 和 `nums[j]` 共用一个大于 1 的公因数时，`nums[i]` 和 `nums[j]`之间才有一条边。
 
 返回 *图中最大连通组件的大小* 。
-
- 
-
-
 
 **示例 1：**
 
@@ -614,17 +571,11 @@ impl Solution {
 输出：8
 ```
 
- 
-
 **提示：**
 
 - `1 <= nums.length <= 2 * 104`
 - `1 <= nums[i] <= 105`
 - `nums` 中所有值都 **不同**
-
-
-
-
 
 - java
 
@@ -683,8 +634,6 @@ class Solution {
     }
 }
 ```
-
-
 
 - rust
 
@@ -764,22 +713,15 @@ impl Solution {
 
 ```
 
-
-
-
 ### [1998. 数组的最大公因数排序](https://leetcode.cn/problems/gcd-sort-of-an-array/)
 
 困难
-
-
 
 给你一个整数数组 `nums` ，你可以在 `nums` 上执行下述操作 **任意次** ：
 
 - 如果 `gcd(nums[i], nums[j]) > 1` ，交换 `nums[i]` 和 `nums[j]` 的位置。其中 `gcd(nums[i], nums[j])` 是 `nums[i]` 和 `nums[j]` 的最大公因数。
 
 如果能使用上述交换方式将 `nums` 按 **非递减顺序** 排列，返回 `true` ；否则，返回 `false` 。
-
- 
 
 **示例 1：**
 
@@ -811,14 +753,10 @@ impl Solution {
 - 交换 10 和 15 因为 gcd(10,15) = 5 。nums = [3,5,9,10,15]
 ```
 
- 
-
 **提示：**
 
 - `1 <= nums.length <= 3 * 104`
 - `2 <= nums[i] <= 105`
-
-
 
 ```java
 class Solution {
@@ -875,8 +813,6 @@ class Solution {
     }
 }
 ```
-
-
 
 - rust
 
@@ -959,31 +895,31 @@ impl Solution {
 
 ```
 
-
-
-
 ## 并查集的用途
 
-
-
 并查集（Union-Find）是一种高效的数据结构，广泛用于解决**动态连通性问题**，尤其是在需要判断某些元素是否属于同一集合的场景。以下是它的常见应用：
+
 #### 1. **图论相关问题**
 
 - **连通分量**：判断图中两点是否连通，以及连通分量的个数。
 - **最小生成树**：Kruskal 算法中用于判断是否形成环。
 - **检测图中环**：判断无向图是否存在环结构。
+
 #### 2. **网络问题**
 
 - **网络连通性**：比如计算电网或通信网络中各个节点的连通状态。
 - **组网问题**：用于动态添加边或节点后，快速判断网络是否连通。
+
 #### 3. **集合相关问题**
 
 - **动态合并集合**：在需要频繁合并集合或查询两个元素是否属于同一集合时效率极高。
 - **分组问题**：例如将不同属性的对象分为相互独立的组。
+
 #### 4. **动态归类问题**
 
 - **语言处理**：词汇归类为语义相似的组。
 - **人群归并**：解决社交网络中朋友分组问题。
+
 #### 5. **实际案例**
 
 - **岛屿问题**：例如“计算岛屿的数量”或“是否存在水陆相连的路径”。
