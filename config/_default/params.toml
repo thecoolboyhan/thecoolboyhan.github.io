@@ -34,7 +34,7 @@ type = "search"
 type = "archives"
 
 [widgets.homepage.params]
-limit = 5
+limit = 10
 
 [[widgets.homepage]]
 type = "categories"
@@ -47,6 +47,9 @@ type = "tag-cloud"
 
 [widgets.homepage.params]
 limit = 10
+
+[[widgets.homepage]]
+type = "series"
 
 [[widgets.page]]
 type = "toc"

@@ -67,3 +67,28 @@ Make sure also to specify Hugo version in the environment variable `HUGO_VERSION
 
 ![Environment variable](https://user-images.githubusercontent.com/5889006/156917212-afb7c70d-ab85-480f-8288-b15781a462c0.png)
 </details>
+
+---
+
+## 文章批量排版脚本
+
+项目包含 `scripts/format_posts.py`，用于对 `content/post/` 下的 Markdown 文章进行批量排版与错别字修复。
+
+### 用法
+
+```bash
+# 预览改动（不写文件）
+python3 scripts/format_posts.py --dry
+
+# 实际应用修改
+python3 scripts/format_posts.py
+
+# 只处理单个文件
+python3 scripts/format_posts.py --file content/post/xxx.md
+```
+
+### 功能
+
+- 压缩连续空行（最多保留 1 行）
+- 标题/列表前后自动补空行
+- 基于词典修复常见错别字（仅正文区域，代码块内完全保护）
