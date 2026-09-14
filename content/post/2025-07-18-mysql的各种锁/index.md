@@ -64,7 +64,9 @@ mysql> INSERT INTO t SELECT * FROM t AS t1;
 - 锁定范围：整个表，所有操作均被阻塞
 - 使用场景：适合需独占访问批量操作，如数据导入或表结构修改。
 
-<font color='red'>写锁会隐式提交当前事务，不是事务安全的</font>
+{{< hint "warning" >}}
+写锁会隐式提交当前事务，不是事务安全的
+{{< /hint >}}
 
 ## 行锁（InnoDB锁）
 
@@ -415,7 +417,9 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 
 <font color='red'>注意，这里提到的上一条数据和下一条数据包括曾经被删除但没有被整理的数据。所以在可重复读下，二级索引上锁并不稳定。</font>
 
+{{< hint "tip" >}}
 **所以推荐，可重复读隔离级别下，尽量只通过主键索引来上锁，不要通过二级索引上锁，否则会导致上锁范围受到影响。**
+{{< /hint >}}
 
 ## 蛇足
 
@@ -429,7 +433,7 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 
 **在「可重复读」隔离级别下，使用了记录锁、间隙锁、Next-Key 锁三种类型的锁。**
 
-**可重复读存在幻读的问题，但实际上在 MySQL 中，因为其使用了间隙锁，所以在「可重复读」隔离级别下，可以通过加 锁解决幻读问题。因此，MySQL 将「可重复读」作为了其默认的隔离级别。**
+**可重复读存在幻读的问题，但实际上在 MySQL 中，因为其使用了间隙锁，所以在「可重复读」隔离级别下，可以通过加 锁解决幻读问题。<mark>因此，MySQL 将「可重复读」作为了其默认的隔离级别。</mark>
 
 - 不同版本如何查看各种锁信息
 

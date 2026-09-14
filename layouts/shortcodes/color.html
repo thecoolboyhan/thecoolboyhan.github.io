@@ -1,0 +1,7 @@
+{{- /* 文字颜色 shortcode：{{< color "red" >}}文字{{< /color >}} 或 {{< color "#ff0000" >}}文字{{< /color >}} */ -}}
+{{- $c := .Get 0 | default "primary" -}}
+{{- if findRE "^#" $c -}}
+<span style="color: {{ $c }};">{{ .Inner }}</span>
+{{- else -}}
+<span class="text-{{ $c }}">{{ .Inner }}</span>
+{{- end -}}

@@ -11,7 +11,7 @@ tags: [powerjob,MapReduce]
 
 #### 探活（非阻塞的）
 
-直接返回当前服务器注册在hashmap中的所有其他server服务器
+直接返回当前服务器注册在 HashMap 中的所有其他 server
 
 #### 处理其他服务器的请求（阻塞）
 
@@ -31,9 +31,9 @@ tags: [powerjob,MapReduce]
 2. 更新工作流中对应的任务
 3. 更新任务日志
 
-> 丢弃掉晚上报的请求
->
-> 丢弃掉不是server任务管理器中执行机器上报的任务
+{{< hint "warning" >}}
+丢弃掉晚上报的请求；丢弃掉不是 server 任务管理器中执行机器上报的任务。
+{{< /hint >}}
 
 #### reportLog(处理日志)非阻塞
 

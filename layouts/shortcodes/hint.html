@@ -1,0 +1,15 @@
+{{- /* 提示框 shortcode：
+       {{< hint "note" >}}内容{{< /hint >}}
+       支持类型：note / info / tip / success / warning / danger
+       内容可以是任意 Markdown。 */ -}}
+{{- $type := .Get 0 | default "note" -}}
+{{- $icon := "📝" -}}
+{{- if eq $type "info" }}{{ $icon = "ℹ️" }}{{ end -}}
+{{- if eq $type "tip" }}{{ $icon = "💡" }}{{ end -}}
+{{- if eq $type "success" }}{{ $icon = "✅" }}{{ end -}}
+{{- if eq $type "warning" }}{{ $icon = "⚠️" }}{{ end -}}
+{{- if eq $type "danger" }}{{ $icon = "⛔" }}{{ end -}}
+<div class="hint hint-{{ $type }}">
+  <div class="hint-icon">{{ $icon }}</div>
+  <div class="hint-content">{{ .Inner }}</div>
+</div>

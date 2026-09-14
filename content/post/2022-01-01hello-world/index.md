@@ -15,7 +15,9 @@ weight: 1       # You can add weight to some posts to override the default sorti
 
 >  欢迎来到我的网站，我常在这里记录我的各种内容文章。如果想了解我的基本信息，可以直接通过右侧导航栏跳转到关于我。
 
+{{< hint "info" >}}
 为保证体验网站完整功能，访问本网站最好开启科学上网
+{{< /hint >}}
 
 ## 关于我
 

@@ -177,7 +177,7 @@ get方法依赖于volatile来保证元素内存的可见性。能够在JVM层面
 
 #### CopyOnWriteArrayList
 
-> 写时复制，可以避免快速失败。
+<mark>写时复制，可以避免快速失败。</mark>
 
 - 写时复制（同时只能有一个线程来修改数组）
 
@@ -560,7 +560,9 @@ public class MyLock extends AbstractQueuedSynchronizer {
 
 > 可重入：通过holdCount锁被获取的次数，每获取一次+1
 
-> **为了避免死锁，lock必须在finally代码中有unlock**
+{{< hint "danger" >}}
+**为了避免死锁，lock 必须在 finally 代码中有 unlock**
+{{< /hint >}}
 
 - 与synchronized对比
 
@@ -2095,7 +2097,9 @@ JVM会创建一个拥有固定核心数的ForkJoinPool，此ForkJoinPool的核�
 
 注：ReentrantLock等lock工具类，都是使用LockSupport或AQS上锁工具与框架实现。均不会阻塞虚拟线程。
 
-> <font color='red'>综上所述，其实平台线程中的所有阻塞方法，在虚拟线程中都是非阻塞的。</font>所以虚拟线程可是实现真正意义上的“虚拟概念”，如果需要进入传统的阻塞方法，都是由JVM平台自己来实现的。不会调用操作系统的方法来真正的阻塞线程。
+{{< hint "tip" >}}
+综上所述，其实平台线程中的所有阻塞方法，在虚拟线程中都是非阻塞的。所以虚拟线程可实现真正意义上的"虚拟概念"，如果需要进入传统的阻塞方法，都是由 JVM 平台自己来实现的，不会调用操作系统的方法来真正阻塞线程。
+{{< /hint >}}
 
 但是，如果虚拟线成的平台线程，因为锁等情况被阻塞了，就还是会正常的走平台线程的阻塞方法，让虚拟线程也暂停运行。
 

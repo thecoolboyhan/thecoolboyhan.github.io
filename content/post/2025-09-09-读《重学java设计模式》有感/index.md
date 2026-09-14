@@ -552,7 +552,9 @@ public class JDKInvocationHandler implements InvocationHandler {
 
 JDKProxy.getProxy(CacheServiceImpl.class, new EGMCacheAdapter());
 
-> 真正意义上对现有代码完全无侵入
+{{< hint "success" >}}
+真正意义上对现有代码完全无侵入
+{{< /hint >}}
 
 ### 总结
 
@@ -717,7 +719,9 @@ public class QuestionBankController {
 
 重复创建有时需要用到远程RPC调用，将消耗大量的时间。原型模式利用本地克隆的方式。
 
-> 在需要用到克隆的类中都需要实现 `implements Cloneable` 接口。
+{{< hint "info" >}}
+在需要用到克隆的类中都需要实现 `implements Cloneable` 接口。
+{{< /hint >}}
 
 ``` xml
 itstack-demo-design-4-02
@@ -1855,7 +1859,9 @@ public class PayFaceMode implements IPayMode{
 
 指举例一个，其他大差不差
 
-> 桥接模式满足单一职责和开闭原则，让每一部分的内容都很清晰易于维护和拓展。
+{{< hint "tip" >}}
+桥接模式满足单一职责和开闭原则，让每一部分的内容都很清晰易于维护和拓展。
+{{< /hint >}}
 
 ## 组合模式
 

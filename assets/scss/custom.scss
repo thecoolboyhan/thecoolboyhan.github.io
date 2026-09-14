@@ -373,3 +373,121 @@ html {
     border-top: 1px dashed var(--card-separator-color, #eaeaea);
     padding-top: var(--card-padding, 1.5rem);
 }
+
+/* ========== 20. 文字颜色工具类（深浅色自适应） ========== */
+/* 浅色模式下的语义色 */
+:root {
+    --c-red: #d4380d;
+    --c-orange: #d46b08;
+    --c-yellow: #ad8b00;
+    --c-green: #1a8a3a;
+    --c-teal: #0e8f7e;
+    --c-blue: #1c6fd6;
+    --c-purple: #8e3db5;
+    --c-pink: #c41d7f;
+    --c-gray: #8c8c8c;
+}
+/* 深色模式：提亮以保证对比度 */
+:root[data-scheme="dark"] {
+    --c-red: #ff7875;
+    --c-orange: #ffa940;
+    --c-yellow: #ffd666;
+    --c-green: #73d13d;
+    --c-teal: #36cfc9;
+    --c-blue: #69b1ff;
+    --c-purple: #d3adf8;
+    --c-pink: #ff85c0;
+    --c-gray: #bfbfbf;
+}
+/* 跟随系统的“自动”模式 */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-scheme="light"]) {
+        --c-red: #ff7875;
+        --c-orange: #ffa940;
+        --c-yellow: #ffd666;
+        --c-green: #73d13d;
+        --c-teal: #36cfc9;
+        --c-blue: #69b1ff;
+        --c-purple: #d3adf8;
+        --c-pink: #ff85c0;
+        --c-gray: #bfbfbf;
+    }
+}
+
+/* 文字颜色类（可在正文与 shortcode 中使用） */
+.text-red    { color: var(--c-red); }
+.text-orange { color: var(--c-orange); }
+.text-yellow { color: var(--c-yellow); }
+.text-green  { color: var(--c-green); }
+.text-teal   { color: var(--c-teal); }
+.text-blue   { color: var(--c-blue); }
+.text-purple { color: var(--c-purple); }
+.text-pink   { color: var(--c-pink); }
+.text-gray   { color: var(--c-gray); }
+.text-primary { color: var(--accent-color, #6a8cff); }
+.text-muted   { color: var(--card-text-color-tertiary, #8c8c8c); }
+
+/* 文字高亮（荧光笔效果，保留原文字颜色，仅加底色） */
+.article-content mark,
+.article-content .mark {
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background: rgba(255, 213, 79, 0.38);
+    color: inherit;
+}
+:root[data-scheme="dark"] .article-content mark,
+:root[data-scheme="dark"] .article-content .mark {
+    background: rgba(255, 213, 79, 0.22);
+}
+
+/* ========== 21. 提示框 hint（note/info/tip/success/warning/danger） ========== */
+.article-content .hint {
+    display: flex;
+    gap: 0.8em;
+    align-items: flex-start;
+    margin: 1.6em 0;
+    padding: 0.9em 1.1em;
+    border-radius: 10px;
+    border-left: 4px solid var(--hint-color, #6a8cff);
+    background: var(--hint-bg, rgba(106, 140, 255, 0.07));
+    color: var(--card-text-color-secondary, #555);
+}
+.article-content .hint .hint-icon {
+    font-size: 1.25em;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+.article-content .hint .hint-content { flex: 1; }
+.article-content .hint .hint-content > :first-child { margin-top: 0; }
+.article-content .hint .hint-content > :last-child { margin-bottom: 0; }
+
+.hint-note, .hint-info {
+    --hint-color: #3498db;
+    --hint-bg: rgba(52, 152, 219, 0.08);
+}
+.hint-tip, .hint-success {
+    --hint-color: #2ecc71;
+    --hint-bg: rgba(46, 204, 113, 0.08);
+}
+.hint-warning {
+    --hint-color: #f39c12;
+    --hint-bg: rgba(243, 156, 18, 0.10);
+}
+.hint-danger {
+    --hint-color: #e74c3c;
+    --hint-bg: rgba(231, 76, 60, 0.10);
+}
+:root[data-scheme="dark"] .hint-note,
+:root[data-scheme="dark"] .hint-info {
+    --hint-bg: rgba(52, 152, 219, 0.16);
+}
+:root[data-scheme="dark"] .hint-tip,
+:root[data-scheme="dark"] .hint-success {
+    --hint-bg: rgba(46, 204, 113, 0.16);
+}
+:root[data-scheme="dark"] .hint-warning {
+    --hint-bg: rgba(243, 156, 18, 0.18);
+}
+:root[data-scheme="dark"] .hint-danger {
+    --hint-bg: rgba(231, 76, 60, 0.18);
+}

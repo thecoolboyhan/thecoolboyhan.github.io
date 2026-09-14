@@ -259,13 +259,15 @@ Spring框架支持六个scope
 
 ![2024-4-2414:31:42-1713940302216.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:31:42-1713940302216.png)
 
-Spring的单例Bean概念和GOF设计模式书中定义的单例模式不同。Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。
+<mark>Spring 的单例 Bean 概念和 GOF 设计模式书中定义的单例模式不同。</mark>Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。
 
 #### 原型
 
 每次对该特定Bean的请求都会创建一个新的Bean实例。也就是说，该Bean被注入到另一个bean中，或者你通过容器上的getBean（）方法调用来请求它。
 
-> 应该对所有有状态的Bean使用原型范围，对无状态的bean使用单例范围。
+{{< hint "tip" >}}
+应该对所有有状态的 Bean 使用原型范围，对无状态的 bean 使用单例范围。
+{{< /hint >}}
 
 ![2024-4-2414:38:30-1713940709879.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:38:30-1713940709879.png)
 
