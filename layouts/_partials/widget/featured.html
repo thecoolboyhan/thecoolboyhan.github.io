@@ -1,0 +1,85 @@
+{{- /* 精选文章 widget（迷你卡片列表）
+       按「分类（taxonomy）」中的某个词条（默认「精选」）列出文章，按时间倒序，
+       每条渲染为「封面缩略图 + 标题 + 日期」的迷你卡片。
+       在 config/_default/params.toml 中配置：
+
+       [[widgets.homepage]]
+       type = "featured"
+       [widgets.homepage.params]
+       title = "精选文章"      # 标题文案
+       taxonomy = "categories" # 分类法：categories / tags
+       term = "精选"           # 词条名称
+       limit = 5               # 显示条数
+       icon = "star"           # assets/icons 下的图标名
+       showLink = true         # 标题是否链接到该词条归档页
+*/ -}}
+{{- $context := .Context -}}
+{{- $taxonomyName := default "categories" .Params.taxonomy -}}
+{{- $termName := default "精选" .Params.term -}}
+{{- $limit := default 5 .Params.limit -}}
+{{- $widgetTitle := default "精选文章" .Params.title -}}
+{{- $icon := default "star" .Params.icon -}}
+{{- $showLink := default true .Params.showLink -}}
+
+{{- $taxonomy := index $context.Site.Taxonomies $taxonomyName -}}
+{{- $entry := false -}}
+{{- with $taxonomy -}}
+    {{- range .ByCount -}}
+        {{- if eq (lower .Name) (lower $termName) -}}
+            {{- $entry = . -}}
+        {{- else if and .Page (eq (lower .Page.Title) (lower $termName)) -}}
+            {{- $entry = . -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- if $entry -}}
+    {{- $termPage := $entry.Page -}}
+    <section class="widget featured">
+        <div class="widget-icon">
+            {{ partial "helper/icon" $icon }}
+        </div>
+        <h2 class="widget-title section-title">
+            {{- if and $showLink $termPage -}}
+                <a href="{{ $termPage.RelPermalink }}">{{ $widgetTitle }}</a>
+            {{- else -}}
+                {{ $widgetTitle }}
+            {{- end -}}
+        </h2>
+
+        <div class="featured-list">
+            {{- range $page := first $limit $termPage.Pages.ByDate.Reverse -}}
+                {{- $img := partial "helper/image" (dict "Image" $page.Params.image "Resources" $page.Resources "Context" $page) -}}
+                <a class="featured-card" href="{{ $page.RelPermalink }}" title="{{ $page.Title }}">
+                    <div class="featured-card-thumb">
+                        <div class="featured-card-ph">
+                            <span>{{ substr $page.Title 0 1 }}</span>
+                        </div>
+                        {{- if $img.Permalink -}}
+                            {{ partial "helper/thumbnail-image" (dict
+                                "Resource" $img.Resource
+                                "Width" 152
+                                "Height" 114
+                                "Resize" $page.Site.Params.imageProcessing.Thumbnail.Enabled
+                                "Attributes" (dict
+                                    "src" $img.Permalink
+                                    "alt" (printf "封面：%s" $page.Title)
+                                    "loading" "lazy"
+                                    "width" $img.Width
+                                    "height" $img.Height
+                                    "onerror" "this.style.display='none'"
+                                )
+                            ) }}
+                        {{- end -}}
+                    </div>
+                    <div class="featured-card-body">
+                        <div class="featured-card-title">{{ $page.Title }}</div>
+                        <div class="featured-card-date">{{ $page.Date.Format "2006-01-02" }}</div>
+                    </div>
+                </a>
+            {{- end -}}
+        </div>
+    </section>
+{{- else -}}
+    {{- warnf "Featured widget: term '%s' not found in taxonomy '%s'" $termName $taxonomyName -}}
+{{- end -}}

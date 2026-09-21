@@ -28,6 +28,17 @@ default = "Licensed under CC BY-NC-SA 4.0"
 
 ## Widgets
 [[widgets.homepage]]
+type = "featured"
+
+[widgets.homepage.params]
+title = "精选文章"
+taxonomy = "categories"
+term = "精选"
+limit = 5
+icon = "star"
+showLink = true
+
+[[widgets.homepage]]
 type = "search"
 
 [[widgets.homepage]]
