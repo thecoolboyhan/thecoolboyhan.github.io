@@ -1,0 +1,10 @@
+{{- /*
+  覆盖主题的正文组件（Stack v4）：仅为带有 links 的页面（如「开源项目」页）追加 has-links 类，
+  便于用 CSS 只对该页正文里的站内链接做「换色 + 加粗」强调。
+  样式见 assets/scss/custom.scss 的「links 页正文链接」一节。
+*/ -}}
+<section class="article-content{{ if .Params.links }} has-links{{ end }}">
+    <!-- Refer to https://discourse.gohugo.io/t/responsive-tables-in-markdown/10639/5 -->
+    {{ $wrappedTable := printf "<div class=\"table-wrapper\">${1}</div>" }}
+    {{ .Content | replaceRE "(<table>(?:.|\n)+?</table>)" $wrappedTable | safeHTML }}
+</section>

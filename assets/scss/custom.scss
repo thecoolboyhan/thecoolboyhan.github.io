@@ -600,3 +600,38 @@ html {
     height: 1px;
     background: var(--card-separator-color, #eaeaea);
 }
+
+/* ========== 23. links 页「项目地址」文字（layouts/_partials/article/components/links.html） ========== */
+/* 项目地址：强调色 + 加粗，方便访客识别与点击 */
+.article-list--compact.links .article-details {
+    /* 允许长链接在窄屏下正常换行，避免撑破卡片 */
+    min-width: 0;
+}
+
+.article-list--compact.links .link-website {
+    display: inline-block;
+    margin-top: 0.35rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--accent-color, #6a8cff);
+    word-break: break-all;
+    transition: color 0.2s ease;
+}
+
+.article-list--compact.links article a:hover .link-website {
+    color: var(--accent-color-darker, #4b6fd6);
+    text-decoration: underline;
+}
+
+/* ========== 24. links 页正文链接（layouts/_partials/article/components/content.html） ========== */
+/* 「本站文章」等站内链接：换色 + 加粗，与卡片地址呼应，便于访客点击 */
+.article-content.has-links a {
+    font-weight: 700;
+    color: var(--c-blue);
+}
+
+.article-content.has-links a:hover {
+    color: var(--accent-color-darker, #4b6fd6);
+    border-bottom-color: currentColor;
+}

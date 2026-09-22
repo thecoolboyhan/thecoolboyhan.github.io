@@ -43,6 +43,8 @@ assets/scss/
 layouts/
   _partials/
     widget/featured.html # 【自定义】精选文章 widget
+    article/components/links.html  # 【覆盖主题】links 页卡片：额外显示项目地址（.link-website）
+    article/components/content.html # 【覆盖主题】仅给带 links 的页面加 has-links 类（便于只对该页正文链接做强调）
     head/custom.html     # 【自定义】代码字体 JetBrains Mono（jsDelivr CDN）
     footer/custom.html   # 【自定义】品牌渐变条 / 不蒜子统计 / 阅读进度条 / 返回顶部
   shortcodes/
@@ -207,6 +209,25 @@ python3 scripts/format_posts.py --file content/post/xxx.md   # 只处理单个�
 - 需求：后续这些项目若有更新/修改，会记录到各自仓库的 `AGENTS.md`；维护博客文章时应直接读取对应文件。
 - 已在本文档**顶部维护约定**与**「开源项目文章的维护约定」小节**中记录：
   维护文章前先读项目仓库的 `AGENTS.md`（配合 README / CHANGELOG），并补充了「文章 ↔ 仓库」映射清单与新增项目的操作步骤。
+
+### 2026-09-22 · links 页卡片显示「项目地址」并强调
+
+- **新增覆盖模板** `layouts/_partials/article/components/links.html`（基于主题同名文件改造）：
+  在「标题 + 描述」下方额外渲染 `<span class="link-website">`，内容为 `$link.website`（站内相对链接用 `absURL` 补全），
+  站内文章卡片显示完整文章地址、GitHub 卡片显示仓库地址；同时把 `helper/image` 的 `Context` 修正为页面（原主题传的是 link dict）。
+- **新增样式** `custom.scss` 第 23 节：`.article-list--compact.links .link-website` 用**强调色 + 加粗**（`var(--accent-color)` / `font-weight:700`），
+  hover 变深并加下划线；`.article-details` 加 `min-width:0` 避免长链接撑破卡片。
+- 需求来源：让 links 页的项目地址更醒目、便于访客点击。
+
+### 2026-09-22 · links 页正文「本站文章」链接换色加粗
+
+- **问题**：`links` 页正文里的 `[本站文章](/p/xxx/)` 链接仍是默认链接样式（强调色、不加粗），与卡片里已强调的地址不一致。
+- **踩坑**：用 `{{< color "blue" >}}[**本站文章**](/p/xxx/){{< /color >}}` 包裹 **不会生效**——
+  `{{< >}}` 短代码的 inner 内容不做 Markdown 渲染，链接会原样输出成纯文本。
+- **采用方案（纯 Markdown，无需写行内 HTML）**：
+  1. 新增覆盖模板 `layouts/_partials/article/components/content.html`，仅当页面有 `links` 参数时给 `.article-content` 加 `has-links` 类；
+  2. `custom.scss` 第 24 节：`.article-content.has-links a { font-weight: 700; color: var(--c-blue); }`（hover 变深 + 下划线）。
+- 效果：links 页正文的站内链接变成 **深蓝色 + 加粗**；其他文章页完全不受影响（已验证 `has-links` 只出现在 `/links/`）。
 
 ## 未来计划 / TODO
 

@@ -1,0 +1,47 @@
+{{- /*
+  覆盖主题的 links 组件（Stack v4）：
+  在原「标题 + 描述」基础上，额外把「项目地址（website）」作为可见文字展示，
+  通过 .link-website 加上强调色 + 加粗，方便访客识别并点击。
+  样式见 assets/scss/custom.scss 的「links 页项目地址」一节。
+*/ -}}
+<div class="article-list--compact links">
+    {{ range $link := .Params.links }}
+        <article>
+            <a href="{{ $link.website }}" target="_blank" rel="noopener">
+                <div class="article-details">
+                    <h2 class="article-title">
+                        {{- $link.title -}}
+                    </h2>
+                    <footer class="article-meta">
+                        {{ with $link.description }}
+                            {{ . }}
+                        {{ end }}
+                    </footer>
+                    {{- with $link.website -}}
+                        {{- /* 站内相对链接补全为完整地址，展示更直观 */ -}}
+                        <span class="link-website">{{ . | absURL }}</span>
+                    {{- end -}}
+                </div>
+
+                {{- $image := partial "helper/image" (dict "Image" $link.image "Resources" $.Resources "Context" $) -}}
+                {{- with $image -}}
+                    <div class="article-image">
+                       {{ partial "helper/thumbnail-image" (dict 
+                            "Resource" .Resource
+                            "Width" 60
+                            "Height" 60
+                            "Resize" $.Site.Params.ImageProcessing.Thumbnail.Enabled
+                            "Attributes" (dict
+                                "src" $image.Permalink
+                                "alt" $link.title
+                                "loading" "lazy"
+                                "width" .Width
+                                "height" .Height
+                            )
+                        ) }}
+                    </div>
+                {{ end }}
+            </a>
+        </article>
+    {{ end }}
+</div>

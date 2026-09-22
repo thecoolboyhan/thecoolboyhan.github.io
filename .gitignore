@@ -5,4 +5,4 @@ resources
 /.idea/
 
 # Continue 插件本地配置
-/.continue/mcpServers/new-mcp-server.yaml
+/.continue/
