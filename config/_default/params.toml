@@ -32,9 +32,10 @@ type = "featured"
 
 [widgets.homepage.params]
 title = "精选文章"
-taxonomy = "categories"
+taxonomy = "tags"
 term = "精选"
-limit = 5
+limit = 0   # 0 = 显示全部精选文章
+groupBy = "category"   # 分组：none / category / series / auto
 icon = "star"
 showLink = true
 
