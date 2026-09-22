@@ -1,7 +1,8 @@
 public
 resources
 .hugo_build.lock
-/.idea/dataSources/data_sources_history.xml
-/.idea/dataSources.local.xml
+# IDE（JetBrains / IntelliJ IDEA）配置目录：整个目录都不再跟踪
+/.idea/
+
+# Continue 插件本地配置
 /.continue/mcpServers/new-mcp-server.yaml
-/.idea/workspace.xml
