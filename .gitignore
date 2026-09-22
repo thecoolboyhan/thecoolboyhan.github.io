@@ -1,3 +1,7 @@
 public
 resources
 .hugo_build.lock
+/.idea/dataSources/data_sources_history.xml
+/.idea/dataSources.local.xml
+/.continue/mcpServers/new-mcp-server.yaml
+/.idea/workspace.xml
