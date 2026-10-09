@@ -34,7 +34,7 @@
 
 ```text
 config/_default/
-  config.toml            # baseurl / 语言 / 分页（pagerSize）
+  config.toml            # baseurl / 语言 / 分页（pagerSize）/ timeout（5m）
   params.toml            # 侧边栏、文章、widget、评论等（主要改动文件）
   module.toml            # 引入 Stack 主题
   _languages.toml / menu.toml / markup.toml / permalinks.toml / related.toml
@@ -158,6 +158,13 @@ python3 scripts/format_posts.py --file content/post/xxx.md   # 只处理单个�
 - 代码高亮 Chroma，行号、`tabWidth=4`；代码字体 JetBrains Mono 由 `head/custom.html` 引入。
 
 ## 修改记录（Changelog）
+
+### 2026-10-09 · 解决 CI 渲染超时
+
+- **问题**：GitHub Actions 构建时报 `timed out rendering the page content ... timeout after 1m0s`，
+  出错文章为《读〈设计数据密集型应用系统〉（第1版）有感 第二部分》（长文渲染超过默认 60s）。
+- **修复**：`config/_default/config.toml` 新增 `timeout = "5m"`（Hugo 渲染超时，含页面内容渲染）。
+- 已验证本地 `hugo --quiet` 构建通过；如 CI 仍超时可继续调大。
 
 ### 2026-09-22 · 精选框调整
 

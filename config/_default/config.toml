@@ -14,5 +14,8 @@ hasCJKLanguage = true
 # Change it to your Disqus shortname before using
 disqusShortname = "thecoolboyhan"
 
+# 渲染单个页面的超时时间（默认 60s，长文渲染可能超时）
+timeout = "5m"
+
 [pagination]
 pagerSize = 20
