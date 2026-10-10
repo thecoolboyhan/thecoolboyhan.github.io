@@ -156,6 +156,12 @@ python3 scripts/cover_to_webp.py          # 实际执行
 
 - 分页大小：`config/_default/config.toml` 的 `pagerSize`（当前 20）。
 - 时区：`config.toml` 的 `timeZone = "Asia/Shanghai"`（**必须保留**）。
+- 语言标签：`config.toml` 的 `locale = "zh-cn"`。
+  ⚠️ **不要再写 `languageCode`**——自 Hugo 0.158.0 起已更名，每次构建都会打 deprecation WARN；
+  且主题 v4.0.3 的 `baseof.html` / `rss.xml` 依赖的 `.Site.Language.Locale` 就是随这次更名新增的字段
+  （这也正是上一条记录里 Hugo 版本下限事故的根因）。
+- 配色 / 排版：**全部集中在 `assets/scss/custom.scss` 第 0 节「设计令牌」**，
+  改动前务必先读「2.1 CSS 变量纪律」。
 - RSS：`config.toml` 的 `[services.rss] limit = 20` + `params.toml` 的 `rssFullContent = false`。
 - 图片派生宽度：`params.toml` 的 `[imageProcessing.content] widths = [800, 1400]`
   （主题默认 `[800, 1600, 2400]`，每张图会多生成 1 份大图）。
@@ -191,12 +197,90 @@ python3 scripts/cover_to_webp.py          # 实际执行
 - 参考字号：正文/`body` **1.6rem(16px)**、文章列表标题 **1.8rem(18px)**、普通 widget 文本 **1.4rem(14px)**。
 - 在 `custom.scss` 写 `rem` 时务必按此换算，否则会明显偏小（曾出现 1rem=10px 过小的问题）。
 
+### 2.1 CSS 变量纪律（⚠️ 改样式前必读，历史上最大的坑）
+
+1. **引用主题变量时绝不要写 fallback 值。**
+   主题一定会定义该变量，`var(--accent-color, #6a8cff)` 里的 `#6a8cff`
+   **永远不会生效**，却会让人误以为生效了——本项目曾因此产生 14 处死样式。
+   需要新颜色 → 在 `custom.scss` 第 0 节「设计令牌」里定义自己的变量，再引用。
+2. **改配色只改第 0 节一处**，其余位置一律引用变量。深浅两套值在
+   `@mixin dark-tokens` / `dark-text-colors` / `dark-hint-bg` 里各写一次。
+3. **覆盖前先确认变量真实存在**（避免重蹈第 1 条的覆辙）：
+   ```bash
+   hugo --quiet && grep -oE '\-\-[a-z0-9-]+:' public/scss/*.css | sed 's/.*css://' | sort -u
+   ```
+4. 深色令牌有两处入口，**都要保留**：
+   - `:root[data-scheme="dark"]` —— 用户手动切深色；
+   - `@media (prefers-color-scheme: dark) :root:not([data-scheme="light"])` —— 无 JS 兜底。
+   主题的内联脚本在 `<body>` 首个子节点处**同步**执行
+   （`document.documentElement.dataset.scheme = "dark" | "light"`，属性总是显式设置），
+   所以显式浅色模式下不会误命中深色令牌，且不会闪白。
+
+### 2.2 已定制的排版（改动前先了解现状）
+
+- **标题字号阶梯**：主题 v4 **完全没有**标题字号定制（浏览器默认导致 h4 与正文同大、
+  h5 反而比正文小）。已在 `custom.scss` 补h1~h6 = `1.9 / 1.55 / 1.3 / 1.12 / 1 / 0.95em`，
+  左侧竖线宽度随层级递减并**同步补偿 `padding-inline-start`**，保持所有标题文字左边界一致。
+- **中文排版**：`text-align: justify` + `text-justify: inter-ideograph`、`line-break: strict`、
+  `hanging-punctuation: allow-end`、`text-autospace: normal`（中英文自动间距，低版本浏览器忽略）。
+  代码块 / 表格 / 提示框 / 引用块通过 `:is(...)` 改回 `text-align: left`，避免被 justify 拉伸。
+- **代码块**：主题给 `pre` 设了 `word-break: break-all`，会让长代码行硬折行、
+  导致 `overflow-x: auto` 永远不触发（横向滚动条出不来）。已覆盖为 `word-break: normal` + `white-space: pre`。
+- **列表**：站内列表极密集（无序 ~3000 条、有序 ~1800 条），原先完全走浏览器默认值。
+  已补缩进、间距、`li::marker` 强调色、嵌套层级降权、任务列表复选框对齐。
+- **对比度**：正文/引用/日期/行内代码/链接均已按 WCAG AA 校准（深浅两套值都 ≥4.5:1，
+  行内代码由原先深色下 2.4:1 提升到 6.9:1）。
+- **主题色**：浅色 `#4263eb` / 深色 `#a8bcff`（覆盖主题默认的 `#34495e` / `#ecf0f1`——后者在深色下近乎纯白，
+  导致标题竖线、正文链接与正文几乎同色）。渐变条等统一走 `--brand-gradient`。
+
+### 2.3 内容排版与配色规范（写文章 / 改文章前必读）
+
+全站 36 篇精选文章已完成排版与配色改造，共 **422 处语义着色**。
+
+#### 配色语义（全站固定，不要自创）
+
+| class | 语义 |典型用途 |
+| --- | --- | --- |
+| `text-red` | 风险 / 错误做法 / 禁止 / 坑 / 缺点 | 「会导致…」「不能…」「❌」 |
+| `text-yellow` | 注意事项 / 边界条件 / 易混淆前提 | 「特殊情形」「前提是…」 |
+| `text-blue` | 核心机制 / 关键定义 / 原理 | 「本质是…」「关键在于…」 |
+| `text-green` | 优势 / 推荐做法 | 「更高效」「建议…」 |
+| `text-gray` | 中性术语首次定义 | 灰度术语首现 |
+
+**密度参考**：约每 400 字 1 处；同一小节不超过 2 处。
+**优先级**：能用 `**加粗**` 解决就不要上色，颜色只承担语义分类。
+
+#### 三条写法铁律（都是实际踩过的坑）
+
+1. **不要用 `<font color="red">`**—— 废弃标签，且颜色写死不随深色模式切换。
+   用 `<span class="text-red">**文字**</span>`（内部Markdown 会被正常解析）。
+2. **列表标记必须留在 `span` 之外**。写成 `<span class="text-red">**- 列表项**</span>`
+   会让整行被span 包住，**列表结构直接失效**。正确写法：`- <span class="text-red">**列表项**</span>`。
+3. **`**小标题：**内容`** 中若 `**` 紧贴字母/数字/汉字，**整段都渲染不出来**
+   （Markdown 要求右闭合符后接空白/标点/行尾）。必须写成 `**小标题：** 内容`（中间留空格）。
+
+> 2026-10-10 的批量改造中，因脚本把整条列表项连同 `- ` 一起包进 `span`，
+> 一次性破坏了 13 处列表结构；已全部修复并加入脚本校验。
+
+#### 相关脚本
+
+- `scripts/enhance_posts.py` —— 通用排版结构优化（松散列表合并、标题层级跳级修正）。
+  规则保守、带 5 道结构自洽校验（标签配对、加粗配对、说明段落非列表项等）。
+  `--dry` 预览，`--all` 覆盖非精选文章。
+- `scripts/format_posts.py` —— 原有脚本，错别字词典**未包含**本文档提到的那些词，
+  上面的错别字是单独修的，不要指望它。
+
 ### 3. 视觉 / 交互增强（`custom.scss` + `footer/custom.html`）
 
 - 顶部品牌渐变条、阅读进度条、返回顶部按钮（JS 在 `footer/custom.html`）。
 - 不蒜子访问统计（国内可用，无需账号）。
 - 文章卡片 / 标签胶囊 hover 动画、自定义滚动条、表格 / 引用块 / 代码块美化。
 - hint 提示框（`note/info/tip/success/warning/danger`）与文字颜色类（`.text-red` 等）。
+- **所有 hover 效果都包在 `@media (hover: hover)` 里**：触屏上 `:hover` 会「粘住」，
+  图片点一下就永久保持放大态。
+- **可访问性**：`:focus-visible` 键盘焦点框、`prefers-reduced-motion: reduce`（关闭动画与位移）、
+  `@media print`（隐藏侧栏/按钮/评论，打印时展开外链地址，代码块与表格不跨页断裂）。
+- **正文外链标识**：`a[href^="http"]::after` 加 SVG mask 图标，站内域名自动排除。
 
 ### 4. 图片处理与体积控制（`layouts/_markup/render-image.html` + 两个脚本）
 
@@ -220,6 +304,154 @@ python3 scripts/cover_to_webp.py          # 实际执行
 - 代码高亮 Chroma，行号、`tabWidth=4`；代码字体 JetBrains Mono 由 `head/custom.html` 引入。
 
 ## 修改记录（Changelog）
+
+### 2026-10-10 · Hello 文章封面改为 Hermes Agent 官网风格的抽象几何封面
+
+**改动**：`content/post/2022-01-01hello-world/`（page bundle，`/p/hello-world/`）
+
+- front matter 由 `image: welcome.jpg` 改为 `image: hello-cover.webp`。
+- 新封面为 AI 生成的抽象几何构成画，风格参照 **Hermes Agent 官网**（Nous Research 的开源 AI 智能体，
+  <https://hermes-agent.nousresearch.com/>）：深靛蓝底 + 纯电光蓝同心圆环 + 荧光黄 / 纯白线条 + 少量品红，
+  瑞士国际主义排版风格，硬边几何、克制留白、中央柔和径向光晕。
+- 落地处理：裁掉底部 8% 去除生成工具的「AI 生成」角标（此图底部是纯深色，裁切完全无损）→
+  转 WebP（`quality=88`），**2.03 MB PNG → 107 KB WebP**（约 1/19），
+  走 Hugo 原生 `imageProcessing` 派生 800/1400 两档 srcset。
+- 旧图 `welcome.jpg`（带 VCG 水印的漫画）与从未被引用的 `cover.jpg` **保留**在目录里，不再作为封面。
+- 构建验证通过：305 页 / 189 张派生图 / 918 ms；文章页与首页卡片均正确引用新封面，旧图已无引用。
+
+**参考来源（想复刻同类风格时先看这里）**
+
+Hermes Agent 官网的视觉语言可直接从其 CSS 变量读出，不用猜：
+
+| token | 值 | 说明 |
+| --- | --- | --- |
+| `--hermes-color-blue` | `#0000f2` | **主色**，极高纯度电光蓝，出现 51 次 |
+| `--hermes-color-indigo` | `#7900f2` | 紫 |
+| `--hermes-color-yellow` | `#f2f200` | 荧光黄，主强调色 |
+| `--hermes-color-magenta` | `#f200f2` | 品红 |
+| `--hermes-color-neon` | `#79f200` | 荧光绿 |
+| `--hermes-color-cyan` | `#00f2f2` | 青 |
+| `--hermes-color-orange` | `#f27900` | 橙 |
+| `--hermes-color-neutral` | `#616191` | 中性灰紫 |
+| 次级蓝 | `#0847c4` / `#ebf5ff` / `#c3ddfd` | 深浅蓝阶 |
+
+字体：`Rules Condensed` / `Rules Extended` / `Rules Gothic Compressed`（压缩展示体）、
+`EB Garamond`（衬线）、`Aeonik Fono Pro`（无衬线）、等宽字体。
+风格关键词：**瑞士国际主义 + 大字号压缩标题 + 高纯度原色 + 深底高对比**。
+
+> ⚠️ **AI 生成图带角标水印**：生成结果右下角固定有平台水印，直接当封面会很突兀。
+> 常规处理是**裁掉底部约 8%**，前提是该区域本就不是构图主体
+> （构图主体在上下渐变或地面网格时就安全；若水印压在主体上则需换构图重生成，不要为此做 inpainting）。
+
+> 💡 **生成脚本在本项目不可用**：`buddy-cloud.py image` 用 IDE 会话 JWT 调用会报
+> `invalid or expired JWT token`，直接用内置的 `image_gen` 工具即可，不要在脚本上纠结。
+
+### 2026-10-10 · 全站 36 篇精选文章逐篇排版与配色改造
+
+**背景**：在上一条「站点样式体检」之后，进一步逐篇阅读 36 篇精选文章，
+按语义补充颜色标记与结构优化。
+
+**新增脚本 `scripts/enhance_posts.py`**（通用、保守、可复现）
+
+- **松散列表合并**：把「列表项是词条 + 说明另起一段」合并为「列表项：说明」。
+  站内这类写法极多（无序列表约 3000 条、有序约 1800 条），原先完全靠浏览器默认渲染。
+- **标题层级跳级修正**：`h2` 后直接出现 `h4` 时降为 `h3`（只降不升）。
+- 带 5 道结构自洽校验，避免误伤：标签配对、加粗配对、说明段落不是列表项、
+  不吞并`**词条：**说明` 结构、合并后长度上限。
+
+**内容侧修复（真实bug）**
+
+1. **`<font color='red'>` → `<span class="text-red">`**（79 处 / 15 篇）。
+   原写法颜色写死，深色模式下不切换；`text-red` 深浅两套均 ≥4.5:1。
+2. **失效的加粗修复**（36 处 / 8 篇）：`**词：**内容` 中 `**` 紧贴文字时整段渲染不出来。
+3. **提示框内的 Markdown 未渲染**：`hint.html` / `color.html` 原用 `{{ .Inner }}`，
+   直接输出原始文本，导致 **75 个提示框中有 20 个内容是坏的**（`**加粗**` 显示为字面量）。
+   改为 `{{ .Inner | .Page.RenderString (dict "display" "block") }}`。
+4. **本地绝对路径泄露**：seata篇 9 处 `file:///Users/tom/...`（含用户名）→ 换成 GitHub 链接。
+5. **图片 URL 含未编码空格与括号** 1 处 → 线上必然加载失败，已编码。
+6. **`[!NOTE]` 是 GitHub 专有语法**，Hugo 不识别会原样显示 → 改为 `hint` shortcode。
+7. **表格缺空行导致不渲染**、有序列表编号重复、空列表项、标题内零宽字符、
+   重复插图、引用块包裹 shortcode 等，共 218 处（`doc_health`体检脚本产出）。
+8. 错别字与术语：`Excutor`、`commitAsyc`、`LOCK_ORNIDARY`、`CLassLoader`、`navtive`、
+   `cansel`、`锁卷/炼狱`、`破话枚举单例`、`范逼近定理` 等数十处。
+
+**语义着色**：36 篇逐篇精读，共 **422 处**（红 177 /蓝 109 / 黄 78 / 绿 41 / 灰 17）。
+配色语义与三条写法铁律见「2.3 内容排版与配色规范」。
+
+**踩坑记录（重要）**
+
+批量改造用的临时应用器存在缺陷：`{o, c}` 格式的条目没有 `n` 字段，
+`nn` 取到空串，**把所有匹配文本替换成了空字符串**，导致一次 git checkout 前的
+约 200 处着色与部分正文丢失。发现后已修正为「`n` 为空则跳过」并加断言，
+随后从快照回填 + 重新跑通全部批次，最终 422 处全部就位。
+**教训：任何批量文本替换都必须有「空结果保护」，且替换后必须统计 before/after 数量。**
+
+**验证**：`hugo --gc --minify` 干净构建通过（69 篇文章页 / 305 页），
+全站检查 `加粗失效 0` / `<font> 残留 0` / `空列表项 0` / 异常页 0。
+
+### 2026-10-10 · 全站排版 / 配色 / 可访问性体检并修复
+
+**背景**：对 `custom.scss` 与主题 v4.0.3 的实际编译产物做逐项比对，发现**一批「写了但根本没生效」
+的死样式**（长期被误认为生效），以及深色模式配色、中文排版、对比度上的多处实质问题。
+
+**1. 失效的样式（真 bug）**
+
+- **14 处`var(--accent-color, #6a8cff)` 的fallback 从未生效**——主题必定定义了 `--accent-color`
+  （浅色 `#34495e` / 深色 `#ecf0f1`），fallback 是死代码。后果：
+  深色模式下**每个h1~h6 左侧的3px 竖线、TOC 当前项、正文链接全是近白色**，
+  与正文 `rgba(255,255,255,.9)` 几乎无法区分；浅色模式下正文链接是暗灰，辨识度弱。
+- **标题锚点样式 20 行全是死代码**：写的是 `.anchor`，主题实际类名是 `a.header-anchor`
+  （且用 `position:absolute` 定位，不是 `margin-left`）。
+- **表格三个变量全部写错**：`--table-head-background` / `--table-stripe-background` /
+  `--table-hover-background` 在主题里都不存在，只靠 `rgba(0,0,0,4%)` fallback 兜住——
+  **深色模式下等于没有**，表头无底色、斑马纹不可见（站内 35 篇文章、1253 行表格受影响）。
+- `body { line-height: 1.75 }` 无效：`.article-content` 已有 `--article-line-height`(1.85)，优先级更高。
+- 行内代码用了不存在的 `--inline-code-color`，绕过了主题的 `--code-text-color`，
+  导致**深色模式下玫红字on `#272822` 仅 2.4:1，几乎不可读**。
+- `config.toml` 的 `languageCode` 自 0.158.0 起已更名，**每次构建都打 deprecation WARN** → 改为 `locale`。
+
+**2. 额外挖出两个此前没注意到的问题**
+
+- 主题 v4 **完全没有标题字号定制**（只做了左侧竖线 + 锚点）。浏览器默认下
+  `h4` 与正文同大、`h5`(0.83em) 反而比正文还小，中文长文里 h3/h4/h5 层级几乎分不出来。
+- 主题给 `.article-content pre` 设了 `word-break: break-all`，会让长代码行**硬折行**，
+  导致同时设置的 `overflow-x: auto` 永远不触发（横向滚动条根本出不来）。
+
+**3. 已落地的修复**
+
+- **配色令牌化**（`custom.scss` 第 0 节）：强调色统一为浅色 `#4263eb` / 深色 `#a8bcff`
+  （均 ≥4.5:1），深浅两套文字色、行内代码色、表格色全部按 **WCAG AA** 重新校准；
+  渐变条 / 进度条 / 头像装饰统一走 `--brand-gradient`。
+- **中文排版**：`line-break: strict`、`hanging-punctuation`、`text-autospace`（中英文自动间距）、
+  `overflow-wrap`（替掉已废弃的 `break-word`）；代码块/表格/提示框/引用块改回 `text-align: left`，
+  避免被 `justify` 拉伸。
+- **标题阶梯** h1~h6 = 1.9/1.55/1.3/1.12/1/0.95em，竖线宽度随层级递减并同步补偿 padding，
+  保证所有标题文字左边界一致；补 `scroll-margin-top` 防止点目录跳转时贴顶。
+- **列表**：站内列表极密集（无序 ~3000、有序 ~1800），原先零样式。补缩进、间距、
+  `::marker` 强调色、嵌套降权、任务列表对齐。
+- **代码块**：覆盖 `word-break`为 `normal` + `white-space: pre`，横向滚动恢复；
+  `pre` 补边框（浅色下主题底色 `#fafafa` 与卡片白底区分度不足）。
+- **表格**：表头加粗 + 强调色淡底 + 首尾单元格圆角；窄屏（≤700px）整表横向滚动而非把单元格挤成竖排。
+- **分隔线**：改为居中渐隐细线（原100px 实心短横）。
+- **可访问性**：`:focus-visible` 键盘焦点框、`prefers-reduced-motion: reduce`、
+  `@media print`（隐藏侧栏/按钮/评论、展开外链地址、代码块与表格不跨页断裂）。
+- **所有 hover 效果包进 `@media (hover: hover)`**：触屏上 `:hover` 会粘住，
+  图片点一下就永久保持放大态（此前 `transform: scale(1.01)` 就是如此）。
+- **正文外链标识**：`a[href^="http"]::after` 加 SVG mask 图标，站内域名自动排除。
+
+**已验证**：`hugo --gc --minify` 构建通过（305 页），`languageCode` deprecation WARN 已消失，
+仅剩原有的 `Widget series not found`（series widget 无数据，属 P2）；
+编译产物逐项核对 18 项断言全部 OK；CSS 72.1 KB（+0.5 KB）。
+已确认 `data-scheme` 由内联脚本**同步**挂在 `<html>` 上且总是显式设为 `dark`/`light`，
+故深色令牌不会污染浅色模式，也不会闪白。
+
+> 📌 **教训**：`var(--主题变量, fallback值)` 这种写法在本项目里**一律是陷阱**——
+> fallback 永远不生效，却掩盖了「变量名写错了」这个事实。改样式前先按 2.1 节的命令
+> 列出主题真实变量，再动笔。
+
+> 📌 **`custom.scss` 分节编号已整体重排**（现共 31 节，配色令牌集中在第 0 节）。
+> 历史变更记录里引用的「第 N 节」是**当时**的编号，仅作历史参考；
+> 定位请以**类名 / 选择器**为准，不要按数字找。
 
 ### 2026-10-10 · 修复 CI 构建失败：Hugo 版本下限事故
 
@@ -413,16 +645,20 @@ can't evaluate field Locale in type *langs.Language
 
 ### P2 · 代码质量与一致性
 
-- [ ] **死 CSS**：`custom.scss:403-415` 的 `@media (prefers-color-scheme: dark) { :root:not([data-scheme="light"]) {...} }`
-  **永不生效**（主题内联脚本必定把 `data-scheme` 设为 light 或 dark），9 个变量白写。
+- [x] ~~**死 CSS**~~（2026-10-10 修正判断）：原判定「`@media (prefers-color-scheme: dark)` 永不生效」**不准确**——
+  主题内联脚本正常工作时确实总会设置 `data-scheme`，但它位于 `<body>` 首个子节点、
+  **属于渲染关键路径**，一旦被 CSP 拦截或 JS 失败，属性就不会存在，此时系统深色偏好仍应生效。
+  故该 `@media` 块作为**无 JS 兜底予以保留**，并在 `custom.scss` 与本文「2.1」节写明原因。
+- [x] **无障碍**：`prefers-reduced-motion: reduce` 已落地（关闭动画/位移/平滑滚动），
+  另补 `:focus-visible` 键盘焦点框与 `@media print` 打印样式。
+- [x] **主题一致性**：3 处硬编码 `linear-gradient(90deg, #6a8cff, #9b6cff)` 已抽成 `--brand-gradient`
+  （深浅两套），随 `--accent-color` 走；深色模式下的固定黑阴影（`rgba(0,0,0,.08~.18)`）
+  改为半透明的 `rgba(15,20,30,…)`，深浅通用。
 - [ ] **死配置**：`params.toml` 的 `[imageProcessing.cover]`（主题 0 引用）、`math = false` 但 `markup.toml` 配了 `$$` passthrough
   （写公式会渲染成裸公式）、`config.toml` 的 `disqusShortname`（v3 遗留）、`params.toml` 里约 70 行未使用评论渠道的空字段。
 - [ ] **配置隐患**：`config/_default/_languages.toml` 写着 `title = "Example Site"`，一旦被改名为 `languages.toml` 启用多语言会生效。建议删除。
 - [ ] **JS 性能**：`footer/custom.html:30-46` 的 scroll 监听无节流，每次事件都读 `scrollHeight`/`clientHeight` 强制重排
   + 写 `style.width`（还叠了 CSS `transition`），长文滚动掉帧。建议 rAF 包裹 + 缓存尺寸 + resize debounce。
-- [ ] **无障碍**：全局 `scroll-behavior: smooth` + 13 处 transition / 多个 transform，**没有 `prefers-reduced-motion` 保护**。
-- [ ] **主题一致性**：`custom.scss` 三处硬编码 `linear-gradient(90deg, #6a8cff, #9b6cff)` 不跟随 `--accent-color`，深色模式下刺眼；
-  另有深色模式下的固定黑阴影（`:86,91,116`）过重。建议抽成 `--brand-gradient` 变量。
 - [ ] **供应链 / 第三方**：`head/custom.html` 从 jsDelivr 拉 JetBrains Mono，两个 `<link rel=stylesheet>` 是**渲染阻塞**且无 SRI；
   `footer/custom.html:10` 不蒜子用协议相对 URL `//`。
 - [ ] **工程基线**：`.gitignore` 漏 `.DS_Store`（当前工作区已有 5 个未跟踪）；缺 `.editorconfig` / `.gitattributes` / Dependabot；

@@ -27,11 +27,11 @@ image: springFrameworkV6.webp
 
 ### 简介
 
-IOC也被称为依赖注入（DI）。它是一个过程，对象仅通过构造参数、工厂方法的参数或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义其依赖关系（即它们与之合作的其他对象）。然后容器在创建bean时注入这些依赖关系。这个过程从根本上说是Bean本身通过使用直接构建类或诸如服务定位模式的机制来控制其依赖关系的实例化或位置的逆过程（因此被称为控制翻转）。
+<span class="text-gray">IOC也被称为依赖注入（DI）。它是一个过程，对象仅通过构造参数、工厂方法的参数</span>或在对象实例被构造或从工厂方法返回后在其上设置的属性来定义其依赖关系（即它们与之合作的其他对象）。然后容器在创建bean时注入这些依赖关系。这个过程从根本上说是Bean本身通过使用直接构建类或诸如服务定位模式的机制来控制其依赖关系的实例化或位置的逆过程（因此被称为控制翻转）。
 
 ### IOC容器概述
 
-org.springframework.context.ApplicationContext接口代表SpringIoC容器，负责实例化、配置和组装Bean。容器通过读取配置元素数据来获取关于要实例化、配置和组装哪些对象的指示。配置元素以XML、Java注解或Java代码表示。
+org.springframework.context.<span class="text-blue">ApplicationContext接口代表SpringIoC容器，负责实例化、配置和组装Bean。</span>容器通过读取配置元素数据来获取关于要实例化、配置和组装哪些对象的指示。配置元素以XML、Java注解或Java代码表示。
 
 ### 使用容器
 
@@ -63,18 +63,28 @@ List<String> userList = service.getUsernameList();
 #### 属性
 
 | 属性                     | 解释         |
+
 | ------------------------ | ------------ |
+
 | Class                    | 实例化Bean   |
+
 | Name                     | Bean命名     |
+
 | Scope                    | Bean Scope   |
+
 | Constructor arguments    | 依赖注入     |
+
 | Properties               | 依赖注入     |
+
 | Autowiring mode          | 注入协作者   |
+
 | Lazy initialization mode | 懒加载的Bean |
+
 | Initialization method    | 初始化回调   |
+
 | Destruction method       | 销毁回调     |
 
-> Bean元数据和手动提供的单体实例需要尽早注册，以便容器在自动注入和其他内省步骤中正确推导它们。虽然在某种程度上支持覆盖现有的元数据和现有的单体实例，但官方不推荐在运行时注册新的Bean（与对工厂的实时访问同时进行），这可能会导致并发访问异常、bean容器中的不一致状态，或者两者都有。
+> Bean元数据和手动提供的单体实例需要尽早注册，以便容器在自动注入和其他内省步骤中正确推导它们。虽然在某种程度上支持覆盖现有的元数据和现有的单体实例，但<span class="text-red">**官方不推荐在运行时注册新的Bean（与对工厂的实时访问同时进行），这可能会导致并发访问异常**</span>、bean容器中的不一致状态，或者两者都有。
 
 ### 依赖注入
 
@@ -121,11 +131,11 @@ public class SimpleMovieLister {
 
 - 应该选用哪种DI方式？
 
-由于可以混合使用基于构造函数和基于Setter的DI，一个好的经验法则是对强制依赖使用构造函数，对可选依赖使用setter方法或配置方法。请注意，在setter方法上使用@Autowired注解可以使属性成为必须得依赖；然而，带有参数程序化验证的构造注入是更好的。
+由于可以混合使用基于构造函数和基于Setter的DI，一个好的经验法则是对强制依赖使用构造函数，对可选依赖使用setter方法或配置方法。请注意，<span class="text-yellow">**在setter方法上使用@Autowired注解可以使属性成为必须得依赖；然而，带有参数程序化验证的构造注入是更好的。**</span>
 
-Spring团体通常提倡构造函数注入，因为它可以让你将应用组件实现为不可变的对象，并确保所需的依赖不为null。此外，构造函数注入的组件总是以完全初始化的状态返回给客户端（调用）代码。顺便提一下，大量的构造函数参数是一种不好的代码，意味着该类可能有太多的责任，应该重构以更好地解决适当的分离问题。
+<span class="text-green">**Spring团体通常提倡构造函数注入，因为它可以让你将应用组件实现为不可变的对象，并确保所需的依赖不为null。**</span>此外，构造函数注入的组件总是以完全初始化的状态返回给客户端（调用）代码。顺便提一下，大量的构造函数参数是一种不好的代码，意味着该类可能有太多的责任，应该重构以更好地解决适当的分离问题。
 
-Settter注入主要应该只用于在类中可以分配合理默认值的可选依赖。否则，必须在代码使用依赖的所有地方进行非null值检查。Setter注入的好处：Setter方法使该类的对象可以在以后重新配置或重新注入。
+Setter注入主要应该只用于在类中可以分配合理默认值的可选依赖。否则，必须在代码使用依赖的所有地方进行非null值检查。Setter注入的好处：Setter方法使该类的对象可以在以后重新配置或重新注入。
 
 #### 依赖的解析过程
 
@@ -138,9 +148,9 @@ Bean解析的过程
 
 - 循环依赖
 
-> 如果你使用主要的构造函数注入，就有可能产生一个无法解决的循环依赖情况。
+> <span class="text-yellow">**如果你使用主要的构造函数注入，就有可能产生一个无法解决的循环依赖情况。**</span>
 >
-> 比如说，类A通过构造函数注入需要类B的一个实例，而类B通过构造函数注入需要类A的实例。如果你将类A和类B的Bean配置为相互注入，Spring IOC容器会在运行时检测到这些循环引用，并抛出一个BeanCurrentlyInCreationException。
+> 比如说，类A通过构造函数注入需要类B的一个实例，而类B通过构造函数注入需要类A的实例。如果你将类A和类B的Bean配置为相互注入，Spring IOC<span class="text-red">**容器会在运行时检测到这些循环引用，并抛出一个BeanCurrentlyInCreationException。**</span>
 >
 > 解决方法：在编写类源码时，使其通过Setter而不是构造器进行配置。或者，避免构造器注入，只使用setter注入。
 >
@@ -150,17 +160,19 @@ Bean解析的过程
 
 Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通过检查ApplicationContext的内容为你的Bean自动解决协作者（其他Bean）。
 
-- 自动注入的优点
-
-自动注入可以随着你的对象的发展而更新配置。例如，如果你需要给一个类添加一个依赖，这个依赖可以自动满足，而不需要你修改配置。因此，自动在开发过程中可能特别有用。而不会否定在代码库变得更加稳定时切换到显式注入的选择。
-
+- **自动注入的优点**：自动注入可以随着你的对象的发展而更新配置。例如，如果你需要给一个类添加一个依赖，这个依赖可以自动满足，而不需要你修改配置。因此，自动在开发过程中可能特别有用。而不会否定在代码库变得更加稳定时切换到显式注入的选择。
 - 四种自动注入的方式
 
 | 模式        | 解释                                                         |
+
 | ----------- | ------------------------------------------------------------ |
+
 | no          | （默认）没有自动注入。Bean引用必须由ref元素来定义。对于大型部署来说，不建议改变默认设置，因为明确指定协作者会带来更大的控制力和清晰度。在某种程度上，它记录了一个系统的结构。 |
+
 | byName      | 通过属性名称自动注入。Spring寻找一个与需要自动注入的属性同名的Bean。例如，如果一个Bean定义被设置为按名称自动注入，并且包含一个master属性（也就是说，它有一个setMaster（..）方法），Spring会寻找一个名为master的Bean定义并使用它来设置该属性。 |
+
 | byType      | 如果容器中正好有一个property类型的Bean存在，就可以自动注入该属性。如果存在一个以上的bean，就会抛出一个致命的exception，这表明你不能对该bean使用byType自动注入。如果没有匹配的bean，就不会发生任何事情（该属性没有被设置）。 |
+
 | constructor | 类似于byType，但适用于构造函数参数。如果容器中没有一个构造函数参数类型的Bean，就会产生一个致命的错误。 |
 
 #### 自动注入的限制和缺点
@@ -173,7 +185,7 @@ Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通�
 无法根据类型指定唯一bean的几种解决方案：
 
 1. 放弃自动注入，改用明确注入。
-2. 通过将Bean定义的Autowire-condidate属性设置为false来避免bean定义的自动注入。
+2. 通过将Bean定义的Autowire-candidate属性设置为false来避免bean定义的自动注入。
 3. 通过将<bean/> 元素的primary属性设置为true，将单个bean定义指定为主要候选者。
 4. 实现基于注解的配置所提供的更精细的控制。
 
@@ -185,7 +197,6 @@ Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通�
 
 ``` java
 package com.springboot.demo;
-
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
@@ -243,12 +254,19 @@ public class CommandManager implements ApplicationContextAware {
 Spring框架支持六个scope
 
 | scope       | 说明                                                         |
+
 | ----------- | ------------------------------------------------------------ |
+
 | singleton   | （默认情况下）为每个Spring IOC容器将单个Bean定义的Scope扩大到单个对象实例。 |
+
 | prototype   | 将单个Bean定义的Scope扩大到任何数量的对象实例。              |
+
 | request     | 将单个Bean定义的Scope扩大到单个HTTP请求的生命周期。也就是说，每个HTTP请求都有自己的Bean实例，该实例是在单个Bean定义的基础上创建的。只在Web感知的Spring ApplicationContext的上下文中有效。 |
+
 | session     | 将单个Bean定义的Scope扩大到一个HTTP Session的生命周期。只在Web感知的Spring ApplicationContext的上下文中有效 |
+
 | Application | 将单个Bean定义的Scope扩大到ServletContext的生命周期中。只在Web感知的Spring ApplicationContext的上下文中有效。 |
+
 | websocket   | 将单个Bean定义的Scope扩大到WebSocket的生命周期。仅在具有Web感知的Spring ApplicationContext的上下文中有效。 |
 
 #### 单例
@@ -259,7 +277,7 @@ Spring框架支持六个scope
 
 ![2024-4-2414:31:42-1713940302216.png](https://gitee.com/grsswh/drawing-bed/raw/master/image/2024-4-2414:31:42-1713940302216.png)
 
-<mark>Spring 的单例 Bean 概念和 GOF 设计模式书中定义的单例模式不同。</mark>Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。
+<mark>Spring 的单例 Bean 概念和 GOF 设计模式书中定义的单例模式不同。</mark><span class="text-blue">Gof单例模式对对象的范围进行了硬编码，即每个ClassLoader创建一个且仅有一个特定类的实例。</span>Spring单例的范围最好被描述为每个容器和每个bean。这意味着，如果你在一个Spring容器中为一个特定的类定义了一个Bean，Spring容器就会为该Bean定义的类创建一个且只有一个实例。Singleton Scope是Spring默认的Scope。
 
 #### 原型
 
@@ -273,7 +291,7 @@ Spring框架支持六个scope
 
 与其他作用域相比，Spring不会管理原型模式的Bean的生命周期。容器对原型对象进行实例化，配合和其他方面的组装，并将其交给客户端，而对该原型实例没有进一步的记录。后续销毁需要客户端自己来。
 
-> 一个单例bean中，如果有依赖一个原型的Bean，那么这个原型Bean也只会被创建一次。
+> <span class="text-yellow">**一个单例bean中，如果有依赖一个原型的Bean，那么这个原型Bean也只会被创建一次。**</span>
 
 ### 自定义Bean的性质
 
@@ -283,10 +301,7 @@ Spring框架支持六个scope
 
 > @PostConstruct和@PreDestroy注解通常被认为是在现代Spring应用程序中接收生命周期回调的最佳实践。使用这些注解意味着你的Bean不会被耦合到Spring特定的接口。
 
-- 在非Web应用中优雅地关闭Spring IoC容器
-
-如果你在非Web应用环境中使用Spring的Ioc容器，请向JVM注册一个shutdown hook。这样做可以确保优雅地关闭，并在你的单例Bean上调用相关的destroy方法，从而释放所有资源。
-
+- **在非Web应用中优雅地关闭Spring IoC容器**：如果你在非Web应用环境中使用Spring的Ioc容器，请向JVM注册一个shutdown hook。这样做可以确保优雅地关闭，并在你的单例Bean上调用相关的destroy方法，从而释放所有资源。
 > 要注册一个shutdown hook，请调用registerShutdown（）方法，该方法在ConfigurableApplicationContext接口上声明。
 
 ``` java
@@ -307,7 +322,6 @@ public final class Boot {
     }
 }
 
-
 ```
 
 org.springframework.beans 和 org.springframework.context 包是Spring Framework的IoC容器的基础。
@@ -325,7 +339,7 @@ BeanFactory接口提供了一种高级配置机制，能够管理任何类型的
 
 一个Bean定义可以包含很多配置信息，包括构造函数参数、数据值和容器特有的信息，如初始化方法、静态工厂方法名称等等。一个子Bean定义从父定义继承配置数据。自定义可以覆盖一些值或根据需要添加其他值。使用父Bean定义和子Bean定义可以节省大量的打字工作量。
 
-> ApplicationContext默认设置了所有的Singleton。因此，如果你有一个（父）Bean定义，你打算作为模版使用，并且这个定义指定了一个类，你必须确保将abstract属性设置为true，否则应用上下文将试图预实例化abstract Bean。
+> ApplicationContext默认设置了所有的Singleton。因此，如果你有一个（父）Bean定义，你打算作为模版使用，并且这个定义指定了一个类，<span class="text-yellow">**你必须确保将abstract属性设置为true，否则应用上下文将试图预实例化abstract Bean。**</span>
 
 #### 容器的扩展
 
@@ -383,10 +397,9 @@ public interface BeanFactoryPostProcessor {
     void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException;
 }
 
-
 ```
 
-> 如果你想改变实际的Bean实例（即从配置元数据中创建的对象），那么你需要使用 BeanPostProcessor（如前面 使用 BeanPostProcessor 自定义 Bean 中的描述）。虽然在技术上可以在BeanFactoryPostProcessor中处理Bean实例（例如，通过使用BeanFactory.getBean())，但这样做会导致过早的Bean实例化，违反了标准容器的生命周期。这可能会导致负面的副作用，比如绕过Bean的后置处理器。
+> 如果你想改变实际的Bean实例（即从配置元数据中创建的对象），那么你需要使用 BeanPostProcessor（如前面 使用 BeanPostProcessor 自定义 Bean 中的描述）。虽然在技术上可以在BeanFactoryPostProcessor中处理Bean实例（例如，通过使用BeanFactory.getBean())，但<span class="text-red">**这样做会导致过早的Bean实例化，违反了标准容器的生命周期。这可能会导致负面的副作用，比如绕过Bean的后置处理器。**</span>
 
 ### 基于注解的容器配置
 
@@ -430,12 +443,11 @@ public class MovieRecommender {
     // ...
 }
 
-
 ```
 
 #### 用Qualifiers微调基于注解的自动注入
 
-有几个实例，当可以确定一个主要的候选者时，@Primary是按照类型自动装配的一种有效方式。当你需要对选择过程进行更多控制时，你可以使用Spring 的@Qualefier注解。将限定符的值与特定的参数联系起来，缩小类型匹配的范围，从而为每个参数选择一个特定的bean。
+有几个实例，当可以确定一个主要的候选者时，@Primary是按照类型自动装配的一种有效方式。当你需要对选择过程进行更多控制时，你可以使用Spring 的@Qualifier注解。将限定符的值与特定的参数联系起来，缩小类型匹配的范围，从而为每个参数选择一个特定的bean。
 
 ``` java
 public class MovieRecommender{
@@ -449,15 +461,8 @@ public class MovieRecommender{
 
 > 在类型匹配候选者中，让Qualifiers针对目标bean名称进行选择，不需要在注入点上进行@Qualifiers注解。如果没有其他解析指标（如果Qualifiers或primary标记），对于非唯一的依赖情况，Spring会将注入点名称（即字段名或参数名）与目标Bean名称进行匹配，并选择同名的候选者（如果有）。
 
-- Autowired
-
-适用于字段、构造函数和参数方法，允许在参数级别上通过Qualifier注解来缩小范围。
-
-- Resource
-
-只支持字段和只有一个参数的bean属性setter方法。
-
-如果你的注入目标是构造函数或参数方法，你应该坚持使用Qualifier。
+- **Autowired**：适用于字段、构造函数和参数方法，允许在参数级别上通过Qualifier注解来缩小范围。
+- **Resource**：只支持字段和只有一个参数的bean属性setter方法。 如果你的注入目标是构造函数或参数方法，你应该坚持使用Qualifier。
 
 #### 用@Resource注入
 
@@ -523,13 +528,21 @@ public class CachingMovieLister{
 #### Spring组件模型元素和jsr标准的比较
 
 | Spring              | **jakarta.inject.\*** | jakarta.inject 限制 / 说明                                   |
+
 | ------------------- | --------------------- | ------------------------------------------------------------ |
+
 | @Autowired          | @Inject               | @Inject没有‘required’属性。可以用java 8的Optional来代替。    |
+
 | @Component          | @Name/@ManagedBean    | jsr-330没有提供一个可组合的模型，只是提供了一个识别命名组件的方法 |
+
 | @Scope("singleton") | @Singleton            | JSR-330 默认scope就像Spring的prototype。然而，为了与Spring的一般默认值保持一致，在Spring容器中声明的JSR-330Bean 默认是一个Singleton。为了使用Singleton以外的scope，你应该使用Spring的@scope注解。 |
+
 | @Qualifier          | @Qualifier/@Named     | jakarta.inject.Qualifier只是一个用于构建自定义Qualifier的元注解。具体的String Qualifier（像Spring 的@Qualifier一样有一个值）可以通过`jakarta.inject.Named` 来关联。 |
+
 | @Value              | -                     | 没有                                                         |
+
 | @Lazy               | -                     | 没有                                                         |
+
 | ObjectFactory       | provider              | jakarta.inject.Provider 是Spring的ObjectFactory的直接代替品，只是get()方法的名字比较短。它也可以与Spring的@Autowired结合使用，或者与非注解的构造器和setter方法结合使用。 |
 
 ### 基于java的容器配置
@@ -548,7 +561,7 @@ public class AppConfig{
     
     @Bean
     public MyServiceImpl myService(){
-        return new MySerivceImpl();
+        return new MyServiceImpl();
     }
 }
 ```

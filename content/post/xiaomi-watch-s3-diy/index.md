@@ -123,11 +123,17 @@ java -cp tools/Mi8WfBinTool Mi8WfBinTool unpack out.bin /tmp/chk ws3
 ## 工具链
 
 | 工具 | 作用 |
+
 | --- | --- |
+
 | `Mi8WfBinTool`（Java） | `pack <dir> <out> ws3` / `unpack <bin> <out> ws3`，逐字段比对两个盘的金标准 |
+
 | `patch_header.py` | 回补 `byte[6]=1`（扫秒开关）、`0x16=1`、`styleCount=4` |
+
 | `gen_assets_*.py` | 用 PIL 生成素材 PNG（轮盘环 / 数字字模 / 弧帧） |
+
 | `assemble_*.py` | 合成 `wfDef.json` |
+
 | `preview*.py` / `build*.py` | 静态预览与一键流水线 |
 
 ## 关键技术结论（想改格式必读）

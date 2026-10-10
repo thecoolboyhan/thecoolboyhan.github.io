@@ -1,7 +1,15 @@
-{{- /* 文字颜色 shortcode：{{< color "red" >}}文字{{< /color >}} 或 {{< color "#ff0000" >}}文字{{< /color >}} */ -}}
+{{- /* 文字颜色/ 强调 shortcode：
+       {{< color "red" >}}文字{{< /color >}}          → <span class="text-red">
+       {{< color "#ff0000" >}}文字{{< /color >}}      → 内联色值（不随深色模式变化，慎用）
+
+       ⚠️ 两点实现注意：
+       1. 必须用 .Page.RenderString 渲染 .Inner，否则框内写`**加粗**` 会输出字面量 `**`；
+       2. 用 {{ .Inner }} 还是 RenderString 会影响能否包裹 Markdown（链接、强调）。
+          推荐优先用 class 版本（.text-*），颜色随深色模式自适应且对比度已按 WCAG AA 校准。 */ -}}
 {{- $c := .Get 0 | default "primary" -}}
+{{- $inner := .Inner | .Page.RenderString -}}
 {{- if findRE "^#" $c -}}
-<span style="color: {{ $c }};">{{ .Inner }}</span>
+<span style="color: {{ $c }};">{{ $inner }}</span>
 {{- else -}}
-<span class="text-{{ $c }}">{{ .Inner }}</span>
+<span class="text-{{ $c }}">{{ $inner }}</span>
 {{- end -}}

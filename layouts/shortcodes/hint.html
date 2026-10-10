@@ -1,7 +1,11 @@
 {{- /* 提示框 shortcode：
        {{< hint "note" >}}内容{{< /hint >}}
        支持类型：note / info / tip / success / warning / danger
-       内容可以是任意 Markdown。 */ -}}
+
+       ⚠️ 实现注意：{{ .Inner }} 直接输出**原始文本**，不解析 Markdown
+       （`**加粗**`、列表、代码块都会以字面量显示）。
+       因此必须用 .Page.RenderString 显式渲染，实测 Hugo 0.166.0 可用且无 deprecation 警告。
+       display 用 "block"，否则框内的多段内容/列表会被拼成一行。 */ -}}
 {{- $type := .Get 0 | default "note" -}}
 {{- $icon := "📝" -}}
 {{- if eq $type "info" }}{{ $icon = "ℹ️" }}{{ end -}}
@@ -9,7 +13,8 @@
 {{- if eq $type "success" }}{{ $icon = "✅" }}{{ end -}}
 {{- if eq $type "warning" }}{{ $icon = "⚠️" }}{{ end -}}
 {{- if eq $type "danger" }}{{ $icon = "⛔" }}{{ end -}}
+{{- $inner := .Inner | .Page.RenderString (dict "display" "block") -}}
 <div class="hint hint-{{ $type }}">
   <div class="hint-icon">{{ $icon }}</div>
-  <div class="hint-content">{{ .Inner }}</div>
+  <div class="hint-content">{{ $inner }}</div>
 </div>

@@ -3,7 +3,7 @@ title: Hello
 description: readme，欢迎来到我的网站，建议先看看这篇文章对我和本网站有个大概的了解。
 slug: hello-world
 date: 2022-03-06 00:00:00+0000
-image: welcome.jpg
+image: hello-cover.webp
 categories:
     - 欢迎
 tags:

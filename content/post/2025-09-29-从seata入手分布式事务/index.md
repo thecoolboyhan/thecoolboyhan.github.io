@@ -24,19 +24,13 @@ tags:
 
 ### 概述
 
-- 整体机制
-
-大致分为两个阶段：
-
-1. 本地提交：把业务数据和undo_log（回滚日志）同时在本地数据库提交，本地数据库释放锁和数据库连接。（**没有释放全局锁**）
+- **整体机制**：大致分为两个阶段：
+1. 本地提交：<span class="text-blue">把业务数据和undo_log（回滚日志）同时在本地数据库提交，本地数据库释放锁和数据库连接</span>。（**没有释放全局锁**）
 2. 全局提交阶段：
    1. 提交事务：异步化提交事务，**释放全局锁**
    2. 事务回滚：执行undo_log中记录的回滚sql，回滚后**释放全局锁**
 
-- 写隔离
-
-对于同一全局锁的数据：一阶段时，A事务持有全局锁，只要A事务不进行二阶段释放全局锁。B事务就始终无法一阶段提交，一阶段提交的必要条件是需要获取全局锁。
-
+- **写隔离**：对于同一全局锁的数据：<span class="text-blue">一阶段时，A事务持有全局锁，只要A事务不进行二阶段释放全局锁。B事务就始终无法一阶段提交</span>，一阶段提交的必要条件是需要获取全局锁。
 **回滚**：如果A事务二阶段回滚，此时B事务持有A事务一阶段相同的本地锁，A事务会回滚失败，但A事务会无限重试回滚（最大努力交付），直到B事务由于获取全局锁超时而回滚释放本地锁。A事务又可以获取本地锁，A事务回滚成功，释放全局锁。（**有效避免了脏写**）
 
 ![Write-Isolation: Rollback](https://seata.apache.org/zh-cn/assets/images/seata_at-2-c7537b8cd8036580215240d037ea4278.png)
@@ -44,7 +38,7 @@ tags:
 - 读隔离
 
 {{< hint "warning" >}}
-普通 select 语句是没有读隔离的，可能会读到中间阶段的数据。**读隔离只对 `select for update` 语句生效**
+<span class="text-red">**普通 select 语句是没有读隔离的，可能会读到中间阶段的数据**</span>。**读隔离只对 `select for update` 语句生效**
 {{< /hint >}}
 
 A事务持有全局锁没有释放，B事务for update查询数据时，会尝试获取全局锁，获取失败后B事务回滚（**回滚是为了防止出现死锁**），然后重试B事务流程。
@@ -83,7 +77,7 @@ SQL执行时：会现在被seata代理的ConnectionProxy连接代理类中的com
 
 2. 如果没有尝试去远程服务器获取锁，没有就注册锁。
 
-3. 如果远程服务器中已存在其他事务获取该锁，抛出以后，事务提交失败，走回滚流程。
+3. <span class="text-red">**如果远程服务器中已存在其他事务获取该锁，抛出以后，事务提交失败，走回滚流程。**</span>
 
 4. 以上获取到锁后，提交本地事务。
 
@@ -91,7 +85,7 @@ SQL执行时：会现在被seata代理的ConnectionProxy连接代理类中的com
 
 当前事务回滚，直接执行ACID的回滚逻辑。
 
-本地AT事务回滚，查询undo_log中记录的回滚日志，循环尝试执行，最大努力交付。
+<span class="text-blue">本地AT事务回滚，查询undo_log中记录的回滚日志，循环尝试执行，最大努力交付。</span>
 
 并向seata server发送当前事务回滚请求，提示让全局事务回滚。
 
@@ -119,7 +113,7 @@ FileManager.removeUndoLog() 方法：清理 undo_log 文件
 
 ### 简介
 
-> TCC事务是颗粒度细，但对业务有侵入的分布式事务，特点为运行速度极快，但需预占用资源，回滚方便等。<mark>常用于金融核心系统，我们的核心事务正是采用 TCC 实现。</mark>
+> <span class="text-blue">TCC事务是颗粒度细，但对业务有侵入的分布式事务，特点为运行速度极快，但需预占用资源，回滚方便等。</span><mark>常用于金融核心系统，我们的核心事务正是采用 TCC 实现。</mark>
 
 ![Overview of a global transaction](https://seata.apache.org/zh-cn/assets/images/seata_tcc-1-1f7a834639aa755d73fa2af435c4f042.png)
 
@@ -163,7 +157,7 @@ prepare、commit、rollback，三个阶段业务逻辑需要代码自己实现�
 
 ### 幂等问题
 
-同一个操作，无论执行多少次，结果都是一样的。TCC中，Confirm和Cancel操作可以会被反复重复调用。
+<span class="text-yellow">**同一个操作，无论执行多少次，结果都是一样的。TCC中，Confirm和Cancel操作可以会被反复重复调用。**</span>
 
 Seata的TCCResourceManager（事务状态管理器）为每个TCC全局事务创建不同的全局事务ID和分支事务ID。
 
@@ -177,7 +171,7 @@ Seata的TCCResourceManager（事务状态管理器）为每个TCC全局事务创
 
 > 为什么会出现这种情况？
 >
-> try阶段由于网络延迟，或者消息乱序（同时发起两个相同的try），导致Cancel操作已经执行完毕。此时可能出现重复占用情况。
+> <span class="text-red">**try阶段由于网络延迟，或者消息乱序（同时发起两个相同的try），导致Cancel操作已经执行完毕。**</span>此时可能出现重复占用情况。
 
 TCC的Aop类TccActionInterceptorHandler中会调用prepareFence方法来通过向数据库插入日志的方式来检测当前事务是否已经存在，如果插入失败就直接返回，不执行Try阶段代码。
 
@@ -207,7 +201,7 @@ Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业�
 
 ![示例状态图](https://seata.apache.org/zh-cn/assets/images/demo_statelang-90f1fc01bfaf3a795c3b3357e1046f16.png)
 
-状态的的运行和流转是根据json文件来执行的：
+状态的运行和流转是根据json文件来执行的：
 
 ``` json
 {
@@ -341,7 +335,7 @@ Saga 模式是 SEATA 提供的长事务解决方案，在 Saga 模式中，业�
 
 > 官方给出的缺乏隔离的应对方案，只能说乏善可陈
 
-- 由于 Saga 事务不保证隔离性, 在极端情况下可能由于脏写无法完成回滚操作, 比如举一个极端的例子, 分布式事务内先给用户 A 充值, 然后给用户 B 扣减余额, 如果在给 A 用户充值成功, 在事务提交以前, A 用户把余额消费掉了, 如果事务发生回滚, 这时则没有办法进行补偿了。这就是缺乏隔离性造成的典型的问题, 实践中一般的应对方法是：
+- <span class="text-red">**由于 Saga 事务不保证隔离性, 在极端情况下可能由于脏写无法完成回滚操作**</span>, 比如举一个极端的例子, 分布式事务内先给用户 A 充值, 然后给用户 B 扣减余额, 如果在给 A 用户充值成功, 在事务提交以前, A 用户把余额消费掉了, 如果事务发生回滚, 这时则没有办法进行补偿了。这就是缺乏隔离性造成的典型的问题, 实践中一般的应对方法是：
   - <mark>业务流程设计时遵循“宁可长款, 不可短款”的原则</mark>，长款意思是客户少了钱机构多了钱，以机构信誉可以给客户退款，反之则是短款，少的钱可能追不回来了。所以在业务流程设计上一定是先扣款。
   - 有些业务场景可以允许让业务最终成功, 在回滚不了的情况下可以继续重试完成后面的流程, 所以状态机引擎除了提供“回滚”能力还需要提供“向前”恢复上下文继续执行的能力, 让业务最终执行成功, 达到最终一致性的目的。
 
@@ -395,16 +389,26 @@ flowchart TD
 ![1760496927120.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760496927120_1760496955622.png)
 
 | 状态类型                                                     | 说明             | 特点                                                         |
+
 | ------------------------------------------------------------ | ---------------- | ------------------------------------------------------------ |
-| [SERVICE_TASK](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L27-L27) | 服务任务状态     | 执行具体的业务逻辑，对应实际的服务调用，是状态机中最常用的状态类型 |
-| [CHOICE](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L32-L32) | 选择状态         | 用于条件分支判断，根据条件表达式的结果决定下一步执行哪个状态 |
-| [FAIL](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L37-L37) | 失败状态         | 表示状态机执行失败，终止状态机执行并标记为失败               |
-| [SUCCEED](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L42-L42) | 成功状态         | 表示状态机执行成功，终止状态机执行并标记为成功               |
-| [COMPENSATION_TRIGGER](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L47-L47) | 补偿触发状态     | 用于触发补偿流程，当状态机需要回滚时触发已执行状态的补偿操作 |
-| [SUB_STATE_MACHINE](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L52-L52) | 子状态机状态     | 调用另一个状态机作为子流程，支持状态机的嵌套调用和组合       |
-| [SUB_MACHINE_COMPENSATION](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L57-L57) | 子状态机补偿状态 | 专门用于补偿子状态机的执行结果                               |
-| [SCRIPT_TASK](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L62-L62) | 脚本任务状态     | 执行脚本代码，支持通过脚本引擎执行动态逻辑                   |
-| [LOOP_START](file:///Users/tom/IdeaProjects/incubator-seata-2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L67-L67) | 循环开始状态     | 支持循环执行某些状态逻辑                                     |
+
+| [SERVICE_TASK](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L27-L27) | 服务任务状态     | 执行具体的业务逻辑，对应实际的服务调用，是状态机中最常用的状态类型 |
+
+| [CHOICE](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L32-L32) | 选择状态         | 用于条件分支判断，根据条件表达式的结果决定下一步执行哪个状态 |
+
+| [FAIL](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L37-L37) | 失败状态         | 表示状态机执行失败，终止状态机执行并标记为失败               |
+
+| [SUCCEED](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L42-L42) | 成功状态         | 表示状态机执行成功，终止状态机执行并标记为成功               |
+
+| [COMPENSATION_TRIGGER](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L47-L47) | 补偿触发状态     | 用于触发补偿流程，当状态机需要回滚时触发已执行状态的补偿操作 |
+
+| [SUB_STATE_MACHINE](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L52-L52) | 子状态机状态     | 调用另一个状态机作为子流程，支持状态机的嵌套调用和组合       |
+
+| [SUB_MACHINE_COMPENSATION](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L57-L57) | 子状态机补偿状态 | 专门用于补偿子状态机的执行结果                               |
+
+| [SCRIPT_TASK](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L62-L62) | 脚本任务状态     | 执行脚本代码，支持通过脚本引擎执行动态逻辑                   |
+
+| [LOOP_START](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L67-L67) | 循环开始状态     | 支持循环执行某些状态逻辑                                     |
 
 - 事务执行
 
@@ -435,7 +439,7 @@ flowchart TD
 
 ```
 
-![mermaid-diagram (1).png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/mermaid-diagram (1)_1760497128502.png)
+![mermaid-diagram (1).png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/mermaid-diagram%20%281%29_1760497128502.png)
 
 - 事务补偿
 
@@ -465,10 +469,10 @@ flowchart TD
 
 ## XA模式
 
-> 以 XA 协议的机制来管理分支事务的一种事务模式。<font color='red'>对业务无侵入，但性能差，属于悲观锁</font>
+> 以 XA 协议的机制来管理分支事务的一种事务模式。<span class="text-red">对业务无侵入，但性能差，属于悲观锁</span>
 
 ![img](https://seata.apache.org/img/doc/TB1hSpccIVl614jSZKPXXaGjpXa-1330-924.png)
 
 也是一种2PC分布式提交方式，利用数据库等可以手动控制事务提交，回滚，来统一管控整体事务的提交回滚等。
 
-> 由于不同事务执行顺序不固定，可能出现死锁，需考虑事务超时场景。
+> <span class="text-red">**由于不同事务执行顺序不固定，可能出现死锁，需考虑事务超时场景。**</span>

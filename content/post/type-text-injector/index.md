@@ -50,9 +50,13 @@ tags:
 ## 支持平台
 
 | 平台 | 注入后端 | 前置依赖 | GUI |
+
 | --- | --- | --- | --- |
+
 | macOS | `osascript` keycode（最稳，能进虚拟机） | 系统自带；需授予「辅助功能」权限 | ✅ |
+
 | Linux | `xdotool`（逐字 type / key） | 需安装 `xdotool`（如 `apt install xdotool`） | ✅（X11；Wayland 需 ydotool） |
+
 | Windows | `enigo`（Win32 SendInput） | 自动包含，无需额外依赖 | ✅（glow / OpenGL 后端） |
 
 Release 页提供三个平台编译好的可执行文件，开箱即用（Windows 版需本机有 VC++ 运行库，一般已自带）。
@@ -148,11 +152,17 @@ echo "hello world" | ./type-text     # 直接喂一行
 位置无关，支持位置参数：
 
 | 写法 | 含义 |
+
 | --- | --- |
+
 | `./type-text` | 默认：准备 5 秒，每键间隔 50ms |
+
 | `./type-text 10` | 第 1 个数字 = **准备秒数**（注入前的倒计时） |
+
 | `./type-text 5 80` | 第 2 个数字 = **每键间隔毫秒**（虚拟机丢字就调大这个） |
+
 | `./type-text -n` | 只预览解析结果，不真正注入键盘（调试用） |
+
 | `./type-text -p` | 自检：打一行标记，确认注入是否生效 |
 
 ### 虚拟机里还漏字怎么办

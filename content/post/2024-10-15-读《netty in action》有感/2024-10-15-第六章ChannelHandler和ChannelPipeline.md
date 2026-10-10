@@ -15,10 +15,15 @@ tags:
 #### Channel的生命周期
 
 | 状态                | 描述                                                         |
+
 | ------------------- | ------------------------------------------------------------ |
+
 | ChannelUnregistered | Channel已经被创建，但还未注册到EventLoop                     |
+
 | ChannelRegistered   | Channel已经被注册到了EventLoop                               |
+
 | ChannelActive       | Channel处于活动状态（已经连接到它的远程节点）可以接收和发送数据了 |
+
 | ChannelInactive     | Channel没有连接到远程节点                                    |
 
 ``` mermaid
@@ -31,9 +36,13 @@ graph TD
 #### ChannelHandler的生命周期
 
 | 类型            | 描述                                              |
+
 | --------------- | ------------------------------------------------- |
+
 | handlerAdded    | 当把ChannelHandler添加到ChannelPipeline中时被调用 |
+
 | handlerRemoved  | 当从ChannelPipeline中移除ChannelHandler时被调用   |
+
 | exceptionCaught | 当处理过程中在ChannelPipeline中有错误产生时被调用 |
 
 ChannelHandler下有两个重要的子接口
@@ -92,9 +101,13 @@ ChannelPipeline的头部和尾部取决于该事件是入站还是出站的。Ne
 - 修改ChannelPipeline
 
 | 名称                                 | 描述                                                         |
+
 | ------------------------------------ | ------------------------------------------------------------ |
+
 | addFirstaddBefore \n addAfteraddLast | 将一个ChannelHandler添加到ChannelPipeline中                  |
+
 | remove                               | 将一个ChannelHandler从ChannelPipeline中移除                  |
+
 | replace                              | 将ChannelPipeline中的一个ChannelHandler替换为另一个ChannelHandler |
 
 > 下面举例中每个Handler应为不同的Handler，这里为了方便全部使用相同的了。

@@ -27,14 +27,14 @@ MySQL的DDL操作会按照原来的表复制一份，并做相应的修改：
 7. 将表B重命名为A
 
 - MySQL 5.6
-官方开始支持更多的ALTER TABLE类型操作来避免数据拷贝，同时支持了在线上DDL的过程中不阻塞DML操作，真正意义上实现了Online DDL。然而并不是所有的DDL操作都支持在线操作。
+官方开始支持更多的ALTER TABLE类型操作来避免数据拷贝，同时支持了在线上DDL的过程中不阻塞DML操作，<span class="text-yellow">**真正意义上实现了Online DDL。然而并不是所有的DDL操作都支持在线操作。**</span>
 
 - MySQL 5.7
 在5.6的基础上又增加了新的特性，比如：增加了重命名索引支持，支持数值类型长度的增大和减少，支持了VARCHAR类型的在线增大等。基本逻辑和限制条件相比5.6并没有大的变化。
 
 - MySQL 8.0对DDL的实现重新进行了设计
 {{< hint "tip" >}}
-DDL 操作支持了原子特性。另外，Online DDL 的 ALGORITHM 参数增加了一个新的选项：INSTANT，只需要修改数据字典中的元数据，无需拷贝数据也无需重建表，同样也无需加排他 MDL 锁，原表数据也不受影响。整个 DDL 过程几乎瞬间完成，也不会阻塞 DML。
+DDL 操作支持了原子特性。另外，Online DDL 的 ALGORITHM 参数增加了一个新的选项：INSTANT，只需要修改数据字典中的元数据，无需拷贝数据也无需重建表，同样也无需加排他 MDL 锁，原表数据也不受影响。<span class="text-green">**整个 DDL 过程几乎瞬间完成，也不会阻塞 DML。**</span>
 {{< /hint >}}
 
 ## Online DDL的算法
@@ -69,7 +69,7 @@ DDL 操作支持了原子特性。另外，Online DDL 的 ALGORITHM 参数增加
 #### MySQL中，表级别的锁有2种
 
 一种是我们通常说的表锁，由InnoDB引擎实现，如lock tables...
-read/write,表锁影响较大，不常用。另一种表级别的锁是MDL（metadata lock），由server层实现，MDL我们不显示使用，是在访问数据库时由数据库自动加的，对表记录增删改查时，加MDL读锁；对表结构进行变更时，加MDL写锁。MDL锁，读读不互斥，读写、写写互斥。
+read/write,表锁影响较大，不常用。另一种表级别的锁是MDL（metadata lock），由server层实现，MDL我们不显示使用，是在访问数据库时由数据库自动加的，<span class="text-blue">对表记录增删改查时，加MDL读锁；对表结构进行变更时，加MDL写锁。MDL锁，读读不互斥，读写、写写互斥。</span>
 
 #### 哪些常用操作“锁表”
 
@@ -99,11 +99,11 @@ alter table tabl_name add column col_name col_type, algorithm=inplace,lock=none;
 - share：共享锁，执行DDL的表可以读，但是不可以写。
 - None：没有任何限制，执行DDL的表可读可写。
 - exclusive：排他锁，执行DDL的表不可以读也不可以写。
-- default：默认值，由MySQL来决定是否锁表。不建议使用，如果你确定你的DDL语句不会锁表，你可以不指定lock或者指定它的值为default，否则建议指定它的锁类型。
+- default：默认值，由MySQL来决定是否锁表。<span class="text-red">**不建议使用，如果你确定你的DDL语句不会锁表，你可以不指定lock或者指定它的值为default**</span>，否则建议指定它的锁类型。
 
 执行DDL操作时，algorithm选项可以不指定，这时候MySQL按照instant、inplace、copy的顺序自动选择合适的模式。也可以指定algorithm=default，也是同样的效果。如果指定algorithm选项，但不支持的话，会直接报错。
 
-> 在执行OnlineDDL之前，要在非业务高峰期去执行，并要确认待执行的表上面没有未提交的事务、锁等信息。可以通过如下的SQL语句查看是否有事务和锁等信息。
+> <span class="text-yellow">**在执行OnlineDDL之前，要在非业务高峰期去执行，并要确认待执行的表上面没有未提交的事务、锁等信息。**</span>可以通过如下的SQL语句查看是否有事务和锁等信息。
 
 ``` sql
 select * from information_schema.innodb_locks; //查询是否有锁
@@ -137,23 +137,14 @@ select * from information_schema.processlist;//数据库连接信息
 
 ![2024-5-1113_15_50-1715404549579.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1113_15_50-1715404549579_1747037825251.png)
 
-1. 初始化
-
-服务器会根据存储引擎的能力，操作的语句和用户指定的algorithm和lock选项来决定允许多大程度的并发。在这个阶段会创建一个可升级元素的共享锁（SU）来保护表定义。
-
-2. 执行
-
-这个阶段会准备并执行DDL语句，根据阶段1评估的结果来决定是否将元数据锁升级为排他锁（X），如果需要升级为排他锁，则只在DDL的准备阶段短暂的添加排他锁。
-
-3. 提交表定义
-
-元数据锁会升级为排他锁来更新表的定义。独占排他锁的时间非常短。
-
+1. **初始化**：服务器会根据存储引擎的能力，操作的语句和用户指定的algorithm和lock选项来决定允许多大程度的并发。在这个阶段会创建一个可升级元素的共享锁（SU）来保护表定义。
+2. **执行**：这个阶段会准备并执行DDL语句，根据阶段1评估的结果来决定是否将元数据锁升级为排他锁（X），如果需要升级为排他锁，则只在DDL的准备阶段短暂的添加排他锁。
+3. **提交表定义**：元数据锁会升级为排他锁来更新表的定义。独占排他锁的时间非常短。
 > 元数据锁（MDL，metadata lock）主要用于DDL和DML操作之间的并发访问控制，保护表结构（表定义）的一致，保证读写的正确性。MDL不需要显式的使用，在访问时会自动加上。
 
 Online DDL过程必须等待已经持有元数据锁的并发事务提交或者回滚才能继续执行。
 
-> 当Online DDL操作正在等待元数据锁时，该元数据锁会处于挂起状态，后续的所有事务都会被阻塞。
+> <span class="text-red">**当Online DDL操作正在等待元数据锁时，该元数据锁会处于挂起状态，后续的所有事务都会被阻塞。**</span>
 
 ## 评估Online DDL操作的性能
 
@@ -166,7 +157,7 @@ Online DDL操作的性能取决于是否发生了表的重建。在对大表执�
 
 ### Online DDL原理
 
-主要原理是将数据分为基线和增量两部分，开启一个单独线程变更基线数据，同时增量实时记录到row-log里。基线变更结束后，通过回放row-log，实现增量同步。
+<span class="text-blue">主要原理是将数据分为基线和增量两部分，开启一个单独线程变更基线数据，同时增量实时记录到row-log里。</span>基线变更结束后，通过回放row-log，实现增量同步。
 
 - 整个过程有几个关键点：
 
@@ -174,9 +165,7 @@ Online DDL操作的性能取决于是否发生了表的重建。在对大表执�
 2. 在基线变更完成后，开始回放row-log，由于row-log随着业务的写入在不断地追加，因此需要基于一个前提：row-log的回放速度高于业务写入的速度，否则可能一直追不上，schema变更就无法完成。
 3. schema生效阶段同样需要禁写，确保不会有新的写进来，新的schema开始生效。
 
-- instant ddl
-
-有点类似于X-DBFast DDL。其余和Online DDL的基本原理保持不变。对于MySQL的Online DDL方案，需要说明的是：MySQL主备副本之间通过binlog同步， 主的schema变更完成后，才会写binlog同步给备库，然后备库才开始做DDL。假设一个ddl变更需要1小时，那么备库最多可能会延迟2倍的变更时间。若变更期间，主库发生故障，备库数据还未追平，则无法提供服务的。
+- **instant ddl**：有点类似于X-DBFast DDL。其余和Online DDL的基本原理保持不变。对于MySQL的Online DDL方案，需要说明的是：MySQL主备副本之间通过binlog同步， 主的schema变更完成后，才会写binlog同步给备库，然后备库才开始做DDL。假设一个ddl变更需要1小时，那么备库最多可能会延迟2倍的变更时间。若变更期间，主库发生故障，备库数据还未追平，则无法提供服务的。
 
 ### F1-Spanner架构的Online DDL
 
@@ -189,16 +178,14 @@ Online DDL操作的性能取决于是否发生了表的重建。在对大表执�
 - S1（absent）：变更前的状态
 - s2（delete-only）：只允许删除新二级索引，忽略新二级索引写入，不允许读新二级索引
 - s3（write-only）：当所有F1-Server都达到S2状态后，开始进入这一阶段，允许删除/写入新二级索引进kv层，不允许读新二级索引，并开始扫描基线数据，构造新的二级索引<key,value>到kv层。
-- s4（public):新二级索引对外可见（可读）
-
-F1论文详细论述了经过这4个状态的转变，如何保证一致性，过程较为复杂。
+- **s4（public):新二级索引对外可见（可读）**：F1论文详细论述了经过这4个状态的转变，如何保证一致性，过程较为复杂。
 ![2024-5-1317_29_15-1715592555187.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-05/2024-5-1317_29_15-1715592555187_1747037878748.png)
 
 ### copy算法
 
 较简单的实现方法，MySQL 会建立一个新的临时表，把源表的所有数据写入到临时表，在此期间无法对源表进行数据写入。MySQL 在完成临时表的写入之后，用临时表替换掉源表。这个算法主要被早期（<=5.5）版本所使用。
 
-### inplance算法
+### inplace 算法
 
 从5.6开始，常用的DDL都默认使用这个算法。inplace算法包含两类：inplace-no-rebuild和inplace-rebuild，两者的主要差异在于是否需要重建源表。
 
@@ -269,7 +256,7 @@ mysql8.0对表metadata结构做出了变更。8.0除了在表的metadata信息�
 - 不支持包含全文索引的表。
 - 仅支持使用mysql8.0新表空间格式的表。
 - 不支持临时表。
-- 包含instant列的表无法再旧版本的mysql上使用（即物理备份无法恢复）。
+- <span class="text-red">**包含instant列的表无法再旧版本的mysql上使用（即物理备份无法恢复）。**</span>
 - 在旧版本上，如果表或者表的索引已经corrupt，除非已经执行fix或者rebuild，否则升级到新版本后无法添加instant列。
 
 ## 各版本支持的 Online DDL语句
@@ -299,7 +286,7 @@ mysql8.0对表metadata结构做出了变更。8.0除了在表的metadata信息�
 修改列数据类型
 修改表字符集
 
-3. 我们常说的Online  DDL，其实是从DML操作的角度描述的，如果DDL操作不阻塞DML操作，那个这个DDL就是Online的。目前8.0默认非Online的DDL有：
+3. <span class="text-blue">我们常说的Online  DDL，其实是从DML操作的角度描述的</span>，如果DDL操作不阻塞DML操作，那个这个DDL就是Online的。目前8.0默认非Online的DDL有：
 - 新增全文索引
 - 新增空间索引
 - 删除主键
@@ -325,13 +312,15 @@ mysql8.0对表metadata结构做出了变更。8.0除了在表的metadata信息�
 - 再次将MDL S锁升级为MDL X锁，完成DDL操作，释放DML锁。
 
 {{< hint "warning" >}}
-真正执行 DDL 操作期间，确实是不会“锁表”的，但如果在第一阶段拿 MDL X 锁时无法正常获取，那就可能真的会“锁表”。
+真正执行 DDL 操作期间，<span class="text-red">**确实是不会“锁表”的，但如果在第一阶段拿 MDL X 锁时无法正常获取，那就可能真的会“锁表”。**</span>
 {{< /hint >}}
 
 ``` sql## session 1
 select sleep(500) from mytest.t1;
+
 ## session 2 
 optimize table mytest.t1;
+
 ## session 3
 select * from mytest.t1;
 

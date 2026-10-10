@@ -45,14 +45,8 @@ public class SocketServer {
 }
 ```
 
-- 目前的缺陷
-
-主程序采用单线程阻塞处理。同一时间只能处理一个连接，如果此连接没有处理结束，其他的客户端也无法连接。
-
-- 如何优化？
-
-在BIO的基础上，增加多线程操作，每次来一个线程就启动一个新的线程来处理。
-
+- **目前的缺陷**：<span class="text-red">**主程序采用单线程阻塞处理。同一时间只能处理一个连接，如果此连接没有处理结束，其他的客户端也无法连接。**</span>
+- **如何优化？**：在BIO的基础上，增加多线程操作，每次来一个线程就启动一个新的线程来处理。
 ```java
 //所有的操作都是阻塞的
 public class SocketServer {
@@ -90,7 +84,7 @@ public class SocketServer {
 
 ### 问题
 
-虽然可以同时处理多个请求了，但是当“C10K”时。会同时创建大量的线程，会占用大量的内存。
+<span class="text-red">**虽然可以同时处理多个请求了，但是当“C10K”时。会同时创建大量的线程，会占用大量的内存。**</span>
 
 {{< hint "info" >}}
 **C10K**：同时有 1 万请求打到服务器
@@ -100,13 +94,13 @@ public class SocketServer {
 
 ### 使用池化技术来优化
 
-如果使用线程池来处理请求，虽然可以同时处理部分请求，但是如果线程池的核心线程都被阻塞，就无法再处理其他请求了。（全部在阻塞队列中等待）
+<span class="text-red">**如果使用线程池来处理请求，虽然可以同时处理部分请求，但是如果线程池的核心线程都被阻塞，就无法再处理其他请求了**</span>。（全部在阻塞队列中等待）
 
 ### 使用虚拟线程
 
 其实上面所有的问题就可以在BIO的基础上直接使用虚拟线程技术来解决，但今天的重点不是这个下面只给出优化代码。
 
-> 但虚拟线程不适合则长时间的处理，尽量处理小任务，如果存在大量复杂的处理。虚拟线程仍然有问题。
+> <span class="text-yellow">**但虚拟线程不适合则长时间的处理，尽量处理小任务，如果存在大量复杂的处理。虚拟线程仍然有问题。**</span>
 
 ```java
 Thread.ofVirtual().start(()->{
@@ -143,7 +137,7 @@ public class NioServer {
 //                检测到连接
                 if (socketChannel != null) {
                     System.out.println("连接成功");
-//                    设置soocketChannel也是非阻塞
+//                    设置socketChannel也是非阻塞
                     socketChannel.configureBlocking(false);
 //                    把当前SocketChannel入队，方便后面轮询处理
                     channelList.add(socketChannel);
@@ -174,7 +168,7 @@ public class NioServer {
 
 ### 问题
 
-1. while（true）一直占用CPU，CPU的一个核心被占用了。
+1. <span class="text-red">**while（true）一直占用CPU，CPU的一个核心被占用了。**</span>
 2. 存在过多无用处理：如果暂存集合中数量特别多，且真正需要处理的请求可能只有一两个。但如果想要处理仍然需要遍历整个集合。
 
 - 优化剪枝
@@ -237,13 +231,13 @@ public class NioSelectorServer {
 
 通过上面的方式，可以完美解决普通NIO中的问题
 
-如果selector检测不到事件，就处于阻塞状态。不会占用CPU
+<span class="text-green">**如果selector检测不到事件，就处于阻塞状态。不会占用CPU**</span>
 
 不会存在多余处理，只有有事件的请求才会被程序处理。没有事件的连接都处于挂起状态。
 
 ### Selector
 
-> 允许一个线程同时管理多个Channel，选择器可以在非阻塞的模式下高效处理多个连接，减少线程切换的开销。
+> <span class="text-gray">允许一个线程同时管理多个Channel，选择器可以在非阻塞的模式下高效处理多个连接，减少线程切换的开销。</span>
 
 - 选择器的核心作用
 
@@ -262,24 +256,22 @@ public class NioSelectorServer {
 - 事件
 
 | 事件类型事件类型 | 描述描述                                          |
+
 | ---------------- | ------------------------------------------------- |
+
 | `OP_ACCEPT`      | 服务器端 `ServerSocketChannel` 接收到新的连接请求 |
+
 | `OP_CONNECT`     | 客户端 `SocketChannel` 连接成功                   |
+
 | `OP_READ`        | 通道中有数据可读                                  |
+
 | `OP_WRITE`       | 通道可以写入数据                                  |
 
 由java.nio.channels.spi类中创建，取系统默认的java.nio.channels.spi.SelectorProvider。
 
 ### linux：epoll
 
-- 工作原理
-
-`epoll_create()`：创建 `epoll` 实例，返回一个文件描述符（FD）。
-
-`epoll_ctl()`：向 `epoll` 实例中添加、修改或删除文件描述符（FD）。
-
-`epoll_wait()`：等待事件发生，并返回就绪的文件描述符。
-
+- **工作原理**：`epoll_create()`：创建 `epoll` 实例，返回一个文件描述符（FD）。 `epoll_ctl()`：向 `epoll` 实例中添加、修改或删除文件描述符（FD）。 `epoll_wait()`：等待事件发生，并返回就绪的文件描述符。
 - 相比传统的优点
 
 1. 事件驱动：相比 `select` 和 `poll`，`epoll` 采用 **事件驱动** 机制，避免了轮询所有文件描述符的开销。
@@ -288,12 +280,7 @@ public class NioSelectorServer {
 
 ### macOS和BSD：kqueue
 
-- 工作原理：
-
-`kqueue()`：创建一个事件队列。
-
-`kevent()`：用于注册、修改或删除事件，并等待事件发生。
-
+- **工作原理：**：`kqueue()`：创建一个事件队列。 `kevent()`：用于注册、修改或删除事件，并等待事件发生。
 - 优点：
 
 1. **低开销**：`kqueue` 采用 **事件驱动** 机制，减少了 CPU 轮询开销。
@@ -301,14 +288,7 @@ public class NioSelectorServer {
 
 ### Windows：IOCP
 
-- 工作原理：
-
-`CreateIoCompletionPort()`：创建一个完成端口（Completion Port）。
-
-`PostQueuedCompletionStatus()`：用于提交 I/O 任务。
-
-`GetQueuedCompletionStatus()`：用于获取完成的 I/O 任务。
-
+- **工作原理：**：`CreateIoCompletionPort()`：创建一个完成端口（Completion Port）。 `PostQueuedCompletionStatus()`：用于提交 I/O 任务。 `GetQueuedCompletionStatus()`：用于获取完成的 I/O 任务。
 - 优点：
 
 1. **异步 I/O**：IOCP 采用 **异步事件驱动** 机制，减少了线程切换开销。
@@ -316,12 +296,7 @@ public class NioSelectorServer {
 
 ### 其他系统：select或poll
 
-- 工作原理
-
-`select()`：遍历所有文件描述符，检查哪些是可读、可写或有异常。
-
-`poll()`：采用类似 `select` 的方式，但使用 **动态数组** 代替固定大小的 FD 集合。
-
+- **工作原理**：`select()`：遍历所有文件描述符，检查哪些是可读、可写或有异常。 `poll()`：采用类似 `select` 的方式，但使用 **动态数组** 代替固定大小的 FD 集合。
 - 缺点：
 
 1. **性能较低**：`select` 需要遍历整个 FD 集合，导致 **O(n)** 级别的时间复杂度。
@@ -341,21 +316,26 @@ Java NIO 选择器的实现位于 `sun.nio.ch` 包中，不同操作系统会加
 - 性能对比
 
 | 操作系统        | 底层实现          | 主要特点                       |
+
 | --------------- | ----------------- | ------------------------------ |
+
 | **Linux**       | `epoll`           | 高效事件驱动，适用于大规模连接 |
+
 | **macOS / BSD** | `kqueue`          | 低开销，支持多种事件类型       |
+
 | **Windows**     | `IOCP`            | 异步 I/O，适用于高吞吐量服务器 |
+
 | **其他系统**    | `select` / `poll` | 适用于较旧系统，但性能较低     |
 
 <mark>10 万级别的请求 IO 多路可以勉强处理</mark>
 
 ### 依然有缺点
 
-当连接数量建立的比较多，且每个连接收发都相当频繁时，一次selectkey操作可能就会出现上万个事件需要处理。大部分请求处理慢，造成用户体验极差，且可能导致服务器暂时无法处理，
+<span class="text-red">**当连接数量建立的比较多，且每个连接收发都相当频繁时，一次selectkey操作可能就会出现上万个事件需要处理。**</span>大部分请求处理慢，造成用户体验极差，且可能导致服务器暂时无法处理，
 
 ## 反应器模式（Reactor）
 
-> 用于处理并发请求的事件设计模式。通过一个中央事件处理器（Reactor）来监听资源上的事件，在事件发生时将这些事件分派到注册的事件处理器，从而实现高效的并发处理。能够在单线程中管理大量连接，提高系统的吞吐量和响应性。
+> <span class="text-gray">用于处理并发请求的事件设计模式。通过一个中央事件处理器（Reactor）来监听资源上的事件</span>，在事件发生时将这些事件分派到注册的事件处理器，从而实现高效的并发处理。能够在单线程中管理大量连接，提高系统的吞吐量和响应性。
 
 1. 资源（Resources）
    - 资源是生成事件的实体，如网络连接（Socket Handle）或文件描述符。
@@ -363,7 +343,7 @@ Java NIO 选择器的实现位于 `sun.nio.ch` 包中，不同操作系统会加
 2. 同步事件解多路器（Synchronous Event Demultiplexer）
    - 使用事件循环（event loop）来阻塞等待所有资源的事件。
    - 当资源准备好进行同步操作且不会阻塞时，解多路器将资源发送到分发器。
-   - CSDN 文章（web:3）提到，这部分通常通过 select、poll 或 epoll 等系统调用实现。
+   - （CSDN）提到，这部分通常通过 select、poll 或 epoll 等系统调用实现。
 3. 分发器（Dispatcher）
    - 负责处理请求处理器的注册和注销。
    - 将资源分发到相关的请求处理器，确保事件被正确处理。
@@ -390,7 +370,7 @@ Java NIO 选择器的实现位于 `sun.nio.ch` 包中，不同操作系统会加
 
 **高效处理高并发**：单个线程可以处理大量连接，适合高吞吐量场景，如 Web 服务器。
 
-例如，博客园文章（web:9）提到，反应器模式代替多线程处理方式，节省系统资源，提高吞吐量。
+例如，（博客园）提到，反应器模式代替多线程处理方式，节省系统资源，提高吞吐量。
 
 ### 缺点
 
@@ -432,13 +412,13 @@ Java NIO 选择器的实现位于 `sun.nio.ch` 包中，不同操作系统会加
    - 抽象数据管道，包含双向链表的ChannelHandler，用于拦截和处理IO事件。
    - 支持添加、删除handler，处理入站和出站事件。
 
-   > 入站事件从头到尾走handler，出站事件从尾到头走handler
+   > <span class="text-blue">入站事件从头到尾走handler，出站事件从尾到头走handler</span>
 
 ### 工作原理
 
 1. BossGroup监听accept事件，当有新连接时，生成NioSocketChannel，并将其注册到WorkerGroup的某个NioEventLoop的Selector上。
 2. WorkerGroup的NioEventLoop轮询Selector，处理注册的Channel上的读写事件。
-3. 当有IO事件发生时，通过ChannelPipline中的handler链处理数据，确保数据流的连续性和高效性。
+3. 当有IO事件发生时，通过ChannelPipeline中的handler链处理数据，确保数据流的连续性和高效性。
 
 ### 优点
 

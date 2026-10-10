@@ -52,16 +52,27 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 ### 常用API
 
 | API                      | 备注                                                         |
+
 | ------------------------ | ------------------------------------------------------------ |
+
 | 虚拟线程Virtual threads  | 虚拟线程是轻量级线程的一种，可以减少编写、维护和调试高吞吐量并发量的应用程序。 |
+
 | 结构化并发               | 将不同线程中运行的相关任务组视为同一个工作单元，从而简化异常处理和取消，提高可靠性和增强可观察性。 |
+
 | 异步任务调度框架         | Executor接口根据一组执行策略，标准化了异步任务的调用、调度、执行和控制等。使任务可以在线程池中执行，或单个线程中执行，开发人员可以创建任意执行策略的自定义实现。内置实现了可配置的策略，如：队列长度限制，拒绝策略，这些策略可以防止资源失控，提高了程序的稳定性。 |
+
 | Fork/join 框架           | 使线程池高效运行大量任务。基于“工作窃取”（workstealing）技术使所有工作线程保持繁忙，以充分利用多个处理器。 |
+
 | 并发集合                 | [`Queue`](https://docs.oracle.com/javase/8/docs/api/java/util/Queue.html)、[`BlockingQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 和 [`BlockingDeque`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingDeque.html) |
+
 | 原子类                   | 已原子方式创建的变量类，提供高性能原子计算、比较和使用。可以实现高性能并发算法、计数器、序列号生成等。 |
+
 | 同步器（Synchronizers）  | 通用的同步类，促进线程之间的协调。主要包括：[Semaphore](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Semaphore.html), [CyclicBarrier](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CyclicBarrier.html), [CountdownLatch](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountDownLatch.html), [Phaser](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Phaser.html), 和 [Exchanger](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Exchanger.html). |
-| 锁                       | 虽然锁是通过synchronized关键字内置到java中的，但内置的monitor锁存在许多限制。<br />lock包下提供与synchronized同效的高性能锁实现，且还支持指定超时时间，不同的锁、同时持有多个锁，以及锁的打断、等待、获取等操作。 |
+
+| 锁                       | <span class="text-red">**虽然锁是通过synchronized关键字内置到java中的，但内置的monitor锁存在许多限制。**</span><br />lock包下提供与synchronized同效的高性能锁实现，且还支持指定超时时间，不同的锁、同时持有多个锁，以及锁的打断、等待、获取等操作。 |
+
 | 纳秒级计时器（nanoTime） | [`System.nanoTime`](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#nanoTime--) 允许访问纳秒级时间源，用来操作各种锁时间。实现精度主要取决于操作系统平台。 |
+
 | 线程局部变量             | 与常规变量不同，每个访问线程局部变量的线程，都有自己独立初始化的变量副本。 |
 
 ## 虚拟线程（Virtual threads）
@@ -74,17 +85,17 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 
 ### 什么是平台线程？
 
-平台线程被是操作系统的包装实现。平台线程在底层的操作系统线程上运行java代码，并且平台线程整个生命周期都是由操作系统线程完成的。因此，可用的平台线程数量受限于操作系统线程数量。
+平台线程被是操作系统的包装实现。<span class="text-blue">平台线程在底层的操作系统线程上运行java代码，并且平台线程整个生命周期都是由操作系统线程完成的。</span>因此，可用的平台线程数量受限于操作系统线程数量。
 
-平台线程通常具有较大的线程栈和其他由操作系统维护的资源。它们适合执行各种任务，但是可能是一种有限的资源。（操作系统的线程数有限）
+<span class="text-red">**平台线程通常具有较大的线程栈和其他由操作系统维护的资源。它们适合执行各种任务，但是可能是一种有限的资源。**</span>（操作系统的线程数有限）
 
 ### 什么是虚拟线程？
 
-像平台线程一样，虚拟线程也是java.lang.Thread类的一个实例。然而虚拟线程并不绑定特定的操作系统线程上。虚拟线程仍然在操作系统线程上运行。然而，当在虚拟线程中运行的代码调用阻塞I/O操作时，java会暂停该虚拟线程，知道它可以恢复。与被暂停的虚拟线程相关联的操作系统线程可以自由的为其他虚拟线程执行操作。
+像平台线程一样，虚拟线程也是java.lang.Thread类的一个实例。<span class="text-blue">然而虚拟线程并不绑定特定的操作系统线程上。虚拟线程仍然在操作系统线程上运行。</span>然而，当在虚拟线程中运行的代码调用阻塞I/O操作时，java会暂停该虚拟线程，知道它可以恢复。与被暂停的虚拟线程相关联的操作系统线程可以自由的为其他虚拟线程执行操作。
 
 虚拟线程的实现方式类似于虚拟内存。为了模拟大量内存，操作系统将一个大的虚拟空间映射到有限的RAM上。同样，为了模拟大量线程，java将大量虚拟线程映射到少量的操作系统线程上。
 
-与平台线程不同，虚拟线程通常具有较浅的调用栈，只执行少量操作，例如：单个HTTP客户端调用或单个JDBC查询。虽然虚拟线程支持线程局部变量和可继承线程局部变量，但需要谨慎使用，因为单个JVM可能支持数百万个虚拟线程。
+与平台线程不同，虚拟线程通常具有较浅的调用栈，只执行少量操作，例如：单个HTTP客户端调用或单个JDBC查询。<span class="text-yellow">**虽然虚拟线程支持线程局部变量和可继承线程局部变量，但需要谨慎使用，因为单个JVM可能支持数百万个虚拟线程。**</span>
 
 > 虚拟线程适合运行大部分时间被阻塞的任务，这些任务通常在等待i/o操作完成。虚拟线程不适合运行长时间的CPU密集型操作。
 
@@ -93,7 +104,7 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 在高吞吐量的并发应用程序中使用虚拟线程，特别是那些由大量并发任务组成的应用程序，这些任务大部分时间都在等待。服务器应用程序就是高吞吐量应用程序的例子，因为它们通常执行许多阻塞I/O操作的客户端请求。
 
 {{< hint "tip" >}}
-虚拟线程并不是更快的线程：它的运行速度和平台线程没有区别。虚拟线程存在的目的是为了提供规模（更高的吞吐量），而不是速度（更低的延迟）。
+<span class="text-yellow">**虚拟线程并不是更快的线程：它的运行速度和平台线程没有区别。**</span>虚拟线程存在的目的是为了提供规模（更高的吞吐量），而不是速度（更低的延迟）。
 {{< /hint >}}
 
 ### 创建和使用虚拟线程
@@ -258,7 +269,7 @@ public class EchoClient {
 
 ### 虚拟线程使用指南
 
-- 非阻塞风格开发的代码，即使使用虚拟线程，也不会有多大提升
+- <span class="text-red">**非阻塞风格开发的代码，即使使用虚拟线程，也不会有多大提升**</span>
 
 ``` java
 CompletableFuture.supplyAsync(info::getUrl, pool)
@@ -270,7 +281,7 @@ CompletableFuture.supplyAsync(info::getUrl, pool)
    .exceptionally(t -> { t.printStackTrace(); return null; });
 ```
 
-- 以同步风格开发的代码，使用虚拟线程将带来极大的提升
+- <span class="text-green">**以同步风格开发的代码，使用虚拟线程将带来极大的提升**</span>
 
 ``` java
 try {
@@ -284,7 +295,7 @@ try {
 }
 ```
 
-- 将每个并发任务表示为一个虚拟线程；<font color='red'>永远不用对虚拟线程进行池化</font>
+- 将每个并发任务表示为一个虚拟线程；<span class="text-red">永远不用对虚拟线程进行池化</span>
 
 <mark>尽管虚拟线程的行为与平台线程相同，但不是相同的程序概念。</mark>
 
@@ -342,9 +353,9 @@ Result foo() {
 }
 ```
 
-> <font color='red'>线程池限制并发数量只是附带效果，线程池主旨在于共享稀缺资源，而虚拟线程不是稀缺资源，因此永远不应被池化。</font>
+> <span class="text-red">线程池限制并发数量只是附带效果，线程池主旨在于共享稀缺资源，而虚拟线程不是稀缺资源，因此永远不应被池化。</span>
 
-- 使用semaphore来限制虚拟线程的并发数量
+- <span class="text-green">**使用semaphore来限制虚拟线程的并发数量**</span>
 
 ``` java
 Semaphore sem = new Semaphore(10);
@@ -384,11 +395,9 @@ try {
 
 ## 结构化并发
 
-> 将运行在不同线程中的相关任务组视为一个工作单元，从而简化错误处理和取消操作，提高可靠性，增强可观察性。
+> <span class="text-blue">将运行在不同线程中的相关任务组视为一个工作单元，从而简化错误处理和取消操作，提高可靠性，增强可观察性。</span>
 
-- StructuredTaskScope
-
-可以将每个子任务分叉，让它们在各自独立线程中运行。StructuredTaskScope可以确保在主任务继续之前完成所有子任务。或者可以指定某个子任务成功时程序继续运行。
+- **StructuredTaskScope**：可以将每个子任务分叉，让它们在各自独立线程中运行。StructuredTaskScope可以确保在主任务继续之前完成所有子任务。或者可以指定某个子任务成功时程序继续运行。
 
 ### StructuredTaskScope的用法
 
@@ -419,14 +428,8 @@ try {
 
 ### ShutdownOnSuccess和ShutdownOnFailure
 
-- ShutdownOnFailure
-
-其中一个子任务失败，就取消所有子任务。
-
-- ShutdownOnSuccess
-
-其中一个子任务成功，就取消剩余所有的子任务。
-
+- **ShutdownOnFailure**：其中一个子任务失败，就取消所有子任务。
+- **ShutdownOnSuccess**：其中一个子任务成功，就取消剩余所有的子任务。
 ``` java
 public class SCRandomTasks {
 

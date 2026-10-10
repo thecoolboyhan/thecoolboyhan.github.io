@@ -20,7 +20,7 @@ tags:
 
 > 上锁方式与表名息息相关，如果上锁时使用别名，那所有的操作都需要通过相同别名才有效。（原名称或其他别名访问上表锁数据，则无锁）
 
-表级锁的优点是实现简单，性能开销小，但并发性较低，因为整个表被锁定，可能会导致其他会话等待。
+<span class="text-red">**表级锁的优点是实现简单，性能开销小，但并发性较低，因为整个表被锁定，可能会导致其他会话等待。**</span>
 
 ### 读锁（READ LOCK)
 
@@ -38,8 +38,10 @@ tags:
 mysql> LOCK TABLES t1 READ;
 mysql> SELECT COUNT(*) FROM t1;
 +----------+
+
 | COUNT(*) |
 +----------+
+
 |        3 |
 +----------+
 mysql> SELECT COUNT(*) FROM t2;
@@ -76,7 +78,7 @@ mysql> INSERT INTO t SELECT * FROM t AS t1;
 
 ### 共享锁(Shared Lock，S Lock)
 
-> 允许多个事务同时读取同一行（<font color='red'>与读锁并不是同一个锁，上锁范围根据where语句有关，一般会锁定固定的行</font>），但禁止任何事务写入。
+> 允许多个事务同时读取同一行（<span class="text-red"><span class="text-yellow">**与读锁并不是同一个锁，上锁范围根据where语句有关，一般会锁定固定的行**</span></span>），但禁止任何事务写入。
 
 - 锁定范围，特定行，仅影响被锁定的行。
 - 适用场合：读取操作需要保护数据的一致性，但允许并发读取。
@@ -108,10 +110,15 @@ SELECT ... FOR UPDATE或UPDATE/DELETE语句自动获取。
 - 意向锁与其他锁是否冲突
 
 |      | `X`  | `IX` | `S`  | `IS` |
+
 | :--- | :--- | :--- | :--- | ---- |
+
 | `X`  | 冲突 | 冲突 | 冲突 | 冲突 |
+
 | `IX` | 冲突 | 相容 | 冲突 | 相容 |
+
 | `S`  | 冲突 | 冲突 | 相容 | 相容 |
+
 | `IS` | 冲突 | 相容 | 相容 | 相容 |
 
 ``` sql
@@ -120,7 +127,7 @@ TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
 
 ### 记录锁（Record Lock）
 
-> 锁定一个特定的索引记录<font color='red'>**注意上锁范围为索引，可能是聚簇索引，也可以是普通索引**</font>
+> 锁定一个特定的索引记录<span class="text-red">**<span class="text-yellow">**注意上锁范围为索引，可能是聚簇索引，也可以是普通索引**</span>**</span>
 
 - 锁定范围：特定的索引记录，如：SELECT c1 FROM t WHERE c1 = 10 FOR UPDATE;会锁定c1=10的行。
 - 使用场景：精确锁定特定的行
@@ -131,15 +138,15 @@ TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
 
 锁定索引之间的间隙，防止其他事务插入新行，保护数据一致性。
 
-<font color='red'>**读已提交级别禁用间隙锁，只有在可重复读级别存在**</font>
+<span class="text-red">**<span class="text-yellow">**读已提交级别禁用间隙锁，只有在可重复读级别存在**</span>**</span>
 
 - 锁定范围：索引记录间的间隙，例如索引值10和11之间的间隙（并不会锁定特定的行）
 
 ### Next-Key Lock
 
-记录锁和间隙锁的组合，即锁定一个索引记录，也锁定该记录前面的间隙。
+<span class="text-blue">记录锁和间隙锁的组合，即锁定一个索引记录，也锁定该记录前面的间隙。</span>
 
-- 上锁范围：一个索引及其前面的间隙，<font color='red'>**左开右闭，一定是间隙锁在前，记录锁在后。(negative infinity, 10]**</font>
+- 上锁范围：一个索引及其前面的间隙，<span class="text-red">**左开右闭，一定是间隙锁在前，记录锁在后。(negative infinity, 10]**</span>
 
 - 可重复读级别下可以防止幻读。
 
@@ -147,7 +154,7 @@ TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
 
 在插入操作时，表示事务打算插入一个新行
 
-- 锁定范围：插入位置的间隙，允许多个事务并发插入非冲突行。**<font color='red'>如果是冲突行，会阻塞后插入的行</font>**
+- 锁定范围：插入位置的间隙，允许多个事务并发插入非冲突行。**<span class="text-red">如果是冲突行，会阻塞后插入的行</span>**
 
 - 作用：提高插入操作的并发性。
 
@@ -172,8 +179,10 @@ TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
 mysql> LOCK TABLES t1 READ;
 mysql> SELECT COUNT(*) FROM t1;
 +----------+
+
 | COUNT(*) |
 +----------+
+
 |        3 |
 +----------+
 mysql> SELECT COUNT(*) FROM t2;
@@ -193,7 +202,7 @@ mysql> INSERT INTO t SELECT * FROM t AS t1;
 
 ### 行锁、间隙锁和Next-Key锁实战
 
-初始表结构z及其数据如下
+初始表结构及其数据如下
 
 ![1753014382673.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1753014382673_1753014382692.png)
 
@@ -235,7 +244,7 @@ select *
 from z where b=3 for update ;
 ```
 
-就算事务A通过普通索引来对b=3加锁，但读已提交隔离级别下。InnoDB并<font color='red'>**不会对二级索引上锁，而是在第一次上锁时，通过二级索引确定具体会锁聚簇索引的某几行。一旦锁定行数确定，后续就算其他事务以相同条件的二级索引插入数据，也不会有锁冲突。**</font>
+就算事务A通过普通索引来对b=3加锁，但读已提交隔离级别下。InnoDB并<span class="text-red">**<span class="text-yellow">**不会对二级索引上锁，而是在第一次上锁时，通过二级索引确定具体会锁聚簇索引的某几行。**</span>一旦锁定行数确定，后续就算其他事务以相同条件的二级索引插入数据，也不会有锁冲突。**</span>
 
 - 如果上锁时的条件为范围呢？
 
@@ -283,10 +292,7 @@ insert into z value (6,3);
 
 > 可以正常提交，无锁。
 
-- 结论
-
-在读已提交隔离级别下，就算尝试通过主键范围上锁，也只能在上锁时锁定具体的行，后续其他事务插入上锁时满足条件的新行，也不会被阻塞。
-
+- **结论**：在读已提交隔离级别下，就算尝试通过主键范围上锁，也只能在上锁时锁定具体的行，后续其他事务插入上锁时满足条件的新行，也不会被阻塞。
 > 所以读已提交情况下，只会通过主键索引来上锁，不会锁定二级索引，就算上锁时条件是二级索引，也只会被转换成锁定满足条件的主键索引。
 
 #### 可重复读
@@ -314,10 +320,7 @@ INSERT INTO z (a, b) VALUES
 
 现在尝试在可重复读的情况下，再做一遍上次的操作
 
-- 通过二级索引来上锁
-
-事务A锁定b=3的二级索引
-
+- **通过二级索引来上锁**：事务A锁定b=3的二级索引
 ```sql
 select *
 from z where b=3 for update ;
@@ -355,10 +358,7 @@ insert into z value (8,6);
 
 > 成功，无锁
 
-- 分析
-
-通过如下语句获取事务A锁定的具体的行
-
+- **分析**：通过如下语句获取事务A锁定的具体的行
 ``` sql
 SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_locks;
 ```
@@ -366,27 +366,25 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 输出信息如下：
 
 | INDEX_NAME | LOCK_MODE     | LOCK_STATUS | LOCK_DATA |
+
 | ---------- | ------------- | ----------- | --------- |
+
 | NULL       | IX            | GRANTED     | NULL      |
+
 | b          | X,GAP         | GRANTED     | 6, 7      |
+
 | b          | X             | GRANTED     | 3, 5      |
+
 | PRIMARY    | X,REC_NOT_GAP | GRANTED     | 5         |
 
-<font color='red'> 首先搞清楚，通过二级索引上锁时，数据是按照二级索引来排序的。（不是按照主键来排序的）。如果二级索引相同的值，则再按照主键排序。</font>
+<span class="text-red"> 首先搞清楚，<span class="text-yellow">**通过二级索引上锁时，数据是按照二级索引来排序的。（不是按照主键来排序的）。**</span>如果二级索引相同的值，则再按照主键排序。</span>
 
 1. 意向排他锁，锁定具体表，但并不冲突
-2. 第二行的x,GAP锁：间隙锁，锁定b=6，a=7到上一个数据之前的间隙，<font color='red'>b=6,a=7数据本身没有被锁定，可以修改</font>
-3. 第三行x：Next-Key锁，锁定范围为：b=3，a=5数据本身，和它前面的一条数据的间隙（不包含前面的数据），也就是（b=1,a=3）之后的间隙。<font color='red'>a=3的数据本身可以被修改，但无法修改b>=2||b<=6的数据，因为都满足Next-Key锁的范围或GAP锁的范围</font>
+2. 第二行的x,GAP锁：间隙锁，锁定b=6，a=7到上一个数据之前的间隙，<span class="text-red">b=6,a=7数据本身没有被锁定，可以修改</span>
+3. 第三行x：Next-Key锁，锁定范围为：b=3，a=5数据本身，和它前面的一条数据的间隙（不包含前面的数据），也就是（b=1,a=3）之后的间隙。<span class="text-red">a=3的数据本身可以被修改，但无法修改b>=2||b<=6的数据，因为都满足Next-Key锁的范围或GAP锁的范围</span>
 4. 第四行X,REC_NOT_GAP：普通行锁，上锁范围为主键索引a=5，表示5这行数据本身被锁定
 
-- 但是有特殊情况
-
-为什么要在做本次实验前先清楚表中数据重新插入？
-
-因为如果不删除，第一次实验时：插入的数据及时后续被删除，依然会影响上锁范围。导致锁有问题。
-
-可见，<font color='red'>在读已提交的隔离级别下，GAP和Next-Key锁并不稳定，被删除的数据可能会影响上锁的范围。</font>
-
+- **但是有特殊情况**：为什么要在做本次实验前先清楚表中数据重新插入？ 因为如果不删除，第一次实验时：插入的数据及时后续被删除，依然会影响上锁范围。导致锁有问题。 可见，<span class="text-red"><span class="text-yellow">**在读已提交的隔离级别下，GAP和Next-Key锁并不稳定，被删除的数据可能会影响上锁的范围。**</span></span>
 - 通过主键上锁
 
 ```sql
@@ -401,49 +399,61 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 ```
 
 | INDEX_NAME | LOCK_MODE     | LOCK_STATUS | LOCK_DATA |
+
 | ---------- | ------------- | ----------- | --------- |
+
 | NULL       | IX            | GRANTED     | NULL      |
+
 | PRIMARY    | X,REC_NOT_GAP | GRANTED     | 5         |
 
 只会在固定a=5行来上锁。
 
 - 总结
 
-**<font color='red'>在可重复读隔离级别下，通过二级索引上锁，数据会按照二级索引+主键索引的情况排序。即使只是通过排他锁锁定固定值的二级索引。</font>**
+**<span class="text-red">在可重复读隔离级别下，通过二级索引上锁，数据会按照二级索引+主键索引的情况排序。即使只是通过排他锁锁定固定值的二级索引。</span>**
 
-**<font color='red'>InnoDB也会在锁定值前：上一个Next-Key锁，锁定范围为上一条数据（不包含），到本条数据。</font>**
+**<span class="text-red">InnoDB也会在锁定值前：上一个Next-Key锁，锁定范围为上一条数据（不包含），到本条数据。</span>**
 
-**<font color='red'>在锁定值后：上一个GAP间隙锁，锁定范围为指定值到下一条数据（不包含）的间隙。</font>**
+**<span class="text-red">在锁定值后：上一个GAP间隙锁，锁定范围为指定值到下一条数据（不包含）的间隙。</span>**
 
-<font color='red'>注意，这里提到的上一条数据和下一条数据包括曾经被删除但没有被整理的数据。所以在可重复读下，二级索引上锁并不稳定。</font>
+<span class="text-red">注意，这里提到的上一条数据和下一条数据包括曾经被删除但没有被整理的数据。所以在可重复读下，二级索引上锁并不稳定。</span>
 
 {{< hint "tip" >}}
-**所以推荐，可重复读隔离级别下，尽量只通过主键索引来上锁，不要通过二级索引上锁，否则会导致上锁范围受到影响。**
+**所以推荐，<span class="text-green">**可重复读隔离级别下，尽量只通过主键索引来上锁，不要通过二级索引上锁**</span>，否则会导致上锁范围受到影响。**
 {{< /hint >}}
 
 ## 蛇足
 
 - 表级的意向排他锁（IX）：lock mode IX。
-- 表级的插入意向锁（LOCK_INSERT_INTENTION）: lock_mode X locks gap before rec insert intention
+- 表级的插入意向锁（INSERT_INTENTION）: lock_mode X locks gap before rec insert intention
 - 行级的记录锁（LOCK_REC_NOT_GAP）: lock_mode X locks rec but not gap
 - 行级的间隙锁（LOCK_GAP）: lock_mode X locks gap before rec
-- 行级的 Next-key 锁（LOCK_ORNIDARY）: lock_mode X
+- 行级的 Next-key 锁（ORDINARY）: lock_mode X
 
 **在「读未提交」隔离级别下，读写操作可以同时进行，但写写操作无法同时进行。与此同时，该隔离级别下只会使用行级别的记录锁，并不会用间隙锁。**
 
 **在「可重复读」隔离级别下，使用了记录锁、间隙锁、Next-Key 锁三种类型的锁。**
 
-**可重复读存在幻读的问题，但实际上在 MySQL 中，因为其使用了间隙锁，所以在「可重复读」隔离级别下，可以通过加 锁解决幻读问题。<mark>因此，MySQL 将「可重复读」作为了其默认的隔离级别。</mark>
+**可重复读存在幻读的问题，但实际上在 MySQL 中，<span class="text-blue">因为其使用了间隙锁，所以在「可重复读」隔离级别下，可以通过加 锁解决幻读问题。</span><mark>因此，MySQL 将「可重复读」作为了其默认的隔离级别。</mark>
 
 - 不同版本如何查看各种锁信息
 
 | 方法                              | MySQL 5.6 | MySQL 5.7 | MySQL 8.0 | MySQL 8.4 | 注意事项                         |
+
 |-----------------------------------|-----------|-----------|-----------|-----------|----------------------------------|
+
 | SHOW ENGINE INNODB STATUS         | ✅        | ✅        | ✅        | ✅        | 需启用 innodb_status_output_locks |
+
 | SHOW PROCESSLIST                  | ✅        | ✅        | ✅        | ✅        | 显示线程状态，非锁详情            |
+
 | SHOW OPEN TABLES                  | ✅        | ✅        | ✅        | ✅        | 适合 MyISAM 表锁                 |
+
 | INNODB_LOCKS/WAITS                | ✅        | ✅        | 废弃      | 废弃      | MySQL 8.0.1 起改用 data_locks      |
+
 | INNODB_TRX                        | ✅        | ✅        | ✅        | ✅        | 查看活跃事务                     |
+
 | performance_schema.data_locks     | ❌        | ❌        | ✅        | ✅        | 需启用 Performance Schema        |
+
 | performance_schema.metadata_locks | ❌        | ✅        | ✅        | ✅        | 适合元数据锁和用户锁             |
+
 | IS_USED_LOCK                      | ✅        | ✅        | ✅        | ✅        | 查看 GET_LOCK 锁                |

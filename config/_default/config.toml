@@ -1,6 +1,8 @@
 # Change baseurl before deploy
 baseurl = "https://thecoolboyhan.github.io"
-languageCode = "zh-cn"
+# 自 0.158.0 起languageCode 更名为 locale（每次构建都会打 deprecation WARN）。
+# 注意：不要改回 languageCode，主题 v4.0.3 的 baseof.html / rss.xml 依赖 .Site.Language.Locale
+locale = "zh-cn"
 title = "韩永发的博客"
 
 # Theme i18n support

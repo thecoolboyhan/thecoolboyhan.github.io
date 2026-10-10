@@ -28,23 +28,37 @@ tags:
 ## 特性一览
 
 | 功能 | 说明 |
+
 | --- | --- |
+
 | **AI 智能分析** | 基于 Ollama（`deepseek-r1:7b`）的经营数据 AI 分析 |
+
 | **大屏数据对接** | 代理 billing API，获取 KPI / 趋势 / Top 客户 / 成本 |
+
 | **SSE 流式输出** | AI 分析结果实时流式返回，前端渐进渲染 |
+
 | **历史持久化** | 分析结果按日期存储，支持跨期对比 |
+
 | **全 record 化** | DTO 层 100% record，样板代码减少约 70% |
+
 | **Java 25 现代写法** | sealed / 结构化并发 / 虚拟线程 / RestClient / 声明式 HTTP Interface |
 
 ## 技术栈
 
 | 组件 | 版本 | 说明 |
+
 | --- | --- | --- |
+
 | JDK | 25（GraalVM CE 25.0.2） | 支持 preview 特性 |
+
 | Spring Boot | 4.1.1 | 支持虚拟线程、Jackson 3 |
+
 | Spring AI | 2.0.1 | ChatClient + Ollama 模型 |
+
 | Ollama | `deepseek-r1:7b` | 本地推理，无需外部 API |
+
 | Maven | 3.9.16 | 构建工具 |
+
 | Jackson 3 | 3.1.5 | 序列化（`tools.jackson` 包路径） |
 
 ## 快速开始
@@ -76,9 +90,13 @@ java --enable-preview -jar target/ai-platform-0.0.1-SNAPSHOT.jar
 ### 访问地址
 
 | 服务 | 地址 |
+
 | --- | --- |
+
 | 分析前端 | <http://localhost:8081/> |
+
 | 健康检查 | <http://localhost:8081/api/ping> |
+
 | AI 健康 | <http://localhost:8081/api/ai/health> |
 
 ## API 接口
@@ -139,10 +157,15 @@ GET /api/analysis/dashboard/snapshot?type=daily&date=20260828&bizType=all
 ### 组件职责
 
 | 层级 | 组件 | 文件 | 作用 |
+
 | --- | --- | --- | --- |
+
 | **P0** | System Prompt | `SpringAiConfig.defaultSystem` | 定义 AI 角色、输出格式、必守规则 |
+
 | **P1** | PromptTemplate | `AnalysisPromptTemplate` | 数据摘要 → 标准文本（文本块） |
+
 | **P2** | Advisor | `AnalysisRuleAdvisor` | 注入动态上下文（当前 / 昨日 / 上周日期） |
+
 | **P3** | History | `AnalysisHistoryRepository` | 保存 / 加载上期结果，支持跨期对比 |
 
 ## 新特性改造（学习导向）
@@ -150,14 +173,23 @@ GET /api/analysis/dashboard/snapshot?type=daily&date=20260828&bizType=all
 本项目已采用 **Java 21+ 现代写法**，核心改造点：
 
 | 特性 | 入口文件 | 学习要点 |
+
 | --- | --- | --- |
+
 | `record` 嵌套 | `DashboardDTO.java` | 镜像 billing JSON 层级，精简约 72% 代码 |
+
 | 紧凑构造器 | `AnalysisRequest.java` | DTO 构造时即校验，非法请求返回 400 |
+
 | `sealed` interface | `AnalysisRequest.AnalysisPeriod` | 穷尽性建模 daily / monthly，switch 无需 break |
+
 | 声明式 HTTP Interface | `BillingHttpInterface.java` | `@GetExchange` 替代硬编码 URL |
+
 | `@ConfigurationProperties` | `BillingProperties.java` | record 绑定配置，类型安全 |
+
 | 结构化并发 | `BillingApiClient.fetchSnapshot()` | `StructuredTaskScope` 并发多数据源 |
+
 | 虚拟线程 | `application.yml` | `spring.threads.virtual.enabled=true` |
+
 | 文本块 | `SpringAiConfig.java` | `"""` 包裹多行 Prompt，无需转义 |
 
 ## 已知坑
