@@ -17,8 +17,9 @@ permissions:
 
 env:
   GO_VERSION: 1.25.5
-  # 与 deploy.yml 保持一致，避免「用A 版本构建、升级后用 B 版本验证」
-  HUGO_VERSION: 0.154.2
+  # 必须与 deploy.yml 一致，否则「用A 版本构建、用 B 版本验证主题」形同虚设。
+  # 下限 0.158.0：主题 v4 的 baseof.html / rss.xml 使用 .Site.Language.Locale。
+  HUGO_VERSION: 0.166.0
 
 jobs:
   update-theme:

@@ -19,7 +19,11 @@
 
 ## 技术栈
 
-- **静态站点生成器**：Hugo **Extended**（本地 v0.166.0，CI 固定 v0.154.2；SCSS 编译必须 Extended）
+- **静态站点生成器**：Hugo **Extended**。本地与 CI **统一为 v0.166.0**（`deploy.yml` / `update-theme.yml` 的 `HUGO_VERSION` 是唯一定义处）。
+  - ⚠️ **下限 0.158.0，不可下调**：主题 v4.0.3 的 `layouts/baseof.html:2` 与 `layouts/rss.xml:33` 用了
+    `.Site.Language.Locale`，该字段自 Hugo 0.158.0 起才存在。低于此版本会导致**全站每一页**渲染失败。
+    `deploy.yml` 的 `Verify installations` 步骤里有版本断言，会在构建前拦截。
+  - SCSS 编译必须用 **Extended** 版；CI 另外装了 Dart Sass 1.97.1。
 - **主题**：`CaiJimmy/hugo-theme-stack` **v4**（通过 Hugo Modules 引入，见 `go.mod`、`config/_default/module.toml`）
 - **样式**：SCSS，自定义覆盖集中在 `assets/scss/custom.scss`
 - **部署**：GitHub Actions → GitHub Pages
@@ -217,6 +221,44 @@ python3 scripts/cover_to_webp.py          # 实际执行
 
 ## 修改记录（Changelog）
 
+### 2026-10-10 · 修复 CI 构建失败：Hugo 版本下限事故
+
+**现象**：2026-10-10 的 P0 优化推送后，CI 全站渲染失败：
+
+```text
+Error: failed to render pages: render of "/home/runner/work/.../content/_index.md" failed:
+".../hugo-theme-stack/v4@v4.0.3/layouts/baseof.html:2:20":
+template: home.html:2:20: executing "home.html" at <.Site.Language.Locale>:
+can't evaluate field Locale in type *langs.Language
+```
+
+**根因**：上一条记录里的「把 `hugo-version: latest` 锁定为 `HUGO_VERSION`」这一步做错了——
+
+- 锁定时**直接沿用了 starter 遗留的 `0.154.2`**（这个数字本身就是个错误信息：`latest` 时代 CI 实际跑的是 Hugo 0.16x，主题依赖新API），
+  并且只在本机（0.166.0）做了验证；
+- 主题 v4.0.3 的 `baseof.html:2` 与 `rss.xml:33` 使用 `.Site.Language.Locale`，
+  这是 **Hugo 0.158.0 随 `languageCode → locale` 更名一起新增的字段**，0.154.2 的 `langs.Language` 上不存在；
+- 于是**每一页**都渲染失败。本地是 0.166.0 所以本地全绿，掩盖了问题。
+
+**修复**：
+
+1. `deploy.yml` 与 `update-theme.yml` 的 `HUGO_VERSION` 由 `0.154.2` → **`0.166.0`**（与本地一致）；
+2. `deploy.yml` 的 `Verify installations` 增加**版本下限断言**（`>= 0.158.0`），
+   用`sort -V` 比较，不满足直接 `::error::` 退出——以后再把版本调低，会在构建第一步就失败，
+   而不是等到渲染阶段才发现全站挂掉；
+3. 两个 workflow 均补注释说明该下限的来源（主题模板的 API 依赖）。
+
+**已验证**：
+
+- 断言逻辑：`0.166.0` / `0.158.0` 通过，`0.154.2` / `0.146.0` 被拒；
+- `hugo_0.166.0` 的 release 资产存在，且有 `hugo_extended_0.166.0_linux-amd64.tar.gz`（extended 为SCSS 必需）；
+- `peaceiris/actions-hugo` **未归档**且 2026-09 仍在维护，此前用 `latest` 能正常下载，说明已适配小写 `linux-amd64` 新命名；
+- 本地 `hugo --gc --minify`（0.166.0，与 CI 同版本）构建通过，305 页；
+- 两个 workflow 的 YAML 已用 ruby 解析校验通过。
+
+> 📌 **教训**：锁定工具链版本时，**不能沿用历史文档里的版本号**（本项目里`0.154.2` 就是 starter 留下的假信息），
+> 必须先确认「该版本 + 当前依赖（本例为主题 v4.0.3）」能否工作；本地验证也要**用与 CI 完全相同的版本**。
+
 ### 2026-10-10 · P0 性能与工程可靠性优化
 
 **背景**：全项目排查后按「收益/风险比」选出7 项 P0 并全部落地。核心结果：
@@ -248,8 +290,9 @@ python3 scripts/cover_to_webp.py          # 实际执行
 5. **时区统一**：`config.toml` 新增 `timeZone = "Asia/Shanghai"`，并删除 CI 里的 `TZ: Europe/Oslo`
    （starter 遗留）。此前本地与线上日期渲染依赖构建机时区，可能差一天。
 6. **`deploy.yml` 修复**
-   - `hugo-version: 'latest'` → `${{ env.HUGO_VERSION }}`（版本号此前形同摆设，构建不可复现，
-     且与本文档记载的版本说明不符）；`update-theme.yml` 同步锁定。
+   - `hugo-version: 'latest'` → `${{ env.HUGO_VERSION }}`（此前版本号形同摆设，构建不可复现）。
+     ⚠️ 但这一步当时锁成了 starter 遗留的 `0.154.2`，**锁错了**，导致 CI 全站渲染失败，
+     已由上一条记录（2026-10-10 Hugo 版本下限事故）修正为 `0.166.0`；
    - 缓存key 由 `hugo-${{ github.run_id }}`（每次运行都唯一）改为
      `hugo-${{ runner.os }}-${{ hashFiles('go.sum', 'config/**', 'assets/**') }}`。
      原写法导致**缓存内容永不刷新**（save 复用 restore 的旧 primary key）且**每次运行新增一条缓存**，
@@ -393,10 +436,12 @@ python3 scripts/cover_to_webp.py          # 实际执行
 - 推送 `main` / `master` 自动触发 `.github/workflows/deploy.yml`：Hugo 构建（`--gc --minify`）→ 上传 artifact → 部署 GitHub Pages。
 - `.github/workflows/update-theme.yml` 每日自动更新 Stack 主题，但**推到 `ci/update-theme` 分支、不自动上线**，
   需人工验证后合并（构建校验失败时不会产生提交）。
-- CI 环境：**Hugo 0.154.2（由 `HUGO_VERSION` 唯一定义，两个 workflow 都锁定该版本）**、
+- CI 环境：**Hugo 0.166.0 Extended**（`HUGO_VERSION` 唯一定义，下限 0.158.0，有断言保护）、
   Dart Sass 1.97.1、Go 1.25.5。**已移除** `TZ: Europe/Oslo`（改由 `config.toml` 的 `timeZone` 控制）、
   Node 24.12.0（无 `package.json`，已删除相关步骤）。
 - Hugo 资源缓存 key 由 `hashFiles('go.sum', 'config/**', 'assets/**')` 决定，**不要改回 `github.run_id`**。
+- **升级/下调 Hugo 版本前**，务必确认主题 v4.0.3 所需的 API（当前下限 0.158.0），
+  并让**本地与 CI 用同一版本**验证——历史上正是「本地 0.166 + CI 0.154」这个错配导致过全站渲染失败。
 
 ## 交接提示（Quick Start）
 
