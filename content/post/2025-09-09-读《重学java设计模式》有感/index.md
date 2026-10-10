@@ -1,7 +1,7 @@
 ---
 title:  读《重学java设计模式》有感
 description:  小傅哥的金典书籍，对设计模式有个笼统的了解。目前还在攻读中。。
-image: 1.png
+image: 1.webp
 date: 2025-09-09
 slug: java-Ontwerp-patroon
 categories:

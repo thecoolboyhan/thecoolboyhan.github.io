@@ -1,7 +1,7 @@
 ---
 title:  拓扑排序题集与分析
 date: 2025-05-26
-image: 2025-05-27.png
+image: 2025-05-27.webp
 categories: [leetcode,精选]
 tags: [算法,力扣,拓扑排序,图]
 ---

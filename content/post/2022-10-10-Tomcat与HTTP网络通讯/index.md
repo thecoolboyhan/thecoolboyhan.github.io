@@ -1,7 +1,7 @@
 ---
 title:  Tomcat与HTTP网络通讯
 description: tomcat详解、tcp、http、https等介绍
-image: 1.png
+image: 1.webp
 date: 2023-05-06
 categories:
   - 精选

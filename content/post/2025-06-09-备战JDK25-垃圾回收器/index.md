@@ -3,7 +3,7 @@ title: 备战JDK25--垃圾回收器
 description: JDK25今年年底就要发布了，这次深入了解结构化并发和分代Shenandoah GC垃圾回收器
 slug: JDK25-1
 date: 2025-06-10 00:00:00+0000
-image: 1.png
+image: 1.webp
 categories:
     - java
     - 精选

@@ -1,6 +1,5 @@
 name: Update theme
 
-# Controls when the workflow will run
 on:
   schedule:
     # Update theme automatically everyday at 00:00 UTC
@@ -8,31 +7,56 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# 同一时间只允许一个实例运行，避免定时任务与手动触发并发写同一分支
+concurrency:
+  group: update-theme
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: 1.25.5
+  # 与 deploy.yml 保持一致，避免「用A 版本构建、升级后用 B 版本验证」
+  HUGO_VERSION: 0.154.2
+
 jobs:
   update-theme:
     runs-on: ubuntu-latest
-
-    permissions:
-      # Give the default GITHUB_TOKEN write permission to commit and push the
-      # added or changed files to the repository.
-      contents: write
-    
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      # hugo mod get / hugo mod tidy 需要 go，原工作流没有 setup-go，
+      # 依赖 runner 镜像里预装的 go，版本不可控。
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
-          hugo-version: 'latest'
+          hugo-version: ${{ env.HUGO_VERSION }}
           extended: true
 
       - name: Update theme
-        run: hugo mod get -u
+        run: |
+          hugo mod get -u
+          hugo mod tidy
 
-      - name: Tidy go.mod, go.sum
-        run: hugo mod tidy
+      # 上游主题可能引入不兼容变更（模板签名、参数、SCSS 变量等）。
+      # 必须在提交前完整构建一次，构建失败则整个 workflow 失败、不产生提交。
+      - name: Verify build
+        run: |
+          hugo --gc --minify --destination /tmp/hugo-verify
+          echo "构建通过，产物大小：$(du -sh /tmp/hugo-verify | cut -f1)"
 
+      # 推送到独立分支而不是默认分支：
+      # deploy.yml 只监听 main / master，直接提交到默认分支会让未经人工验证的
+      # 主题升级立刻上线。改为推到 ci/update-theme，由人工验证后合并。
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "CI: Update theme"
+          branch: ci/update-theme

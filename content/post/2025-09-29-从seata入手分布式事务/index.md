@@ -1,7 +1,7 @@
 ---
 title:  从seata源码入手分布式事务
 description:  最近分布式事务又重新刮起了热风，今天就从seata来总结主流的分布式事务的实现
-image: 1.png
+image: 1.webp
 date: 2025-10-20
 slug: seataTransactional
 categories:

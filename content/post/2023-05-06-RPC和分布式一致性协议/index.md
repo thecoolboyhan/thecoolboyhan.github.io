@@ -1,7 +1,7 @@
 ---
 title:  RPC和分布式一致性协议
 description: 分布式一致性协议
-image: 1.png
+image: 1.webp
 date: 2023-05-06
 categories:
   - 精选

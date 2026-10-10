@@ -25,22 +25,26 @@
 - **部署**：GitHub Actions → GitHub Pages
 - **语言**：中文（`defaultContentLanguage = "zh"`，`hasCJKLanguage = true`）
 - **评论**：Giscus
-- **脚本**：Python3（`scripts/format_posts.py`）
+- **脚本**：Python3（`scripts/format_posts.py`、`scripts/optimize_images.py`、`scripts/cover_to_webp.py`）
 
-> ⚠️ **时区坑**：`config.toml` 未设置 `timeZone`，日期依赖构建机时区；CI 中为 `TZ: Europe/Oslo`（starter 遗留）。
-> 若出现日期显示异常，请在 `config.toml` 补充 `timeZone = "Asia/Shanghai"`。
+> ✅ **时区**：`config.toml` 已显式设置 `timeZone = "Asia/Shanghai"`，CI 里的 `TZ: Europe/Oslo`（starter 遗留）已删除。
+> 本地与线上日期渲染保持一致。**不要再删掉 `timeZone`，也不要重新引入 `TZ` 环境变量。**
 
 ## 目录结构（只看自定义/关键部分）
 
 ```text
 config/_default/
-  config.toml            # baseurl / 语言 / 分页（pagerSize）/ timeout（5m）
-  params.toml            # 侧边栏、文章、widget、评论等（主要改动文件）
+  config.toml            # baseurl / 语言 / 时区（timeZone）/ 分页（pagerSize）/ timeout（5m）/ RSS limit
+  params.toml            # 侧边栏、文章、widget、评论、图片派生宽度等（主要改动文件）
   module.toml            # 引入 Stack 主题
   _languages.toml / menu.toml / markup.toml / permalinks.toml / related.toml
-assets/scss/
-  custom.scss            # 【全部自定义样式】按编号分节，见文件内注释
+assets/
+  img/avatar.webp        # 侧边栏头像（400x400 WebP，45 KB）
+  scss/
+    custom.scss            # 【全部自定义样式】按编号分节，见文件内注释
 layouts/
+  _markup/
+    render-image.html    # 【覆盖主题】远程图片直连、不再下载到本地（见「5. 图片处理」）
   _partials/
     widget/featured.html # 【自定义】精选文章 widget
     article/components/links.html  # 【覆盖主题】links 页卡片：额外显示项目地址（.link-website）
@@ -51,10 +55,13 @@ layouts/
     hint.html            # 【自定义】提示框 {{< hint "tip" >}}
     color.html           # 【自定义】文字颜色 {{< color "red" >}}
   partials/extend-footer.html  # 空占位文件
-scripts/format_posts.py  # 文章批量排版 / 错别字修复
-.github/workflows/       # deploy.yml（构建部署）、update-theme.yml（每日更新主题）
+scripts/
+  format_posts.py        # 文章批量排版 / 错别字修复
+  optimize_images.py     # 压缩 content/ 下图片（保持文件名与格式不变）
+  cover_to_webp.py       # 把大体积封面图迁移为 WebP 并同步 front matter
+.github/workflows/       # deploy.yml（构建部署）、update-theme.yml（每日更新主题，推 ci/update-theme 分支）
 content/post/            # 文章（中文）
-static/                  # 静态资源
+static/                  # 静态资源（favicon.png，180x180）
 ```
 
 ## 本地运行
@@ -67,7 +74,7 @@ hugo --quiet            # 构建校验（不启动服务）
 ## 内容规范
 
 - 文章存放于 `content/post/`，按系列或日期组织（部分目录为 page bundle：`index.md` + 图片）。
-- **「精选文章」通过 front matter 标记**：当前 35 篇文章在 `categories` 中包含 `精选`；**`tags` 中暂无 `精选`**。
+- **「精选文章」通过 front matter 标记**：当前 **30** 篇文章在 `categories` 中包含 `精选`；**`tags` 中 0 篇**（`params.toml` 配的却是 `taxonomy = "tags"`，靠 `featured.html` 的回退逻辑兜住）。
 - 可设置 `series: ["系列名称"]` 启用系列关联；`slug` / `permalink` 可固定链接（站内已有多篇使用）。
 - **注意**：不写 `slug` 时，文章的 URL 会由**标题**生成（`post = "/p/:slug/"`）。新增文章若希望 URL 干净，请显式设置 `slug`。
 - **`content/page/links/index.md`**：开源项目导航页（侧边栏「开源项目」菜单），用 front matter 的 `links` 数组渲染卡片，
@@ -110,9 +117,44 @@ python3 scripts/format_posts.py --file content/post/xxx.md   # 只处理单个�
 
 功能：压缩连续空行（最多 1 行）、标题/列表前后补空行、基于词典修复常见错别字（代码块完全保护）。
 
+### `scripts/optimize_images.py`
+
+压缩 `content/` 下的 PNG/JPG，**保持文件名与扩展名不变**，因此不需要改动任何文章引用。
+依赖 Pillow（`pip3 install Pillow`）。
+
+```bash
+python3 scripts/optimize_images.py --dry    # 预览
+python3 scripts/optimize_images.py          # 实际写入
+```
+
+策略：超过 1600px 的先等比缩放 → PNG 转 8-bit 调色板量化（256 色，带 alpha 的走 FASTOCTREE）→
+JPEG 用 `quality=82` 重编码 → 压缩后反而更大的文件自动跳过。默认只处理 ≥250 KB 的图。
+
+### `scripts/cover_to_webp.py`
+
+把**体积较大的封面图**（书籍封面等照片类 PNG）迁移为 WebP，并同步更新 front matter 的 `image` 字段。
+照片类 PNG 即便量化到 256 色仍有 1 MB+，WebP 通常只有 1/10。
+
+```bash
+python3 scripts/cover_to_webp.py --dry    # 预览
+python3 scripts/cover_to_webp.py          # 实际执行
+```
+
+三重安全约束（任一不满足即跳过并报告，不会写坏文章）：
+
+1. 该图片**只能**被 front matter 的 `image:` 引用；正文若出现 `![](x.png)` 或 `<img src="x.png">` 则跳过；
+2. 转换后体积未降到原来的一半则跳过并删除产物；
+3. front matter 的 `image:` 必须精确等于该文件名才替换（只替换 1 处）。
+
+> 新增文章时若放了照片类封面，建议直接存 WebP 并在 front matter 写 `image: xxx.webp`。
+
 ## 配置要点
 
 - 分页大小：`config/_default/config.toml` 的 `pagerSize`（当前 20）。
+- 时区：`config.toml` 的 `timeZone = "Asia/Shanghai"`（**必须保留**）。
+- RSS：`config.toml` 的 `[services.rss] limit = 20` + `params.toml` 的 `rssFullContent = false`。
+- 图片派生宽度：`params.toml` 的 `[imageProcessing.content] widths = [800, 1400]`
+  （主题默认 `[800, 1600, 2400]`，每张图会多生成 1 份大图）。
 - 首页 widget 列表：`config/_default/params.toml` 的 `[[widgets.homepage]]`。
 - 评论：Giscus（需仓库开启 Discussions），见 `params.toml` 的 `[comments.giscus]`。
 - 代码高亮：Chroma，已配置行号、`tabWidth=4`；代码字体 JetBrains Mono。
@@ -152,14 +194,80 @@ python3 scripts/format_posts.py --file content/post/xxx.md   # 只处理单个�
 - 文章卡片 / 标签胶囊 hover 动画、自定义滚动条、表格 / 引用块 / 代码块美化。
 - hint 提示框（`note/info/tip/success/warning/danger`）与文字颜色类（`.text-red` 等）。
 
-### 4. 评论 / 代码
+### 4. 图片处理与体积控制（`layouts/_markup/render-image.html` + 两个脚本）
+
+**这是本项目体积控制的重点，改图片相关配置前务必先读本节。**
+
+- **本地图片**：走 Hugo 原生 `imageProcessing`，派生宽度由 `params.toml` 的
+  `[imageProcessing.content] widths = [800, 1400]` 控制（`srcset` 最大项始终是原图）。
+- **远程图片**：`render-image.html` 覆盖了主题同名文件，**对 `http://` / `https://` / `//` 开头的图片
+  直接输出原URL**，不调用 `helper/image`（也就不会触发内部的 `resources.GetRemote`），也不生成 srcset。
+
+  为什么必须这样：主题默认会把正文里所有外链图床图片**下载一份到本地并全量发布到 public 根目录**
+  （实测 778 个文件 / 139 MB，占 public 的 88%），而且构建成败取决于外部图床
+  （实测 gitee / helloimg / camo.githubusercontent.com 均有403 或解析失败，那些图在页面上直接是坏图）。
+
+- **新增图片建议**：照片类封面直接存 WebP；`optimize_images.py` 保持文件名不变可安全批量压缩；
+  `cover_to_webp.py` 用于把已有的大封面迁移为 WebP（会自动同步 front matter）。
+
+### 5. 评论 / 代码
 
 - 评论为 Giscus，配置 `params.toml` 的 `[comments.giscus]`（仓库需开启 Discussions）。
 - 代码高亮 Chroma，行号、`tabWidth=4`；代码字体 JetBrains Mono 由 `head/custom.html` 引入。
 
 ## 修改记录（Changelog）
 
-### 2026-10-09 · 解决 CI 渲染超时
+### 2026-10-10 · P0 性能与工程可靠性优化
+
+**背景**：全项目排查后按「收益/风险比」选出7 项 P0 并全部落地。核心结果：
+**`public/` 293 MB → 18 MB，构建 11 s → 4.8 s，首页 RSS 7.4 MB → 34 KB。**
+
+1. **侧边栏头像 6.6 MB → 45 KB**
+   - 根因：主题 `sidebar/left.html` 只调 `helper/image`（**不做任何 Resize**），
+     直接把原图 permalink 放进 `<img>`，而原图是 1773×2364 的 6.6 MB PNG，每页首屏都加载。
+   - 处理：`assets/img/avatar.png` → 居中裁剪为 400×400 → WebP q82（`assets/img/avatar.webp`），
+     `params.toml` 的 `sidebar.avatar` 同步改为 `img/avatar.webp`。
+2. **favicon 1.2 MB → 30 KB**：`static/favicon.png` 由 1024×1024 缩到 180×180（路径不变，无需改配置）。
+3. **`public/` 293 MB → 18 MB**（两条独立原因）
+   - **本地源图 63 MB → 3.9 MB**：
+     - 新增 `scripts/optimize_images.py`：保持文件名/格式不变地压缩（缩放 + PNG 8-bit 量化 + JPEG q82），
+       **零引用改动**，处理 36 张，60.9 MB → 32.7 MB；
+     - 新增 `scripts/cover_to_webp.py`：29 张照片类大封面（书籍封面，量化后仍 1 MB+）→ WebP，
+       1 MB → 30~144 KB，并自动同步 front matter 的 `image:`。带三重安全校验（详见「脚本工具」）。
+   - **远程图片本地化 139 MB → 0**：主题 `render-image.html` 对**所有**图片（含远程）调用
+     `helper/image`，其内部 `resources.GetRemote` 会把外链图床图片下载并**全量发布到 public 根目录**
+     （778 个文件 / 139 MB，占 public 的 88%）；同时构建依赖外部图床，实测 gitee / helloimg /
+     camo.githubusercontent.com 有 403 与解析失败，**这些图在页面上本来就是坏的**，每次构建刷大量 WARN。
+     新增 `layouts/_markup/render-image.html`：远程图片直连原URL，不下载、不生成 srcset。
+     本地图片逻辑与主题完全一致（仍带 srcset）。
+   - 顺带把 `params.toml` 的 `[imageProcessing.content] widths` 从主题默认 `[800, 1600, 2400]`
+     收窄为 `[800, 1400]`。
+   - 副作用（正向）：构建不再有远程抓取 WARN，`Processed images` 625 → 187。
+4. **RSS 7.4 MB → 34 KB**：`rssFullContent = false`（`params.toml`）+ `[services.rss] limit = 20`（`config.toml`）。
+   此前首页 `index.xml` 塞进了全部 75 篇全文（单篇最长 112 KB）。
+5. **时区统一**：`config.toml` 新增 `timeZone = "Asia/Shanghai"`，并删除 CI 里的 `TZ: Europe/Oslo`
+   （starter 遗留）。此前本地与线上日期渲染依赖构建机时区，可能差一天。
+6. **`deploy.yml` 修复**
+   - `hugo-version: 'latest'` → `${{ env.HUGO_VERSION }}`（版本号此前形同摆设，构建不可复现，
+     且与本文档记载的版本说明不符）；`update-theme.yml` 同步锁定。
+   - 缓存key 由 `hugo-${{ github.run_id }}`（每次运行都唯一）改为
+     `hugo-${{ runner.os }}-${{ hashFiles('go.sum', 'config/**', 'assets/**') }}`。
+     原写法导致**缓存内容永不刷新**（save 复用 restore 的旧 primary key）且**每次运行新增一条缓存**，
+     会迅速吃满仓库 Actions 缓存配额。
+   - 删除无效步骤：`setup-node`、无 `package.json` 的 `npm ci || true`、
+     `submodules: recursive`（无 submodule）、`fetch-depth: 0`，以及 `Verify installations` 里的 Node 打印。
+7. **`update-theme.yml` 加固**
+   - 补`actions/setup-go`（此前 `hugo mod get/tidy` 依赖 runner 镜像预装的 go，版本不可控）；
+   - 补 `concurrency`，避免定时任务与手动触发并发写同一分支；
+   - 提交前**先完整构建校验**（`hugo --gc --minify --destination /tmp/hugo-verify`），失败则不产生提交；
+   - 提交目标从默认分支改为 `ci/update-theme`（`deploy.yml` 只监听 main/master），
+     **主题升级不再自动上线**，需人工验证后合并。
+
+> 验证：`hugo --gc --minify` 干净构建通过（305 页 / 11.3 s→4.8 s），仅剩一条既有 WARN
+> `Widget series not found`（series widget 无数据，属 P2）。两个 workflow 的 YAML 已用 ruby 解析校验通过。
+> 临时文件备份在 `/tmp/hblog-bak/`（原头像与 favicon）。
+
+### 2026-10-09 · 解决 CI渲染超时
 
 - **问题**：GitHub Actions 构建时报 `timed out rendering the page content ... timeout after 1m0s`，
   出错文章为《读〈设计数据密集型应用系统〉（第1版）有感 第二部分》（长文渲染超过默认 60s）。
@@ -239,23 +347,62 @@ python3 scripts/format_posts.py --file content/post/xxx.md   # 只处理单个�
 ## 未来计划 / TODO
 
 > AI 接手时建议优先阅读本节。
+>
+> 2026-10-10 已完成 P0（性能 + CI 可信度），`public/` 293 MB → 18 MB。
+> 以下是排查中发现的 **P1 / P2**，均**尚未处理**，按优先级排列。
 
-- [ ] **确定「精选」最终归类**：目前标记在 `categories`，widget 走回退逻辑。若改用 `tags`，需给现有 35 篇补 `精选` 标签（可用脚本批量）。
-- [ ] **补齐分组依据**：约 10 篇精选文章只有 `精选` 分类（无其他分类/系列），分组后落到「其他」。可考虑给它们补 `categories` 或 `series`，或把 `groupBy` 换成 `series` 并统一维护系列。
-- [ ] **精选框体验**：条目 35 条 + 16 个分组后，评估 `50vh` 高度 + 滚动的观感，必要时调整 `--featured-box-h` 或改回限量展示。
-- [ ] **统一时区**：在 `config.toml` 补 `timeZone = "Asia/Shanghai"`，避免依赖构建机时区。
+### P1 · 内容与 SEO
+
+- [ ] **60 篇文章无 `slug`**：URL 由中文标题生成（percent-encoded，如 `/p/算法-排序/`），
+  可读性差、换标题即换 URL。需脚本化补ASCII slug + 同步 `aliases` 保护老URL（改动较大，务必分批）。
+- [ ] **35 篇文章缺 `description`**：列表页摘要靠 `.Summary` 截技术正文，常在代码块中间断掉；分享到微信/微博无摘要。
+- [ ] **`精选` 标记与配置错位**：30 篇全在 `categories`，`tags` 中 0 篇；而 `params.toml` 配的是 `taxonomy = "tags"`，
+  现在靠 `featured.html` 的回退兜底跑着，删掉回退代码就会静默失效。
+- [ ] **categories / tags 语义重叠**：26 vs 68 个词条中有 **15 个重复**（AI / java / mysql / 架构 / 算法 / 信贷核心…），
+  同一内容生成两套归档页（已产生 209 个分类/标签 HTML），SEO 重复。建议明确规则：分类=领域大类，tags=主题/技术栈。
+- [ ] **两篇 MapReduce 近乎重复**：`content/post/2024-07-15-Powerjob/2024-09-10-MapReduce.md` 与
+  `content/post/2025-01-01之前的杂项/2024-09-10-MapReduce.md`（diff 后仅差`hashmap`/`HashMap` 大小写与一个 hint 块）。删一篇 + `aliases`。
+- [ ] **og:image 全缺**：`params.toml` 的 `defaultImage.opengraph.enabled = false`；配一张 1200×630 兜底图。
+- [ ] **无 robots.txt**：加 `enableRobotsTXT = true` + `static/robots.txt`（写明 `Sitemap:`）。
+- [ ] **3 篇文章的 `image:` 指向不存在的文件**（构建时会WARN）：
+  `2025-12-25-账务是怎样运行的`、`1连载中/读《设计机器学习应用系统》有感-神经网络与机器学习`、`2025-07-17-状态机`。
+- [ ] **`series` 是死配置**：0 篇文章设置，但 `params.toml` 配了 series widget → 构建 WARN `Widget series not found`。要么补series，要么删 widget。
+
+### P2 · 代码质量与一致性
+
+- [ ] **死 CSS**：`custom.scss:403-415` 的 `@media (prefers-color-scheme: dark) { :root:not([data-scheme="light"]) {...} }`
+  **永不生效**（主题内联脚本必定把 `data-scheme` 设为 light 或 dark），9 个变量白写。
+- [ ] **死配置**：`params.toml` 的 `[imageProcessing.cover]`（主题 0 引用）、`math = false` 但 `markup.toml` 配了 `$$` passthrough
+  （写公式会渲染成裸公式）、`config.toml` 的 `disqusShortname`（v3 遗留）、`params.toml` 里约 70 行未使用评论渠道的空字段。
+- [ ] **配置隐患**：`config/_default/_languages.toml` 写着 `title = "Example Site"`，一旦被改名为 `languages.toml` 启用多语言会生效。建议删除。
+- [ ] **JS 性能**：`footer/custom.html:30-46` 的 scroll 监听无节流，每次事件都读 `scrollHeight`/`clientHeight` 强制重排
+  + 写 `style.width`（还叠了 CSS `transition`），长文滚动掉帧。建议 rAF 包裹 + 缓存尺寸 + resize debounce。
+- [ ] **无障碍**：全局 `scroll-behavior: smooth` + 13 处 transition / 多个 transform，**没有 `prefers-reduced-motion` 保护**。
+- [ ] **主题一致性**：`custom.scss` 三处硬编码 `linear-gradient(90deg, #6a8cff, #9b6cff)` 不跟随 `--accent-color`，深色模式下刺眼；
+  另有深色模式下的固定黑阴影（`:86,91,116`）过重。建议抽成 `--brand-gradient` 变量。
+- [ ] **供应链 / 第三方**：`head/custom.html` 从 jsDelivr 拉 JetBrains Mono，两个 `<link rel=stylesheet>` 是**渲染阻塞**且无 SRI；
+  `footer/custom.html:10` 不蒜子用协议相对 URL `//`。
+- [ ] **工程基线**：`.gitignore` 漏 `.DS_Store`（当前工作区已有 5 个未跟踪）；缺 `.editorconfig` / `.gitattributes` / Dependabot；
+  `assets/jsconfig.json` 提交了本机绝对路径 `../../../Library/Caches/...`。
+- [ ] **文档失真**：`README.md` 标题仍是 "Hugo Theme Stack Starter Template"，还在教人拉 v3 主题和改 gh-pages 分支；
+  `LICENSE` 是主题作者的 MIT，而站点声明 CC BY-NC-SA 4.0（且文章多为公司内部系统设计内容，非商业条款有授权风险）。
 - [ ] （后续新增待办请追加到此处）
 
 ## CI/CD
 
 - 推送 `main` / `master` 自动触发 `.github/workflows/deploy.yml`：Hugo 构建（`--gc --minify`）→ 上传 artifact → 部署 GitHub Pages。
-- `.github/workflows/update-theme.yml` 每日自动更新 Stack 主题。
-- CI 环境：Dart Sass 1.97.1、Go 1.25.5、Hugo 0.154.2（`peaceiris/actions-hugo` 用 latest）、Node 24.12.0、`TZ: Europe/Oslo`。
+- `.github/workflows/update-theme.yml` 每日自动更新 Stack 主题，但**推到 `ci/update-theme` 分支、不自动上线**，
+  需人工验证后合并（构建校验失败时不会产生提交）。
+- CI 环境：**Hugo 0.154.2（由 `HUGO_VERSION` 唯一定义，两个 workflow 都锁定该版本）**、
+  Dart Sass 1.97.1、Go 1.25.5。**已移除** `TZ: Europe/Oslo`（改由 `config.toml` 的 `timeZone` 控制）、
+  Node 24.12.0（无 `package.json`，已删除相关步骤）。
+- Hugo 资源缓存 key 由 `hashFiles('go.sum', 'config/**', 'assets/**')` 决定，**不要改回 `github.run_id`**。
 
 ## 交接提示（Quick Start）
 
 1. 改**样式**：先看 `assets/scss/custom.scss`（有编号分节），注意 `1rem = 10px`。
 2. 改**首页 widget**：`config/_default/params.toml` 的 `[[widgets.homepage]]` + `layouts/_partials/widget/*`。
 3. 改**布局/短代码**：`layouts/`（覆盖主题同名文件即可）。
-4. 提交前建议执行 `hugo --quiet` 做一次构建校验。
-5. 完成后**记得回来更新本文件**（尤其「修改记录」与「未来计划」）。
+4. 改**图片**：先读「4. 图片处理与体积控制」。远程图片不会自动下载，照片类封面请直接用 WebP。
+5. 提交前建议执行 `hugo --quiet` 做一次构建校验。
+6. 完成后**记得回来更新本文件**（尤其「修改记录」与「未来计划」）。

@@ -1,7 +1,7 @@
 ---
 title:  读《Kafka权威指南》有感
 description: 最近kafka越来越被常提及，总结其中的权威书籍。Kafka权威指南，作者Neha Narkhede、Gwen Shapira和Todd Palino ( 0’Reilly），版权归Neha Narkhede、GwenShapira和Todd Palino所有，978-1-4919-3616-0
-image: 1.png
+image: 1.webp
 date: 2025-11-18
 categories:
   - 精选

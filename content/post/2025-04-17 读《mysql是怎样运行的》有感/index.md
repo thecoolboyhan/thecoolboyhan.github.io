@@ -1,7 +1,7 @@
 ---
 title:  读《mysql是怎样运行的》有感
 description: 感觉是读过最好的mysql书籍
-image: 1.png
+image: 1.webp
 date: 2025-04-17
 categories:
   - 精选

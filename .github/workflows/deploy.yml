@@ -21,27 +21,25 @@ jobs:
     env:
       DART_SASS_VERSION: 1.97.1
       GO_VERSION: 1.25.5
+      # Hugo 版本在此处唯一定义，下方 Setup Hugo 通过 env 引用。
+      # 不要写 hugo-version: latest —— 那会让构建不可复现，
+      # 且与本文件 / AGENTS.md 中记录的版本说明不一致。
       HUGO_VERSION: 0.154.2
-      NODE_VERSION: 24.12.0
-      TZ: Europe/Oslo
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
-          fetch-depth: 0
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          # Hugo 模块走 --cacheDir 自己的缓存，这里关掉 setup-go 的默认缓存
           cache: false
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+
       - name: Create directory for user-specific executable files
         run: |
           mkdir -p "${HOME}/.local"
@@ -54,28 +52,29 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
-          hugo-version: 'latest'
+          hugo-version: ${{ env.HUGO_VERSION }}
           extended: true
       - name: Verify installations
         run: |
           echo "Dart Sass: $(sass --version)"
           echo "Go: $(go version)"
           echo "Hugo: $(hugo version)"
-          echo "Node.js: $(node --version)"
-      - name: Install Node.js dependencies
-        run: |
-          [[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true
       - name: Configure Git
         run: |
           git config core.quotepath false
+
+      # 缓存 key 必须由内容决定。
+      # 原先写的是 key: hugo-${{ github.run_id }}（每次运行都唯一），导致：
+      #   1) save 时复用 restore 出来的旧 primary key，缓存内容永远不刷新；
+      #   2) 未命中时每次新增一条缓存记录，很快吃满仓库的 Actions 缓存配额。
       - name: Cache restore
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/hugo_cache
-          key: hugo-${{ github.run_id }}
-          restore-keys:
-            hugo-
+          key: hugo-${{ runner.os }}-${{ hashFiles('go.sum', 'config/**', 'assets/**') }}
+          restore-keys: |
+            hugo-${{ runner.os }}-
       - name: Build the site
         run: |
           hugo \
@@ -84,11 +83,11 @@ jobs:
             --baseURL "${{ steps.pages.outputs.base_url }}/" \
             --cacheDir "${{ runner.temp }}/hugo_cache"
       - name: Cache save
-        id: cache-save
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/hugo_cache
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+          key: hugo-${{ runner.os }}-${{ hashFiles('go.sum', 'config/**', 'assets/**') }}
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

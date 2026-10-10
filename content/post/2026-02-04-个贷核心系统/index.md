@@ -2,7 +2,7 @@
 title:  个贷核心系统业务与核算规则概览
 description: 本次补充批扣和流水同步部分，把账务运行拼图补充完整
 date: 2026-02-04
-image: 1.png
+image: 1.webp
 categories: [金融,精选,个贷核心]
 tags: [业务,随笔,账务]
 ---

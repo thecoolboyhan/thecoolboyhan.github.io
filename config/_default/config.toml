@@ -17,5 +17,16 @@ disqusShortname = "thecoolboyhan"
 # 渲染单个页面的超时时间（默认 60s，长文渲染可能超时）
 timeout = "5m"
 
+# 时区：必须显式指定。
+# 未设置时日期依赖「构建机时区」，本地（Asia/Shanghai）与 CI（starter 遗留的 Europe/Oslo）
+# 会渲染出不同的日期/时间，导致同一次提交在本地与线上表现不一致。
+timeZone = "Asia/Shanghai"
+
 [pagination]
 pagerSize = 20
+
+# RSS 只保留最近 20 篇。
+# 配合 params.toml 的 rssFullContent = false，避免首页 index.xml 膨胀到数 MB
+# （曾达到 7.4 MB：75 篇全文 + 单篇最长 112 KB，拉取端易超时）。
+[services.rss]
+limit = 20

@@ -1,6 +1,6 @@
 ---
 title:  OceanBase调研-分区和并行查询
-image: ob.png
+image: ob.webp
 date: 2024-11-27
 categories:
   - 精选

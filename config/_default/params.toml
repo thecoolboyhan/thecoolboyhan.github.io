@@ -1,7 +1,9 @@
 # Pages placed under these sections will be shown on homepage and archive page.
 mainSections = ["post"]
 # Output page's full content in RSS.
-rssFullContent = true
+# 关闭全文输出：配合 config.toml 的 [services.rss] limit = 20，
+# 避免首页 index.xml 把全部 75 篇文章的正文塞进去（曾达 7.4 MB）。
+rssFullContent = false
 favicon = "/favicon.png"
 
 [footer]
@@ -15,7 +17,7 @@ lastUpdated = "Jan 02, 2006 15:04 MST"
 [sidebar]
 emoji = "🍥"
 subtitle = "目前人在上海，20年毕业，普通muggle，java开发。邮箱：hanyongfa2013@163.com 。"
-avatar = "img/avatar.png"
+avatar = "img/avatar.webp"   # 400x400 WebP（45 KB）。原 avatar.png 有 6.6 MB，且主题 helper/image 不做压缩
 
 [article]
 headingAnchor = true
@@ -84,6 +86,9 @@ enabled = true
 
 [imageProcessing.content]
 enabled = true
+# 派生图宽度。主题默认为 [800, 1600, 2400]，每张原图会额外生成 3 份无损 PNG，
+# 是 public/ 体积膨胀的主因。博客正文实际很少用到 1600 以上，故收窄为 2 档。
+widths = [800, 1400]
 
 ## Comments
 [comments]

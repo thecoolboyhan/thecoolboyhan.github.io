@@ -1,7 +1,7 @@
 ---
 title: 并查集的设计与实现
 date: 2025-03-12
-image: 20241212.png
+image: 20241212.webp
 categories:
   - 精选
   - leetcode

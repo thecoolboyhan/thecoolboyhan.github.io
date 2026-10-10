@@ -2,7 +2,7 @@
 title: JAVA21核心库--并发
 date: 2025-02-13
 description: 根据21版本的JDK，重新认识java的并发
-image: java21c.png
+image: java21c.webp
 categories:
   - 精选
 tags:

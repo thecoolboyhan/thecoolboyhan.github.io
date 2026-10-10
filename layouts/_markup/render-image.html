@@ -1,0 +1,55 @@
+{{- /*
+  覆盖主题 layouts/_markup/render-image.html
+
+  与主题原版的唯一区别：远程图片（http/https/协议相对）直接输出原 URL，
+  不走 helper/image 内部的 resources.GetRemote，也不生成 srcset 派生图。
+
+  原因：
+    1. 体积——主题默认会把正文里所有外链图床图片下载一份到本地并全量发布到
+       public 根目录，实测 778 个文件 / 139 MB，占整个 public 的 88%。
+    2. 可用性——构建要依赖外部图床（gitee / helloimg / camo.githubusercontent.com
+       等）。实测多个图床返回 403 或无法解析 media type，这些图在页面上直接坏掉，
+       且每次构建都会重复失败并刷出大量 WARN。
+    3. 速度——省掉数百次网络请求，构建时间明显缩短。
+
+  本地图片的处理逻辑与主题完全一致，不受影响。
+*/ -}}
+{{- $dest := .Destination -}}
+{{- $isRemote := or (strings.HasPrefix $dest "https://") (strings.HasPrefix $dest "http://") (strings.HasPrefix $dest "//") -}}
+
+{{- if $isRemote -}}
+    {{- $alt := .PlainText | safeHTML -}}
+    {{- $title := .Title | markdownify -}}
+    <img src="{{ $dest | safeURL }}" alt="{{ $alt }}" title="{{ $title }}" loading="lazy">
+{{- else -}}
+    {{- $image := partial "helper/image" (dict "Resources" .Page.Resources "Image" $dest "Context" .Page) -}}
+    {{- $alt := .PlainText | safeHTML -}}
+    {{- $title := .Title | markdownify -}}
+
+    {{/* There are some types of images that don't have width and height attributes, such as SVG */}}
+    {{- $galleryImage := and $image.Height $image.Width -}}
+
+    {{- $attributes := dict -}}
+    {{- if $galleryImage -}}
+        {{- $attributes = (dict
+            "data-flex-grow" (div (mul $image.Width 100) $image.Height)
+            "data-flex-basis" (printf "%dpx" (div (mul $image.Width 240) $image.Height))
+        ) -}}
+    {{- end -}}
+
+    {{ partial "helper/responsive-image" (dict
+        "Resource" $image.Resource
+        "Widths" (cond .Page.Site.Params.ImageProcessing.Content.Enabled .Page.Site.Params.ImageProcessing.Content.Widths nil)
+        "Attributes" (merge $attributes (dict
+            "src" $image.Permalink
+            "width" $image.Width
+            "height" $image.Height
+            "alt" $alt
+            "title" $title
+            "data-title-escaped" ($title | htmlEscape)
+            "class" (cond $galleryImage "gallery-image" "")
+            "loading" "lazy"
+            "sizes" "(max-width: 767px) calc(100vw - 30px), (max-width: 1023px) 700px, (max-width: 1279px) 950px, 1232px"
+        ))
+    ) }}
+{{- end -}}

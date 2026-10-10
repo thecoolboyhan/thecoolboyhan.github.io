@@ -1,7 +1,7 @@
 ---
 title:  redis5之前
 description: 补档之前redis
-image: 1.png
+image: 1.webp
 date: 2023-10-03
 categories:
   - 精选

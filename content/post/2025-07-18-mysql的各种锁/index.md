@@ -1,7 +1,7 @@
 ---
 title:  mysql的各种锁
 description: 深入理解mysql的各种锁，深度好文，一文搞懂mysql常用的各种锁，及其范围。
-image: 1.png
+image: 1.webp
 date: 2025-07-20
 slug: mysql-Lock
 categories:

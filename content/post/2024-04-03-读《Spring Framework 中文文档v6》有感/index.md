@@ -4,7 +4,7 @@ description: Spring官方说明文档
 categories: [java,精选]
 tags: [java,spring,框架,读后感]
 date: 2024-04-03
-image: springFrameworkV6.png
+image: springFrameworkV6.webp
 ---
 
 ## Spring概览

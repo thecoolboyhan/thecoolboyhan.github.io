@@ -2,7 +2,7 @@
 title: 读《深入理解java虚拟机2019版》有感
 description: 非常nice的java虚拟机书籍
 date: 2024-09-10
-image: 深入理解java虚拟机v3.png
+image: 深入理解java虚拟机v3.webp
 categories: [精选]
 tags:
   - JVM

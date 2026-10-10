@@ -1,7 +1,7 @@
 ---
 title:  读《凤凰架构》有感--架构篇
 description: 最近攻读周志明老师的《凤凰架构》，书中介绍了软件领域的架构演进，涉及到众多架构知识，分布式场景的设计原则等，不知能否做到归纳总结。\n本文主要包含：服务远程调用、各种事务、流量分发、架构安全
-image: 1.png
+image: 1.webp
 date: 2025-08-07
 slug: icyfenix-Argitektuur
 categories:

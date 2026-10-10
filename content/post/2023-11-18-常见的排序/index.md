@@ -1,7 +1,7 @@
 ---
 title:  算法-排序
 description: 常见的排序汇总
-image: 1.png
+image: 1.webp
 date: 2023-11-18
 categories:
   - 精选

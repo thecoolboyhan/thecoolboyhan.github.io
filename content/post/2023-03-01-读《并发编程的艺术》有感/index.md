@@ -1,7 +1,7 @@
 ---
 title:  读《并发编程的艺术》有感
 description: JUC入门书籍
-image: 1.png
+image: 1.webp
 date: 2023-03-01
 categories:
   - 精选
