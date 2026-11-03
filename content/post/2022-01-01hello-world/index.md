@@ -77,11 +77,11 @@ K8s优雅下线+滚动更新实现零空窗发布 让核心服务发版不再需
 
 - 算法基本功
 
-目前周赛成绩普遍保持在1800左右（最近几场略有下降），（拿过几次knight但没一直保住）最好成绩全国56名。
+全站排名2054，竞赛分数1912，目前已经上k。算法已经处于养老状态。
+![1792744566832.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2026-10/1792744566832_1792744566850.png)
 
-![250720155229116.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/250720155229116_1752997949162.png)
 
-目前题量大概在1600+左右（三年出勤率超90%）
+目前题量大概在1800+左右（三年出勤率超90%）
 
 ![1752998012179.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-07/1752998012179_1752998012205.png)
 
