@@ -2,7 +2,10 @@
   覆盖主题的 links 组件（Stack v4）：
   在原「标题 + 描述」基础上，额外把「项目地址（website）」作为可见文字展示，
   通过 .link-website 加上强调色 + 加粗，方便访客识别并点击。
-  样式见 assets/scss/custom.scss 的「links 页项目地址」一节。
+  另外支持可选的 repo 字段：当卡片的 website 指向「本站介绍文章」时，
+  在卡片下方补一条可点击的「代码仓库」直链（放在外层 </a> 之后，避免嵌套 <a>）。
+  未设置 repo 的卡片渲染结果不变。
+  样式见 assets/scss/custom.scss 的「links 页项目地址」一节（.link-website / .link-repo）。
 */ -}}
 <div class="article-list--compact links">
     {{ range $link := .Params.links }}
@@ -42,6 +45,11 @@
                     </div>
                 {{ end }}
             </a>
+            {{- with $link.repo -}}
+                <div class="link-repo">
+                    <a href="{{ . }}" target="_blank" rel="noopener">代码仓库：{{ . }}</a>
+                </div>
+            {{- end -}}
         </article>
     {{ end }}
 </div>

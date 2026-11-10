@@ -830,6 +830,7 @@ html {
 }
 
 /* ========== 27. links 页「项目地址」文字（layouts/_partials/article/components/links.html） ========== */
+/* .link-website = website（本站文章 / 仓库地址）；.link-repo = 可选的第二链接（代码仓库直链） */
 .article-list--compact.links .article-details {
     min-width: 0;   /* 允许长链接在窄屏下正常换行，避免撑破卡片 */
 }
@@ -845,6 +846,25 @@ html {
 }
 @media (hover: hover) {
     .article-list--compact.links article a:hover .link-website {
+        color: var(--accent-color-darker);
+        text-decoration: underline;
+    }
+}
+/* 卡片 website 指向「本站介绍文章」时，用 repo 补一条可点击的代码仓库直链 */
+.article-list--compact.links .link-repo {
+    padding: 0.35rem 1.2rem 1rem;
+    font-size: 1.3rem;
+    line-height: 1.4;
+    word-break: break-all;
+}
+.article-list--compact.links .link-repo a {
+    display: inline;
+    font-weight: 600;
+    color: var(--c-blue);
+    text-decoration: none;
+}
+@media (hover: hover) {
+    .article-list--compact.links .link-repo a:hover {
         color: var(--accent-color-darker);
         text-decoration: underline;
     }

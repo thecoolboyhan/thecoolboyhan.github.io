@@ -51,7 +51,7 @@ layouts/
     render-image.html    # 【覆盖主题】远程图片直连、不再下载到本地（见「5. 图片处理」）
   _partials/
     widget/featured.html # 【自定义】精选文章 widget
-    article/components/links.html  # 【覆盖主题】links 页卡片：额外显示项目地址（.link-website）
+    article/components/links.html  # 【覆盖主题】links 页卡片：项目地址（.link-website）+ 可选代码仓库直链（.link-repo）
     article/components/content.html # 【覆盖主题】仅给带 links 的页面加 has-links 类（便于只对该页正文链接做强调）
     head/custom.html     # 【自定义】代码字体 JetBrains Mono（jsDelivr CDN）
     footer/custom.html   # 【自定义】品牌渐变条 / 不蒜子统计 / 阅读进度条 / 返回顶部
@@ -82,7 +82,9 @@ hugo --quiet            # 构建校验（不启动服务）
 - 可设置 `series: ["系列名称"]` 启用系列关联；`slug` / `permalink` 可固定链接（站内已有多篇使用）。
 - **注意**：不写 `slug` 时，文章的 URL 会由**标题**生成（`post = "/p/:slug/"`）。新增文章若希望 URL 干净，请显式设置 `slug`。
 - **`content/page/links/index.md`**：开源项目导航页（侧边栏「开源项目」菜单），用 front matter 的 `links` 数组渲染卡片，
-  每项支持 `title` / `description` / `website` / `image`（可留空）。已固定 `slug: links` 以保持 `/links/` 地址不变。
+  每项支持 `title` / `description` / `website` / `image` / `repo`（除 `title` 外均可留空）。
+  `website` 是整张卡片的主链接（主要项目指向本站介绍文章）；`repo` 是**可选的第二链接**，在卡片下方显示可点击的「代码仓库」直链。
+  已固定 `slug: links` 以保持 `/links/` 地址不变。
 - **开源项目官网文章**（均为 page bundle，URL 用显式 `slug`；有仓库截图的放同目录，无截图的纯文字）：
   - `content/post/fishing-funds/index.md` → `/p/fishing-funds/`（`banner.png` + `1~3.png`）
   - `content/post/type-text-injector/index.md` → `/p/type-text-injector/`（`gui-preview.png`）
@@ -305,7 +307,34 @@ python3 scripts/cover_to_webp.py          # 实际执行
 - 评论为 Giscus，配置 `params.toml` 的 `[comments.giscus]`（仓库需开启 Discussions）。
 - 代码高亮 Chroma，行号、`tabWidth=4`；代码字体 JetBrains Mono 由 `head/custom.html` 引入。
 
+### 6. links 页卡片双链接（`links.html` + `custom.scss` 第 27 节）
+
+- 卡片整体是 `<a href="{{ $link.website }}">`，**不能在内层再嵌 `<a>`**；因此可选的 `$link.repo` 必须渲染在外层 `</a>` 之后、`</article>` 之内，用 `.link-repo` 包一层独立链接。
+- 5 张「主要项目」卡片的 `website` 指向本站介绍文章、`repo` 指向对应 GitHub 仓库；「学习 / 其他仓库」的 `website` 本身就是 GitHub 地址，无需 `repo`。
+- 未设置 `repo` 的卡片输出不变。新增或修改卡片时，回到「文章 ↔ 仓库」映射表核对地址，并在正文补一段项目说明与链接清单。
+
 ## 修改记录（Changelog）
+
+### 2026-11-10 · 补齐 /links/ 页 dmla-mps-lab 的介绍与仓库直链
+
+**背景**：上一轮只给 `/links/` 加了卡片和一行列表，卡片 `website` 指向本站文章，正文没有项目说明、卡片也没有 GitHub 直链；用户指出「这篇文章的相关介绍和链接没有补充到博客开源说明里」。
+
+- `content/page/links/index.md`：
+  - 正文新增 `### 关于 dmla-mps-lab`：项目定位、与网页原版的差异、M5 实测（86 分钟 / loss 8.11 → 3.03）、CC BY-NC-SA 4.0 边界，
+    以及含 4 条链接的表格（本站介绍文章、GitHub 仓库、DMLA 预训练 / SFT 两章原文）。
+  - 「主要项目」列表条目扩写，补 [GitHub 仓库](https://github.com/thecoolboyhan/dmla-mps-lab) 直链。
+  - 5 张主要项目卡片均补可选 `repo` 字段（避免只有一张卡片多出一行），`website` 仍指向各自的本站文章。
+- `layouts/_partials/article/components/links.html`：支持可选 `$link.repo`，渲染为卡片下方的 `.link-repo` 独立链接；
+  **放在外层 `</a>` 之后**以避开嵌套 `<a>`。未设置 `repo` 的卡片输出不变。
+- `assets/scss/custom.scss` 第 27 节：新增 `.link-repo` / `.link-repo a`（蓝色加粗、窄屏换行、hover 下划线），
+  复用已有 `--c-blue` / `--accent-color-darker`，未新增 CSS 变量。
+- 本文件同步：内容规范的 links 字段、目录结构注释、新增「6. links 页卡片双链接」实现说明、本节修改记录。
+
+**验证**：`hugo --destination /tmp/hugo-blog-verify`（本机 v0.166.0 Extended，与 CI 同版本）构建通过，
+**315 页 / 792 ms**（仅剩既有 `Widget series not found` WARN）；`/links/index.html` 中 `class="link-repo"` 恰好出现 **5 次**，
+分别指向 5 个主要项目仓库，且渲染为 `</a><div class="link-repo"><a ...>`（**无嵌套 `<a>`**）；
+正文新增小节、表格与 4 条链接均已渲染；编译后的 `scss/style.min.*.css` 含 3 条 `.link-repo` 规则。
+构建输出到 `/tmp`，**未改动 `public/`**。
 
 ### 2026-11-10 · 新增 dmla-mps-lab 开源项目文章 + links 卡片
 
