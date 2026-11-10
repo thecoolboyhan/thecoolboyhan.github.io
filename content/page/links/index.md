@@ -14,6 +14,9 @@ links:
   - title: ai-platform
     description: AI 中台 —— 基于 Spring AI 2.0.1 + Ollama + JDK 25 的数据分析平台，对接 billing 计费系统经营数据大屏——官网与使用说明见本站文章。
     website: /p/ai-platform/
+  - title: dmla-mps-lab
+    description: 给《设计机器学习应用系统》读者的补充实验方案 —— 没有独显也能把 Transformer 预训练与 SFT 两章完整走一遍，自动检测 CUDA / MPS / CPU，不依赖 Docker 与 Git LFS——官网与使用说明见本站文章。
+    website: /p/dmla-mps-lab/
   - title: blogserver
     description: 博客相关的服务端 / 前端项目（SCSS）。
     website: https://github.com/thecoolboyhan/blogserver
@@ -58,6 +61,7 @@ comments: false
 - **type-text-injector**：把文字稳定「打」进虚拟机与远程桌面的小工具，详见 [本站文章](/p/type-text-injector/)。
 - **xiaomi-watch-s3-diy**：小米手表 S3 自研表盘与 ws3 打包工具，详见 [本站文章](/p/xiaomi-watch-s3-diy/)。
 - **ai-platform**：基于 Spring AI + Ollama + JDK 25 的 AI 中台示例，详见 [本站文章](/p/ai-platform/)。
+- **dmla-mps-lab**：没有独显也能走完 LLM 预训练与 SFT 两章的教学实验，详见 [本站文章](/p/dmla-mps-lab/)。
 
 ## 学习 / 其他仓库
 

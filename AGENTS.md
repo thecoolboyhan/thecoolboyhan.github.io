@@ -83,11 +83,12 @@ hugo --quiet            # 构建校验（不启动服务）
 - **注意**：不写 `slug` 时，文章的 URL 会由**标题**生成（`post = "/p/:slug/"`）。新增文章若希望 URL 干净，请显式设置 `slug`。
 - **`content/page/links/index.md`**：开源项目导航页（侧边栏「开源项目」菜单），用 front matter 的 `links` 数组渲染卡片，
   每项支持 `title` / `description` / `website` / `image`（可留空）。已固定 `slug: links` 以保持 `/links/` 地址不变。
-- **开源项目官网文章**（均为 page bundle，含仓库真实截图，URL 用显式 `slug`）：
+- **开源项目官网文章**（均为 page bundle，URL 用显式 `slug`；有仓库截图的放同目录，无截图的纯文字）：
   - `content/post/fishing-funds/index.md` → `/p/fishing-funds/`（`banner.png` + `1~3.png`）
   - `content/post/type-text-injector/index.md` → `/p/type-text-injector/`（`gui-preview.png`）
   - `content/post/xiaomi-watch-s3-diy/index.md` → `/p/xiaomi-watch-s3-diy/`（`preview-banner.png` / `roulette-s3.png` / `minimal-s3.png` / `daynight-day.png` / `daynight-night.png`）
   - `content/post/ai-platform/index.md` → `/p/ai-platform/`（仓库无截图，纯文字）
+  - `content/post/dmla-mps-lab/index.md` → `/p/dmla-mps-lab/`（仓库无截图，纯文字）
   - 这几篇同时也是 links 页「主要项目」卡片的落地页。
 - 图片建议放文章目录内或 `static/`；主题已开启 imageProcessing。
 
@@ -97,11 +98,12 @@ hugo --quiet            # 构建校验（不启动服务）
 - **维护对应的博客文章前，先读取该项目仓库的 `AGENTS.md`（配合 `README.md` / `CHANGELOG.md`）**，
   据此同步更新文章内容与配图，避免博客文章与项目实际脱节。
 - **项目侧仓库的 `AGENTS.md` 是「项目真源」**；本文件只负责记录「文章 ↔ 仓库」的映射与同步约定。
-- 文章 ↔ 仓库对应关系（四个仓库均已自带 `AGENTS.md`）：
+- 文章 ↔ 仓库对应关系（五个仓库均已自带 `AGENTS.md`）：
   - `content/post/fishing-funds/index.md` ↔ <https://github.com/thecoolboyhan/fishing-funds>
   - `content/post/type-text-injector/index.md` ↔ <https://github.com/thecoolboyhan/type-text-injector>
   - `content/post/xiaomi-watch-s3-diy/index.md` ↔ <https://github.com/thecoolboyhan/xiaomi-watch-s3-diy>
   - `content/post/ai-platform/index.md` ↔ <https://github.com/thecoolboyhan/ai-platform>
+  - `content/post/dmla-mps-lab/index.md` ↔ <https://github.com/thecoolboyhan/dmla-mps-lab>
 
 - **新增开源项目文章时**：按同样结构建 page bundle（`index.md` + 真实截图）+ 显式 `slug`，
   在 `content/page/links/index.md` 加卡片，并**回到本表补一行映射**。
@@ -304,6 +306,28 @@ python3 scripts/cover_to_webp.py          # 实际执行
 - 代码高亮 Chroma，行号、`tabWidth=4`；代码字体 JetBrains Mono 由 `head/custom.html` 引入。
 
 ## 修改记录（Changelog）
+
+### 2026-11-10 · 新增 dmla-mps-lab 开源项目文章 + links 卡片
+
+**背景**：新开源仓库 `thecoolboyhan/dmla-mps-lab`（《设计机器学习应用系统》预训练 / SFT 教学降配实验）发布，按「开源项目文章的维护约定」补官网文章与导航卡片。
+
+- 新增 `content/post/dmla-mps-lab/index.md`（page bundle，`slug: dmla-mps-lab` → `/p/dmla-mps-lab/`）：
+  内容取自该仓库的 `README.md` / `COMPARISON.md` / `AGENTS.md`，含项目定位、与网页原版的差异、
+  平台支持、快速开始、八阶段脚本映射、M5 实测记录、能力边界、许可证与作者介绍。
+  **仓库无截图，纯文字**（沿用 `ai-platform` 先例，因此未写 `image:`）。
+- `date: 2021-01-01`，沿用既有约定沉到归档底部、不影响自己文章的时间排序；入口靠 `/links/` 页。
+- 分类 `开源` / `AI`，tags `开源项目` / `大语言模型` / `PyTorch` / `Apple Silicon` / `LLM`；**未加入「精选」**。
+- `content/page/links/index.md`：主要项目卡片 +1，正文「主要项目」列表 +1。
+- 本文件同步更新：官网文章列表、文章 ↔ 仓库映射表（四个 → 五个）、本节修改记录。
+- 项目侧同步：仓库 `README.md` / `NOTICE.md` 贴上博客地址 <https://thecoolboyhan.github.io> 与作者介绍。
+
+**验证**：`hugo --destination /tmp/hugo-blog-verify`（本机 v0.166.0 Extended，与 CI 同版本）构建通过，
+**315 页 / 752 ms**，`/p/dmla-mps-lab/` 与 `/links/` 产物正常；仅剩既有的 `Widget series not found` WARN（P2，见未来计划）。
+构建输出到 `/tmp`，**未改动 `public/`**。
+
+> ⚠️ 提交时注意：当时仓库里有用户正在编辑的未提交文章
+> （`content/post/1连载中/读《设计机器学习应用系统》有感-大语言模型.md`）
+> 与多个未跟踪 `.DS_Store`、`package-lock.json`，**只 add 本次涉及的 3 个文件**，不要用 `git add -A`。
 
 ### 2026-10-10 · Hello 文章封面改为 Hermes Agent 官网风格的抽象几何封面
 
