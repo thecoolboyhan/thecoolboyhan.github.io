@@ -86,8 +86,9 @@ bash setup.sh        # macOS / Linux；Windows 用 setup.ps1
 
 # 第 2 章：SFT
 <venv-python> stage5_sft_data.py
-<venv-python> stage6_sft_train.py
+<venv-python> stage6_sft_train.py   # M5 实测约 28 分钟
 <venv-python> stage7_sft_chat.py
+<venv-python> play_sft.py          # 可选：自己提问、换权重对比、批量测试
 ```
 
 `<venv-python>` 在 macOS / Linux 是 `.venv/bin/python`，在 Windows PowerShell 是 `.venv\Scripts\python.exe`；脚本运行时打印的「下一步」会自动给出正确路径。想先验证链路，<span class="text-green">**用 `PRESET=quick` 十几分钟就能走完 0→4**</span>。
@@ -103,7 +104,7 @@ bash setup.sh        # macOS / Linux；Windows 用 setup.ps1
 | 第 4 阶段 · 推理续写 | `stage4_generate.py`、`play_pretrain.py` |
 | 第 2 章 · SFT 语料 / ChatML / labels 掩码 | `stage5_sft_data.py`、`shared/sft_dataset.py` |
 | 第 2 章 · SFT 训练 | `stage6_sft_train.py` |
-| 第 2 章 · 对话服务 | `stage7_sft_chat.py` |
+| 第 2 章 · 对话服务 | `stage7_sft_chat.py`、`play_sft.py` |
 
 逐步该看懂什么、验收清单、对照实验和常见坑见仓库的 [GUIDE.md](https://github.com/thecoolboyhan/dmla-mps-lab/blob/main/GUIDE.md)；接手维护的 AI 助手可以先读仓库里的 [AGENTS.md](https://github.com/thecoolboyhan/dmla-mps-lab/blob/main/AGENTS.md)。
 
@@ -115,11 +116,14 @@ bash setup.sh        # macOS / Linux；Windows 用 setup.ps1
 | loss 曲线 | 8.110 → **3.029**，降幅 5.08 |
 | 续写效果 | 中文通顺、有主题词，但内容会胡说、重复；英文 prompt 破碎 |
 | 权重健康 | `missing=0 / unexpected=0`，FP32，无 NaN/Inf |
-| SFT 阶段 | 20 步冒烟通过，初始 loss 1.906 |
+| SFT 阶段 | 完整 1,875 步，28.1 分钟，loss 1.860 → **1.647** |
+| SFT 对话效果 | 会按 ChatML 格式回答，但仍会胡说（「1+1」答 2.5）、自称 Qwen |
 
-{{< hint "warning" >}}
-**完整 SFT 1,875 步训练尚未跑完**，最终对话质量未实测，文档里的「约 30 分钟」只是前 200 步外推。CUDA 分支目前也只做了逻辑测试，本机没有 N 卡。这些边界在 README 与 COMPARISON 里都如实标注了。
+{{< hint "info" >}}
+2026-11-10 已把第 2 章完整跑完：1,875 步 / 28.1 分钟，loss 1.860 → 1.647。训完的模型确实学会了「按 user / assistant 格式说话」，但「1+1」答成 2.5、自我介绍时自称 Qwen —— <span class="text-red">**SFT 赋予的是对话行为，不是知识**</span>，与网页结论一致。仓库新增 `play_sft.py`，可以自己提问、热切换权重、三方对照和批量跑问题集。
 {{< /hint >}}
+
+CUDA 分支目前仍只做了逻辑测试，本机没有 N 卡；这个边界在 README 与 COMPARISON 里如实标注着。
 
 ## 能得到什么，得不到什么
 
@@ -127,7 +131,7 @@ bash setup.sh        # macOS / Linux；Windows 用 setup.ps1
 
 **得不到**：网页的 loss 1.85、64M 全量指标、一个日常可用的助手、英文能力、事实正确性，以及 CUDA / FlashAttention / 多卡分布式的真实经验。
 
-预训练模型只会续写、不会对话，这是网页的设计，不是 bug；SFT 赋予的是**对话行为**而非知识，64M 级模型仍会把「1+1」答成 3。
+预训练模型只会续写、不会对话，这是网页的设计，不是 bug；SFT 赋予的是**对话行为**而非知识，64M 级模型仍会把「1+1」答错（自己训的答 2.5，官方权重答 3）。
 
 ## 仓库里不含什么
 

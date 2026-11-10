@@ -315,6 +315,16 @@ python3 scripts/cover_to_webp.py          # 实际执行
 
 ## 修改记录（Changelog）
 
+### 2026-11-10 · 同步 dmla-mps-lab 项目进展（SFT 完整实跑 + 新工具）
+
+- 项目侧 `stage6_sft_train.py` 已完整跑完 **1,875 步 / 28.1 分钟**，loss **1.860 → 1.647**；
+  文章「实测记录」表、原 `hint "warning"`（写的是「完整 SFT 尚未跑完」）已改为实测结论 + `hint "info"`。
+- 文章快速开始、八个阶段脚本表补入新增的 `play_sft.py`（交互对话 / 权重对比 / 批量测试工具）。
+- `/links/` 页「关于 dmla-mps-lab」段落补上 SFT 实测数字，与文章、项目 README 三处一致。
+- 同步更新项目仓库 `README.md` / `GUIDE.md` / `COMPARISON.md` / `AGENTS.md` / `NOTICE.md` 的同一批过时表述，
+  并新增 `play_sft.py`；两处仓库均会提交推送。
+- **注意**：CUDA 真机仍未实测，文章保留该边界说明，不要连带删掉。
+
 ### 2026-11-10 · 补齐 /links/ 页 dmla-mps-lab 的介绍与仓库直链
 
 **背景**：上一轮只给 `/links/` 加了卡片和一行列表，卡片 `website` 指向本站文章，正文没有项目说明、卡片也没有 GitHub 直链；用户指出「这篇文章的相关介绍和链接没有补充到博客开源说明里」。
