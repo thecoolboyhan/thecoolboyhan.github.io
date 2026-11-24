@@ -389,25 +389,15 @@ flowchart TD
 ![1760496927120.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-10/1760496927120_1760496955622.png)
 
 | 状态类型                                                     | 说明             | 特点                                                         |
-
 | ------------------------------------------------------------ | ---------------- | ------------------------------------------------------------ |
-
 | [SERVICE_TASK](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L27-L27) | 服务任务状态     | 执行具体的业务逻辑，对应实际的服务调用，是状态机中最常用的状态类型 |
-
 | [CHOICE](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L32-L32) | 选择状态         | 用于条件分支判断，根据条件表达式的结果决定下一步执行哪个状态 |
-
 | [FAIL](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L37-L37) | 失败状态         | 表示状态机执行失败，终止状态机执行并标记为失败               |
-
 | [SUCCEED](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L42-L42) | 成功状态         | 表示状态机执行成功，终止状态机执行并标记为成功               |
-
 | [COMPENSATION_TRIGGER](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L47-L47) | 补偿触发状态     | 用于触发补偿流程，当状态机需要回滚时触发已执行状态的补偿操作 |
-
 | [SUB_STATE_MACHINE](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L52-L52) | 子状态机状态     | 调用另一个状态机作为子流程，支持状态机的嵌套调用和组合       |
-
 | [SUB_MACHINE_COMPENSATION](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L57-L57) | 子状态机补偿状态 | 专门用于补偿子状态机的执行结果                               |
-
 | [SCRIPT_TASK](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L62-L62) | 脚本任务状态     | 执行脚本代码，支持通过脚本引擎执行动态逻辑                   |
-
 | [LOOP_START](https://github.com/apache/incubator-seata/blob/2.5.0/compatible/src/main/java/io/seata/saga/statelang/domain/StateType.java#L67-L67) | 循环开始状态     | 支持循环执行某些状态逻辑                                     |
 
 - 事务执行

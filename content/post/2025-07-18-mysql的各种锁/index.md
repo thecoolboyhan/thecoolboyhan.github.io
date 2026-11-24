@@ -110,15 +110,10 @@ SELECT ... FOR UPDATE或UPDATE/DELETE语句自动获取。
 - 意向锁与其他锁是否冲突
 
 |      | `X`  | `IX` | `S`  | `IS` |
-
 | :--- | :--- | :--- | :--- | ---- |
-
 | `X`  | 冲突 | 冲突 | 冲突 | 冲突 |
-
 | `IX` | 冲突 | 相容 | 冲突 | 相容 |
-
 | `S`  | 冲突 | 冲突 | 相容 | 相容 |
-
 | `IS` | 冲突 | 相容 | 相容 | 相容 |
 
 ``` sql
@@ -366,15 +361,10 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 输出信息如下：
 
 | INDEX_NAME | LOCK_MODE     | LOCK_STATUS | LOCK_DATA |
-
 | ---------- | ------------- | ----------- | --------- |
-
 | NULL       | IX            | GRANTED     | NULL      |
-
 | b          | X,GAP         | GRANTED     | 6, 7      |
-
 | b          | X             | GRANTED     | 3, 5      |
-
 | PRIMARY    | X,REC_NOT_GAP | GRANTED     | 5         |
 
 <span class="text-red"> 首先搞清楚，<span class="text-yellow">**通过二级索引上锁时，数据是按照二级索引来排序的。（不是按照主键来排序的）。**</span>如果二级索引相同的值，则再按照主键排序。</span>
@@ -399,11 +389,8 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 ```
 
 | INDEX_NAME | LOCK_MODE     | LOCK_STATUS | LOCK_DATA |
-
 | ---------- | ------------- | ----------- | --------- |
-
 | NULL       | IX            | GRANTED     | NULL      |
-
 | PRIMARY    | X,REC_NOT_GAP | GRANTED     | 5         |
 
 只会在固定a=5行来上锁。
@@ -439,21 +426,12 @@ SELECT INDEX_NAME,LOCK_MODE,LOCK_STATUS,LOCK_DATA FROM performance_schema.data_l
 - 不同版本如何查看各种锁信息
 
 | 方法                              | MySQL 5.6 | MySQL 5.7 | MySQL 8.0 | MySQL 8.4 | 注意事项                         |
-
 |-----------------------------------|-----------|-----------|-----------|-----------|----------------------------------|
-
 | SHOW ENGINE INNODB STATUS         | ✅        | ✅        | ✅        | ✅        | 需启用 innodb_status_output_locks |
-
 | SHOW PROCESSLIST                  | ✅        | ✅        | ✅        | ✅        | 显示线程状态，非锁详情            |
-
 | SHOW OPEN TABLES                  | ✅        | ✅        | ✅        | ✅        | 适合 MyISAM 表锁                 |
-
 | INNODB_LOCKS/WAITS                | ✅        | ✅        | 废弃      | 废弃      | MySQL 8.0.1 起改用 data_locks      |
-
 | INNODB_TRX                        | ✅        | ✅        | ✅        | ✅        | 查看活跃事务                     |
-
 | performance_schema.data_locks     | ❌        | ❌        | ✅        | ✅        | 需启用 Performance Schema        |
-
 | performance_schema.metadata_locks | ❌        | ✅        | ✅        | ✅        | 适合元数据锁和用户锁             |
-
 | IS_USED_LOCK                      | ✅        | ✅        | ✅        | ✅        | 查看 GET_LOCK 锁                |

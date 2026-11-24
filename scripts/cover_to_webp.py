@@ -45,6 +45,8 @@ def body_without_fm(text: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--min-kb", type=int, default=MIN_BYTES // 1024,
+                    help=f"只处理大于此体积的封面（KB，默认 {MIN_BYTES // 1024}）")
     args = ap.parse_args()
 
     # 收集所有正文中的本地图片引用（含 markdown 与 html），用于安全校验
@@ -71,7 +73,7 @@ def main() -> None:
         if not src.exists() or src.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
             continue
         size = src.stat().st_size
-        if size < MIN_BYTES:
+        if size < args.min_kb * 1024:
             continue
 
         # 安全约束 1：正文里不能引用这张图
@@ -114,6 +116,8 @@ def main() -> None:
             new_text = new_text.replace(f"]({img})", f"]({dst.name})")
             md.write_text(new_text, encoding="utf-8")
             src.unlink()
+        else:
+            dst.unlink()
 
         saved += size - new_size
         converted += 1

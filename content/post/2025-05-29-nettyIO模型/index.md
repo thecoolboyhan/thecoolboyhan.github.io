@@ -256,15 +256,10 @@ public class NioSelectorServer {
 - 事件
 
 | 事件类型事件类型 | 描述描述                                          |
-
 | ---------------- | ------------------------------------------------- |
-
 | `OP_ACCEPT`      | 服务器端 `ServerSocketChannel` 接收到新的连接请求 |
-
 | `OP_CONNECT`     | 客户端 `SocketChannel` 连接成功                   |
-
 | `OP_READ`        | 通道中有数据可读                                  |
-
 | `OP_WRITE`       | 通道可以写入数据                                  |
 
 由java.nio.channels.spi类中创建，取系统默认的java.nio.channels.spi.SelectorProvider。
@@ -316,15 +311,10 @@ Java NIO 选择器的实现位于 `sun.nio.ch` 包中，不同操作系统会加
 - 性能对比
 
 | 操作系统        | 底层实现          | 主要特点                       |
-
 | --------------- | ----------------- | ------------------------------ |
-
 | **Linux**       | `epoll`           | 高效事件驱动，适用于大规模连接 |
-
 | **macOS / BSD** | `kqueue`          | 低开销，支持多种事件类型       |
-
 | **Windows**     | `IOCP`            | 异步 I/O，适用于高吞吐量服务器 |
-
 | **其他系统**    | `select` / `poll` | 适用于较旧系统，但性能较低     |
 
 <mark>10 万级别的请求 IO 多路可以勉强处理</mark>

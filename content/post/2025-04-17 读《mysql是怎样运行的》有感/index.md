@@ -37,73 +37,41 @@ tags:
 - 常见的存储引擎
 
 | 存储引擎  | 描述                                 |
-
 | --------- | ------------------------------------ |
-
 | ARCHIVE   | 用于数据存档（行被插入后不能再修改） |
-
 | BLACKHOLE | 丢弃写操作，读操作会返回空内容       |
-
 | CSV       | 在存储数据时，以逗号分隔各个数据项   |
-
 | FEDERATED | 用来访问远程表                       |
-
 | InnoDB    | 具备外键支持功能的事务存储引擎       |
-
 | MEMORY    | 置于内存的表                         |
-
 | MERGE     | 用来管理多个MyISAM表构成的表集合     |
-
 | MyISAM    | 主要的非事务处理存储引擎             |
-
 | NDB       | MySQL集群专用存储引擎                |
 
 - 各功能支持情况
 
 | feature                                            | **MyISAM** | **Memory** | **InnoDB** | **Archive** | **NDB** |
-
 | -------------------------------------------------- | ---------- | ---------- | ---------- | ----------- | ------- |
-
 | B-tree indexes 索引                                | Yes        | yes        | yes        | no          | no      |
-
 | Backup/point-in-time recovery 时间镜像备份         | yes        | yes        | yes        | yes         | yes     |
-
 | Cluster database support 集群                      | no         | no         | no         | no          | Yes     |
-
 | Clustered indexes 聚簇索引                         | no         | no         | yes        | no          | no      |
-
 | Compressed data 数据压缩                           | yes        | no         | yes        | yes         | no      |
-
 | Data caches 数据缓存                               | No         | N/A        | Yes        | no          | yes     |
-
 | Encrypted data 数据加密                            | yes        | yes        | yes        | yes         | yes     |
-
 | Foreign key support 外键                           | no         | no         | yes        | no          | yes     |
-
 | Full-text search indexes 全文搜索索引              | Yes        | no         | yes        | no          | no      |
-
 | Geospatial data type support 空间数据类型支持      | yes        | no         | yes        | yes         | yes     |
-
 | Geospatial indexing support 空间索引支持           | yes        | no         | yes        | no          | no      |
-
 | Hash indexes 哈希索引                              | no         | yes        | no         | no          | yes     |
-
 | Index caches 索引缓存                              | yes        | N/A        | yes        | no          | yes     |
-
 | Locking granularity 锁粒度                         | Table      | Table      | Row        | Row         | Row     |
-
 | MVCC 多版本并发控制                                | no         | no         | yes        | no          | no      |
-
 | Query cache support 查询缓存                       | yes        | yes        | yes        | yes         | yes     |
-
 | Replication support 主从复制                       | yes        | Limited    | yes        | yes         | yes     |
-
 | Storage limits 存储限制                            | 256TB      | RAM        | 64TB       | None        | 384EB   |
-
 | T-tree indexes T-tree索引                          | no         | no         | no         | no          | yes     |
-
 | Transactions 事务                                  | no         | no         | yes        | no          | yes     |
-
 | Update statistics for data dictionary 更新数据字典 | yes        | yes        | yes        | yes         | yes     |
 
 > 可以为不同的表设置不同的存储引擎
@@ -116,15 +84,10 @@ tags:
 - 四种行格式
 
 | 行格式     | 紧凑的存储特性 | 增强的可变长度列存储 | 大型索引键前缀支持 | 压缩支持 | 支持的表空间类型         |
-
 | ---------- | -------------- | -------------------- | ------------------ | -------- | ------------------------ |
-
 | REDUNDANT  | 否             | 否                   | 否                 | 否       | 系统，每个表的文件，一般 |
-
 | COMPACT    | 是的           | 否                   | 否                 | 否       | 系统，每个表的文件，一般 |
-
 | DYNAMIC    | 是的           | 是的                 | 是的               | 否       | 系统，每个表的文件，一般 |
-
 | COMPRESSED | 是的           | 是的                 | 是的               | 是的     | 文件每表，一般           |
 
 ### **COMPACT**行格式
@@ -158,23 +121,14 @@ COMPACT行格式会把这些值为NULL的列统一管理起来。
 > 用于描述记录的记录头信息
 
 | 名称         | 大小（单位：bit） | 描述                                                         |
-
 | ------------ | ----------------- | ------------------------------------------------------------ |
-
 | 预留位1      | 1                 | 没有使用                                                     |
-
 | 预留位2      | 1                 | 没有使用                                                     |
-
 | delete_mask  | 1                 | 标记该记录是否被删除                                         |
-
 | min_rec_mask | 1                 | B+树的每层非叶子节点中的最小记录都会添加该标记               |
-
 | n_owned      | 4                 | 表示当前记录拥有的记录数                                     |
-
 | heap_no      | 13                | 表示当前记录在记录堆的位置信息                               |
-
 | record_type  | 3                 | 表示当前记录的类型，0 表示普通记录，1 表示B+树非叶子节点记录，2 表示最小记录，3 表示最大记录 |
-
 | next_record  | 16                | 表示下一条记录的相对位置                                     |
 
 #### 记录的真实数据
@@ -184,13 +138,9 @@ COMPACT行格式会把这些值为NULL的列统一管理起来。
 - mysql隐藏列
 
 | 列名           | 是否必须                     | 占用空间 | 描述                   |
-
 | -------------- | ---------------------------- | -------- | ---------------------- |
-
 | row_id         | 否（InnoDB指定主键时才存在） | 6 字节   | 行ID，唯一标识一条记录 |
-
 | transaction_id | 是                           | 6 字节   | 事务ID                 |
-
 | roll_pointer   | 是                           | 7 字节   | 回滚指针               |
 
 - <span class="text-red">mysql主键的生成策略</span>
@@ -212,43 +162,26 @@ mysql一页大小为16kb，也就是16384字节。对于占用空间非常大的
 ![1744855192735.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2025-04/1744855192735_1744855192753.png)
 
 | 名称               | 中文名             | 占用空间大小 | 简单描述                 |
-
 | ------------------ | ------------------ | ------------ | ------------------------ |
-
 | File Header        | 文件头部           | 38 字节      | 页的一些通用信息         |
-
 | Page Header        | 页面头部           | 56 字节      | 数据页专有的一些信息     |
-
 | Infimum + Supremum | 最小记录和最大记录 | 26 字节      | 两个虚拟的行记录         |
-
 | User Records       | 用户记录           | 不确定       | 实际存储的行记录内容     |
-
 | Free Space         | 空闲空间           | 不确定       | 页中尚未使用的空间       |
-
 | Page Directory     | 页面目录           | 不确定       | 页中的某些记录的相对位置 |
-
 | File Trailer       | 文件尾部           | 8 字节       | 校验页是否完整           |
 
 ### 记录头信息
 
 | 名称         | 大小 (单位: bit) | 描述                                                         |
-
 | ------------ | ---------------- | ------------------------------------------------------------ |
-
 | 预留位1      | 1                | 没有使用                                                     |
-
 | 预留位2      | 1                | 没有使用                                                     |
-
 | delete_mask  | 1                | 标记该记录是否被删除                                         |
-
 | min_rec_mask | 1                | B+树的每层非叶子节点中的最小记录都会添加该标记               |
-
 | n_owned      | 4                | 表示当前记录拥有的记录数                                     |
-
 | heap_no      | 13               | 表示当前记录在记录堆的位置信息                               |
-
 | record_type  | 3                | 表示当前记录的类型：0-普通记录，1-B+树非叶节点记录，2-最小记录，3-最大记录 |
-
 | next_record  | 16               | 表示下一条记录的相对位置                                     |
 
 - delete_mask
@@ -433,23 +366,14 @@ test.MYI：表的索引
 - file Header：记录一些通用信息
 
 | 名称                             | 占用空间大小 | 描述                                                         |
-
 | -------------------------------- | ------------ | ------------------------------------------------------------ |
-
 | FIL_PAGE_SPACE_OR_CHKSUM         | 4 字节       | 页的校验和（checksum 值）                                    |
-
 | FIL_PAGE_OFFSET                  | 4 字节       | 页号                                                         |
-
 | FIL_PAGE_PREV                    | 4 字节       | 上一个页的页号                                               |
-
 | FIL_PAGE_NEXT                    | 4 字节       | 下一个页的页号                                               |
-
 | FIL_PAGE_LSN                     | 8 字节       | 页面被最后修改时对应的日志序列位置 (Log Sequence Number)     |
-
 | FIL_PAGE_TYPE                    | 2 字节       | 该页的类型                                                   |
-
 | FIL_PAGE_FILE_FLUSH_LSN          | 8 字节       | 仅在系统表空间的一个页中定义，代表文件至少被刷新到了对应的 LSN 值 |
-
 | FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID | 4 字节       | 页属于哪个表空间                                             |
 
 - File Trailer：检查页是否完整，保证从内存到磁盘刷新时内容的一致性。
@@ -493,15 +417,10 @@ test.MYI：表的索引
 > 不止包含上面提到的两种段，还存在别的段（回滚段等）
 
 | 状态名    | 含义                 |
-
 | --------- | -------------------- |
-
 | FREE      | 空闲的区             |
-
 | FREE_FRAG | 有剩余空间的碎片区   |
-
 | FULL_FRAG | 没有剩余空间的碎片区 |
-
 | FSEG      | 附属于某个段的区     |
 
 > 以上表格中的区，只有FSEG属于段，其他的区都直接属于mysql，不属于某个段。
@@ -597,19 +516,12 @@ b-->|no|d[到表空间下申请一个状态为空闲的区,把数据插入到新
 mysql有默认的成本常量，可以通过成本常量来计算出不同方案查询需要的成本。mysql再选择成本最低的方案来执行。
 
 | 成本常数名称                 | 默认值 | 描述                                                         |
-
 | ---------------------------- | ------ | ------------------------------------------------------------ |
-
 | disk_temptable_create_cost   | 40.0   | 创建基于磁盘的临时表的成本，增大该值可减少磁盘临时表的创建   |
-
 | disk_temptable_row_cost      | 1.0    | 向磁盘临时表写入或读取一条记录的成本，增大该值可减少磁盘临时表的创建 |
-
 | key_compare_cost             | 0.1    | 两条记录比较操作的成本，多用于排序，增大该值可提高 filesort 成本，使优化器更倾向于使用索引排序 |
-
 | memory_temptable_create_cost | 2.0    | 创建基于内存的临时表的成本，增大该值可减少内存临时表的创建   |
-
 | memory_temptable_row_cost    | 0.2    | 向内存临时表写入或读取一条记录的成本，增大该值可减少内存临时表的创建 |
-
 | row_evaluate_cost            | 0.2    | 记录是否符合搜索条件的成本，增大该值可能让优化器更倾向于使用索引而非全表扫描 |
 
 > InnoDB的表信息是不准确的估值
@@ -626,31 +538,18 @@ mysql有默认的成本常量，可以通过成本常量来计算出不同方案
 ## 第15章、Explain详解
 
 | 列名            | 描述                                      |
-
 |---------------|----------------------------------------|
-
 | id           | 在一个大的查询语句中每个 SELECT 关键字都对应一个唯一的 id |
-
 | select_type  | SELECT 关键字对应的那个查询的类型          |
-
 | table        | 表名                                    |
-
 | partitions   | 匹配的分区信息                          |
-
 | type        | 针对单表的访问方法                        |
-
 | possible_keys | 可能用到的索引                          |
-
 | key         | 实际上使用的索引                          |
-
 | key_len     | 实际使用到的索引长度                      |
-
 | ref         | 当使用索引列等值查询时，与索引列进行等值匹配的对象信息 |
-
 | rows        | 预估的需要读取的记录条数                  |
-
 | filtered    | 某个表经过搜索条件过滤后剩余记录条数的百分比 |
-
 | Extra       | 一些额外的信息                          |
 
 ### 各属性的介绍
@@ -664,29 +563,17 @@ mysql有默认的成本常量，可以通过成本常量来计算出不同方案
 #### Select_type
 
 | 名称                 | 描述                                                         |
-
 | -------------------- | ------------------------------------------------------------ |
-
 | SIMPLE               | 不包含union或者子查询的查询（连接查询也是simple）            |
-
 | PRIMARY              | union、union All或者子查询的大查询等，由多个小查询组成的，其中最左面的查询就是primary |
-
 | UNION                | UNION 中的第二个或更后续的 SELECT 是union                    |
-
 | UNION RESULT         | UNION 的结果                                                 |
-
 | SUBQUERY             | 子查询中的第一个 SELECT                                      |
-
 | DEPENDENT SUBQUERY   | 依赖于外部查询的子查询中的第一个 SELECT                      |
-
 | DEPENDENT UNION      | 依赖于外部查询的 UNION 中的第二个或更后续的 SELECT 语句      |
-
 | DERIVED              | 派生表（需要临时表）                                         |
-
 | MATERIALIZED         | 物化子查询                                                   |
-
 | UNCACHEABLE SUBQUERY | 结果无法缓存并且必须针对外部查询的每一行重新评估的子查询     |
-
 | UNCACHEABLE UNION    | 属于不可缓存子查询的 UNION 中的第二个或更后续的 SELECT 语句 (见 UNCACHEABLE SUBQUERY) |
 
 #### type
@@ -694,49 +581,29 @@ mysql有默认的成本常量，可以通过成本常量来计算出不同方案
 前面文章提到的执行计划
 
 | type            | 备注                                                    |
-
 | --------------- | ------------------------------------------------------- |
-
 | system          | 查询系统表，如myisam的数量（InnoDB的数量是不可靠的）    |
-
 | const           | 主键等值匹配（通过唯一二级索引确定唯一id到也算）        |
-
 | eq_ref          | 非唯一的二级索引等值获取到多个id，会聚簇索引查询        |
-
 | index_merge     | 第十章中提到的索引合并                                  |
-
 | Unique_subquery | 两表连接中的eq_ref等值查询（经常出现在in id关联查询中） |
-
 | index_subquery  | 与上面类似，只是关联条键是普通索引                      |
-
 | range           | 使用索引的范围扫描                                      |
-
 | index           | 全索引扫描                                              |
-
 | All             | 全表扫描                                                |
 
 #### extra（扩展信息）
 
 |                                       | 解释                                                         |
-
 | ------------------------------------- | ------------------------------------------------------------ |
-
 | No tables used                        | 没有from子句，不查表                                         |
-
 | Impossible WHERE                      | where语句无效，永远不成立                                    |
-
 | No matching min/max row               | 使用min/max函数，但where条件过滤掉了所有数据（没有数据）时   |
-
 | Using index                           | 只需要使用索引数据，不需要回表                               |
-
 | Using index condition                 | where条件中有索引，但不能使用索引（新版本表示使用了索引下推） |
-
 | Using where                           | 使用where条件进行了全表扫描                                  |
-
 | Using join buffer (Block Nested Loop) | 无法使用索引的关联查询，mysql需要建立临时的buffer块来加快查询 |
-
 | Using filesort                        | 需要使用文件重排序，如果数据很多会非常慢                     |
-
 | Using temporary                       | 多个查询的过程中，需要临时表，一般在排序、去重等查询中常见 DISTINCT 、 GROUP BY 、 UNION |
 
 ### 蛇足
@@ -926,15 +793,10 @@ mysql会修改记录的trx_id、roll_pointer这些隐藏列的值）
 #### 四种隔离级别
 
 | 隔离级别                           | 脏读   | 不可重复读 | 幻读                             |
-
 | ---------------------------------- | ------ | ---------- | -------------------------------- |
-
 | 读未提交 (READ UNCOMMITTED)        | 可能   | 可能       | 可能                             |
-
 | 读已提交 (READ COMMITTED)          | 不可能 | 可能       | 可能                             |
-
 | 可重复读 (REPEATABLE READ)（默认） | 不可能 | 不可能     | 可能（有特殊方法，避免出现幻读） |
-
 | 可串行化 (SERIALIZABLE)            | 不可能 | 不可能     | 不可能                           |
 
 > 无论哪种事务隔离级别，都不允许出现脏写情况
@@ -976,13 +838,9 @@ mysql记录中有两个必要的隐藏列（row_id不是必须的，只有在没
 > 不同的事务隔离级别，生成ReadView的时机不同
 
 | 隔离级别 | 生成ReadView的时机               | 影响                                                         |
-
 | -------- | -------------------------------- | ------------------------------------------------------------ |
-
 | 读已提交 | 每次读取数据前都生成一个ReadView | 每次查询时都独立生成一个ReadView，这样每次查询都会读到本次ReadView之前已经提交的版本 |
-
 | 可重复读 | 第一次读取数据时生成ReadView     | 第一次查询时才生成ReadView，这样即使ReadView事务列表中的其他事务后面提交了，当前事务也无法读到它的版本 |
-
 | 串行化   | 用锁实现                         |                                                              |
 
 > 详细介绍mysql的各种锁

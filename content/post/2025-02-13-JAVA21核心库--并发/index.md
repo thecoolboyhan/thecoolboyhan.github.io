@@ -52,27 +52,16 @@ https://docs.oracle.com/en/java/javase/21/core/concurrency.html
 ### 常用API
 
 | API                      | 备注                                                         |
-
 | ------------------------ | ------------------------------------------------------------ |
-
 | 虚拟线程Virtual threads  | 虚拟线程是轻量级线程的一种，可以减少编写、维护和调试高吞吐量并发量的应用程序。 |
-
 | 结构化并发               | 将不同线程中运行的相关任务组视为同一个工作单元，从而简化异常处理和取消，提高可靠性和增强可观察性。 |
-
 | 异步任务调度框架         | Executor接口根据一组执行策略，标准化了异步任务的调用、调度、执行和控制等。使任务可以在线程池中执行，或单个线程中执行，开发人员可以创建任意执行策略的自定义实现。内置实现了可配置的策略，如：队列长度限制，拒绝策略，这些策略可以防止资源失控，提高了程序的稳定性。 |
-
 | Fork/join 框架           | 使线程池高效运行大量任务。基于“工作窃取”（workstealing）技术使所有工作线程保持繁忙，以充分利用多个处理器。 |
-
 | 并发集合                 | [`Queue`](https://docs.oracle.com/javase/8/docs/api/java/util/Queue.html)、[`BlockingQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 和 [`BlockingDeque`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingDeque.html) |
-
 | 原子类                   | 已原子方式创建的变量类，提供高性能原子计算、比较和使用。可以实现高性能并发算法、计数器、序列号生成等。 |
-
 | 同步器（Synchronizers）  | 通用的同步类，促进线程之间的协调。主要包括：[Semaphore](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Semaphore.html), [CyclicBarrier](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CyclicBarrier.html), [CountdownLatch](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountDownLatch.html), [Phaser](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Phaser.html), 和 [Exchanger](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Exchanger.html). |
-
 | 锁                       | <span class="text-red">**虽然锁是通过synchronized关键字内置到java中的，但内置的monitor锁存在许多限制。**</span><br />lock包下提供与synchronized同效的高性能锁实现，且还支持指定超时时间，不同的锁、同时持有多个锁，以及锁的打断、等待、获取等操作。 |
-
 | 纳秒级计时器（nanoTime） | [`System.nanoTime`](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#nanoTime--) 允许访问纳秒级时间源，用来操作各种锁时间。实现精度主要取决于操作系统平台。 |
-
 | 线程局部变量             | 与常规变量不同，每个访问线程局部变量的线程，都有自己独立初始化的变量副本。 |
 
 ## 虚拟线程（Virtual threads）

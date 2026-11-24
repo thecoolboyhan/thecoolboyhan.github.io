@@ -97,8 +97,6 @@ tags:
 
 批量处理最直接的价值在于计算效率。现代 GPU 拥有数千到上万个计算核心，这些核心的设计初衷就是高效执行矩阵运算。
 
-
-
 |          批量大小范围           | 特点                                                   | 适用场景                             |
 | :-----------------------------: | :----------------------------------------------------- | :----------------------------------- |
 |    小批量（B=16*B*=16-6464）    | 梯度噪声大，训练波动，但有利于跳出局部最优；内存占用低 | 内存受限场景、研究实验、追求泛化性能 |
@@ -107,21 +105,15 @@ tags:
 
 > 并不是在内存允许的情况下，批量越大越好。小批量梯度噪音大并不全是坏事，噪音相当于在梯度上添加了随机干扰，这种干扰可以帮助跳出局部最优。
 
-
-
 ### 反向传播
 
 > 如何确定神经网络的参数（权重和偏置），深度学习领域最重要的算法之一。
 
 当网络输出错误时，如何确定数百甚至数千个参数中哪些应该调整，以及调整多少。反向传播通过计算损失函数对各层参数的梯度，将输出端的误差信号精确地反向传递到每一层，每一个参数，告诉网络谁的贡献大，谁该调整多少。
 
-
-
 #### 反向传播的数学基础
 
-<font color='red'>神经网络实际上是一个层层嵌套的复合函数，数据从输入层开始，依次经过每一层的线性变换和激活函数，最终到达输出层。</font>如果我们想调整某个参数来降低预测误差，计算这个参数应该调整多少，实际上就是要从这个复合函数的输出值，反推他的参数变化。
-
-
+<span class="text-red">神经网络实际上是一个层层嵌套的复合函数，数据从输入层开始，依次经过每一层的线性变换和激活函数，最终到达输出层。</span>如果我们想调整某个参数来降低预测误差，计算这个参数应该调整多少，实际上就是要从这个复合函数的输出值，反推他的参数变化。
 
 接下来，把单层网络的情况扩展到多层网络，观察损失对输入 x**x** 变化的导数，以一个三层网络为例，信息前向传递路径如下：
 
@@ -135,8 +127,6 @@ tags:
 
 如下游数据有问题，现在需要找到在哪一环出现了故障，需要从下至上每层检测，这个过程与反向传播类似。
 
-
-
 #### 计算图视角下的反向传播
 
 计算图将神经网络的前向传播过程分解为一系列基本运算节点，每个节点只负责一个简单的操作（如矩阵乘法、激活函数、加法），数据沿着边从输入流向输出，在处理反向传播时，就将信息流动的方向反转。
@@ -145,21 +135,15 @@ tags:
 
 反向传播利用程序，自动将前向传播的数据反向流转
 
-
-
 #### 计算复杂度分析
 
 - 时间复杂度
 
 方向传播的时间复杂度和前向传播的在同一个量级，意味着训练一次迭代（一次前向传播和一次后向传播）的计算量大概就是前向传播的计算量的两倍，也是同一量级的。
 
-
-
 - 空间复杂度
 
 反向传播需要存储前向传播的中间结果用于计算梯度，这需要有一定的内存开销。总和得出，内存占用等于批量大小乘以各层神经元数的两倍。
-
-
 
 > 对于大型网络和批量训练，内存开销可能成为瓶颈。譬如，一个 10 层网络，每层 1000 个神经元，批量大小 1000，内存占用约为1000×10×1000×2=21000×10×1000×2=2 千万个浮点数，按 FP32 计算，约需 80 MB 内存。这还只是训练中间结果的存储开销，并未计算模型参数本身占用的内存。
 
@@ -169,17 +153,11 @@ tags:
 2. 内存复用：计算完梯度后，立刻释放中间结果内存，减少峰值内存占用。（手动回收内存）
 3. 混合精度：使用低精度存储中间结果，减少一半内存占用。（精简数据）
 
-
-
 ### 激活函数和损失函数
-
-
 
 #### 梯度消失和梯度爆炸
 
 **梯度消失**是指反向传播中梯度逐层衰减，传递到网络前面几层时已经十分接近0，参数几乎不在更新。**梯度消失是由于连续与一个小于 1 的导数相乘而导致的**
-
-
 
 > 一旦出现梯度消失，权重变化就变得极小，深层网络的前面几层参数几乎不更新，训练过程收敛极慢或停滞。同时由于前面几层没有学到有效特征，测试集的表现通常也不好。
 
@@ -187,15 +165,11 @@ tags:
 
 反向传播中梯度逐层放大，前面几层梯度极大，参数更新幅度过大，训练变得极不稳定。**激活函数导数长期大于 1**
 
-
-
 > 梯度消失和梯度爆炸是模型训练中的两种问题，下面主要说明如何减少两种问题出现的机率
 
 #### 激活函数
 
 如果网络全部使用线性变换，无论叠加多少层，最终仍然是线性模型。
-
-
 
 - 双曲正切函数
 
@@ -215,21 +189,15 @@ tags:
 | 梯度消失   | 严重（两端导数趋近 0） | 存在（两端导数趋近 0） |
 | 适用位置   | 输出层（二分类）       | 隐藏层（浅层网络）     |
 
-
-
 - ReLU及其变体
 
 正数就保持不变，负数就置零，在零点的左右导数甚至都不相等。
 
 通过只保留正数，让计算变成线性的，但同时带来了大量的数据死亡（小于0的数据将永久归零）。所以需要大量的调整，让死亡的神经元占比降低。
 
-
-
 - GELU与Swish
 
 在ReLU的基础上，用微小斜率和指数平滑来修补负数区域，一定程度上缓解神经元死亡的风险。
-
-
 
 **GELU函数**：在ReLU的基础上加权，来决定输出的是z还是0。相当于可以动态的调整负数为零的范围，极限值等于ReLU所有负数都为0。
 
@@ -251,8 +219,6 @@ tags:
 | 输出层（多分类）                   | Softmax              | 输出概率分布，符合多分类语义                     |
 | 输出层（回归）                     | Linear（无激活）     | 输出无范围限制                                   |
 
-
-
 #### 损失函数
 
 > 激活函数决定网络的非线性表达能力，损失函数决定网络的优化目标。
@@ -263,8 +229,6 @@ tags:
 
 回归问题的目标是预测连续值，房价预测、温度预测、销量预测等。度量连续值损失方式是：计算预测值与真实值之间的差距，差距越大惩罚越重。
 
-
-
 **三种常见的回归损失函数**：
 
 | 特性         | MSE          | MAE              | Huber                  |
@@ -274,19 +238,13 @@ tags:
 | 梯度变化     | 与误差成正比 | 恒定 ±1±1        | 小误差递减，大误差恒定 |
 | 优化难度     | 易（凸函数） | 中（零点不可导） | 易（处处可导）         |
 
-
-
 - 分类损失
 
 类别是离散的信息（猫、狗、鸟），需要专门的损失函数 **交叉熵损失**。以信息中概率越小的事件发生时信息量越大的观点为基础，度量两个概率分布之间的差距。
 
-
-
 - Hinge损失
 
 支持向量机的损失函数，体现了最大间隙原则的优化思想。寻找最大间隙分类边界，不仅需要分类正确，还要求分类边界与两类样本保持足够的距离，提高泛化能力。
-
-
 
 | 任务类型         | 推荐损失函数                 | 输出层激活 | 选择原因                   |
 | :--------------- | :--------------------------- | :--------- | :------------------------- |
@@ -296,8 +254,6 @@ tags:
 | 多分类           | Categorical Cross-Entropy    | Softmax    | 梯度计算高效，概率语义清晰 |
 | 多标签分类       | Binary Cross-Entropy（每类） | Sigmoid    | 每个标签独立二分类         |
 
-
-
 ## 优化神经网络
 
 **如何训练**
@@ -306,19 +262,13 @@ tags:
 
 > 梯度下降是最经典、应用最广泛的优化算法之一。就是沿着梯度的反方向（损失下降最快的方向）更新参数。
 
-
-
 #### 梯度下降的基本原理
 
 反向传播部分我们推导出了[计算梯度的公式](https://ai.icyfenix.cn/deep-learning/neural-network-structure/backpropagation.html#参数梯度计算)，有了梯度之后，该如何更新参数，这个场景就仿佛登山者在四周雾气弥漫，看不清位置的山上，凭脚下的感知，能判断出坡度，接下来要决定的是朝哪个方向走、走多远。
 
-
-
 ![梯度下降的几何直观示意图](https://ai.icyfenix.cn/assets/gradient-descent-geometric-intuition-B55BzlFa.png)
 
 *图：梯度下降的几何直观*
-
-
 
 接下来的问题是每一步该走多远。如果每一步走得太小，可能需要走几千步才能到达山谷。如果每一步走得太大，可能直接跳过山谷，跑到另一边的山坡上，甚至越跑越远。
 
@@ -330,37 +280,23 @@ tags:
 | 收敛稳定性       | 稳定（平滑路径）   | 震荡（波动路径）   | 较稳定（适度噪声）   |
 | 跳出局部最优能力 | 弱（无噪声）       | 强（噪声帮助探索） | 适中                 |
 
-
-
 #### 动量法
 
 ![椭圆损失曲面示意图](https://ai.icyfenix.cn/assets/elliptical-loss-surface-JiRPzJj0.png)
 
 *图：椭圆损失曲面 L=W12+100W22\*L*=\*W*12+100\*W*22 的三维可视化*
 
-
-
 SGD每一步完全依赖当前位置的梯度，完全不考虑历史信息。当梯度在不同方向上差异很大时，参数更新方向在各个方向之间剧烈摆动，无法沿着一条平滑的路径收敛。
-
-
 
 **动量法**：引入历史梯度信息，平滑参数更新方向，就像物理学中的动量概念，一个有质量的物体在运动时会保持惯性，不会因为单次受力而剧烈改变方向。
 
-
-
 > 动量法的核心机制是梯度累积。当梯度方向一致，历史梯度累积放大当前梯度，加速前进；当梯度方向摆动，历史梯度正负抵消，削弱当前梯度，抑制震荡，整体收敛更平稳高效。
 
-
-
 #### Nesterov加速梯度
-
-
 
 - NAG原理
 
 NAG 相对于动量法的改进是在预测位置计算梯度，而不是在当前位置。
-
-
 
 > 新速度 = 惯性保留 + 预测位置的推力
 >
@@ -368,13 +304,9 @@ NAG 相对于动量法的改进是在预测位置计算梯度，而不是在当�
 
 NAG可以避免冲过头的情况，当发现梯度反转（过了山谷），提前减速，可以更平稳的到底山谷底部。
 
-
-
 ### 自适应优化器
 
 根据参数的历史梯度自动调整学习率，为每个参数分配独立的更新步长。
-
-
 
 **下面是自适应优化器的迭代过程**：越来越好
 
@@ -398,13 +330,9 @@ NAG可以避免冲过头的情况，当发现梯度反转（过了山谷），�
 
 它只使用梯度平方调整学习率，没有累积历史梯度方向，相当于放弃了[动量法](https://ai.icyfenix.cn/deep-learning/neural-network-optimization/gradient-descent.html#动量法)的平滑效果。
 
-
-
 - Adam（目前广泛使用的自适应优化器）
 
 同时估计梯度的[一阶矩](https://en.wikipedia.org/wiki/Moment_(mathematics))和二阶矩，将动量法与自适应学习率融于一身。
-
-
 
 - AdamW（权重修正版）
 
@@ -412,16 +340,12 @@ NAG可以避免冲过头的情况，当发现梯度反转（过了山谷），�
 
 现在一般在所有场景中都可以使用 AdamW 替代 Adam，尤其在需要强正则化的任务上，譬如大规模语言模型训练，AdamW 如今已成为许多 Transformer 架构模型，如 BERT、GPT 的默认优化器。
 
-
-
 - Muon（优化器的未来）
 
 1. 第一步，动量累积。Muon 像动量法一样，维护一个历史梯度的加权平均（动量缓冲区），新梯度加入时保留大部分旧方向、融入小部分新方向，以此平滑更新路径、抑制震荡。
 2. 第二步，正交化。这是 Muon 与所有前述优化器不同的地方。可以把一个矩阵想象成多个独立方向及其强度的组合。譬如，一个权重矩阵可能在某些方向上推动得很猛（强度大），在另一些方向上只是轻轻触碰（强度小）。正交化做的事情就是只保留这些方向本身，而把它们的强度全部拉平到相同的水平。就像一个团队里有嗓门大的成员和沉默寡言的成员，正交化相当于给每个人装上同样音量的麦克风，让所有声音都能被平等地听到。
 
 #### 如何选择优化器
-
-
 
 | 优化器   | 核心机制                    | 优势                 | 缺陷                           | 适用场景                       |
 | :------- | :-------------------------- | :------------------- | :----------------------------- | :----------------------------- |
@@ -434,8 +358,6 @@ NAG可以避免冲过头的情况，当发现梯度反转（过了山谷），�
 | AdamW    | Adam+解耦权重衰减           | 正则化稳定           | SGD 相比有额外的二阶矩内存开销 | 默认选择                       |
 | Muon     | 动量 + Newton-Schulz 正交化 | 利用矩阵结构、内存省 | 仅适用于二维矩阵参数           | Transformer 隐藏层、大规模训练 |
 
-
-
 - | 任务类型             | 推荐优化器      | 理由                                 |
   | :------------------- | :-------------- | :----------------------------------- |
   | 通用深度学习         | AdamW           | 鲁棒性强，默认选择                   |
@@ -446,37 +368,25 @@ NAG可以避免冲过头的情况，当发现梯度反转（过了山谷），�
   | 稀疏数据（推荐系统） | AdamW           | 稀疏参数获得大学习率                 |
   | 大规模语言模型训练   | Muon + AdamW    | 隐藏层用 Muon 提速，其余参数用 AdamW |
 
-
-
 ## 深层网络稳定性
 
 ### 权重初始化
 
 一个好的初始化能让训练快速、稳定地收敛。
 
-
-
 - Xavier初始化
 
 通过分析信号在网络中的传播过程，推导出保持信号稳定所需的权重方差，精确计算出最佳的初始化参数。
 
-
-
 一方面当输入远离 0 时，激活函数非线性特征显现，Xavier 初始化只能尽量让激活值落在线性区域，但无法完全避免饱和。另一方面更为严重，Xavier 初始化不适配 [ReLU 激活函数](https://ai.icyfenix.cn/deep-learning/neural-network-structure/activation-loss-functions.html#relu-及其变体) ，ReLU 的特性与 Sigmoid 和 tanh 完全不同。ReLU 只保留正值，负值全部置零，这意味着约一半的激活值被杀死，信号强度减半。Xavier 的线性假设在 ReLU 上完全失效，如果用 Xavier 初始化 ReLU 网络，激活值会逐层衰减，深层网络的梯度几乎为零。
-
-
 
 - He初始化
 
 ReLU 的稀疏性问题主要发生在前向传播阶段，反向传播时梯度只通过正值神经元传递，同样存在信号减半的问题，但 He 初始化优先保证前向传播的信号稳定性，因此仅对前向方向进行补偿。当 nin≈nout*n**in*≈*n**o**u**t* 时，He 初始化方差约为 Xavier 的两倍。
 
-
-
 ### Dropout正则化
 
 训练时随机丢弃一部分神经元，让每个神经元学会独立工作，不能依赖其他神经元的存在。
-
-
 
 - Dropout原理
 
@@ -486,27 +396,19 @@ ReLU 的稀疏性问题主要发生在前向传播阶段，反向传播时梯度
 
 **Dropout 实际上在训练时隐式地构建了海量的子网络，推理时相当于对这些子网络的预测进行平均。这种训练一个模型，获得多个模型效果的特性，才是 Dropout 的精髓所在。**
 
-
-
 ### 批归一化
 
 >  随着网络深度增加，各层输入分布不断变化，导致梯度传播不稳定。这种现象称为**内部协变量偏移**，它使得深层网络难以训练、收敛缓慢、对初始化高度敏感。
 
-
-
 - BN算法原则
 
 既然各层输入分布的变化是训练困难的根源，就要想办法在每一层引入一种机制，强制将输入分布标准化，使其保持稳定。
-
-
 
 ## 卷积神经网络
 
 卷积层通过小型滤波器在图像上滑动提取局部特征，池化层降采样扩大感受野，多层堆叠后实现从局部到全局的特征抽象。
 
 > 如何抽象一个复杂的对象
-
-
 
 ### CNN基础原理
 
@@ -516,21 +418,15 @@ ReLU 的稀疏性问题主要发生在前向传播阶段，反向传播时梯度
 
 卷积操作在用一个探针在图像上逐位置探测。针头（卷积核）是一个小型矩阵，譬如 3×33×3 的方格，每个格子里有个数值，将探针放在图像某个位置，探针的数值和图像对应位置的像素值相乘后求和，得到一个输出值。
 
-
-
 ![卷积运算数值示例：5×5 输入图像、3×3 卷积核和 3×3 输出特征图](https://ai.icyfenix.cn/assets/conv-3x3-input-kernel-Cj1lEzQv.png)
 
 CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数并不是预先定义的，而是通过反向传播训练学习。
-
-
 
 - AlexNet架构设计
 
 深度学习在视觉领域的崛起
 
 ![1793602228270.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2026-11/1793602228270_1793602228289.png)
-
-
 
 ## 生成式模型
 
@@ -539,8 +435,6 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 ### 变分自编码器
 
 > 如何让神经网络学习概率分布，而非单纯的点估计。
-
-
 
 - 自编码器原理
 
@@ -552,8 +446,6 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 
 编码器负责将高维输入压缩为低维潜在编码，解码器则将低维编码展开为高维重建输出。
 
-
-
 - 变分自编码器
 
 <svg id="mermaid-1793603885446" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 1254.41px; display: inline-block; margin: 0px auto; width: 940.811px; height: 56.0977px;" viewBox="0 6.5 1254.4140625 74.796875" role="graphics-document document" aria-roledescription="flowchart-v2"><g><g class="root"><g class="nodes"><g class="node default" id="mermaid-1793603885446-flowchart-B1-0" data-look="classic" transform="translate(108.41796875, 43.8984375)"><g class="label" style="" transform="translate(-70.41796875, -14.3984375)"><foreignObject width="140.8359375" height="28.796875"><div xmlns="http://www.w3.org/1999/xhtml" style="color: rgb(51, 51, 51) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel " style="color: rgb(51, 51, 51); fill: rgb(51, 51, 51);"><p style="line-height: 1.8; overflow-wrap: break-word; margin: 0px; font-size: inherit !important; color: rgb(24, 24, 27);">输入 x（高维数据）</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-1793603885446-flowchart-B2-1" data-look="classic" transform="translate(319.0859375, 43.8984375)"><rect class="basic label-container" style="" x="-85.25" y="-29.3984375" width="170.5" height="58.796875"></rect><g class="label" style="" transform="translate(-55.25, -14.3984375)"><rect></rect><foreignObject width="110.5" height="28.796875"><div xmlns="http://www.w3.org/1999/xhtml" style="color: rgb(51, 51, 51) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel " style="color: rgb(51, 51, 51); fill: rgb(51, 51, 51);"><p style="line-height: 1.8; overflow-wrap: break-word; margin: 0px; font-size: inherit !important; color: rgb(24, 24, 27);">编码器 Encoder</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-1793603885446-flowchart-B3-3" data-look="classic" transform="translate(513.8984375, 43.8984375)"><rect class="basic label-container" style="fill:#c8e6c9 !important" x="-84.5625" y="-29.3984375" width="169.125" height="58.796875"></rect><g class="label" style="" transform="translate(-54.5625, -14.3984375)"><rect></rect><foreignObject width="109.125" height="28.796875"><div xmlns="http://www.w3.org/1999/xhtml" style="color: rgb(51, 51, 51) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel " style="color: rgb(51, 51, 51); fill: rgb(51, 51, 51);"><p style="line-height: 1.8; overflow-wrap: break-word; margin: 0px; font-size: inherit !important; color: rgb(24, 24, 27);">分布参数 (μ, σ)</p></span></div></foreignObject></g></g><g class="node default  " id="mermaid-1793603885446-flowchart-B4-5" data-look="classic" transform="translate(713.55078125, 43.8984375)"><rect class="basic label-container" style="fill:#fff9c4 !important" x="-90.08984375" y="-29.3984375" width="180.1796875" height="58.796875"></rect><g class="label" style="" transform="translate(-60.08984375, -14.3984375)"><rect></rect><foreignObject width="120.1796875" height="28.796875"><div xmlns="http://www.w3.org/1999/xhtml" style="color: rgb(51, 51, 51) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel " style="color: rgb(51, 51, 51); fill: rgb(51, 51, 51);"><p style="line-height: 1.8; overflow-wrap: break-word; margin: 0px; font-size: inherit !important; color: rgb(24, 24, 27);">采样 z ~ N(μ, σ²)</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-1793603885446-flowchart-B5-7" data-look="classic" transform="translate(914.50390625, 43.8984375)"><rect class="basic label-container" style="" x="-85.86328125" y="-29.3984375" width="171.7265625" height="58.796875"></rect><g class="label" style="" transform="translate(-55.86328125, -14.3984375)"><rect></rect><foreignObject width="111.7265625" height="28.796875"><div xmlns="http://www.w3.org/1999/xhtml" style="color: rgb(51, 51, 51) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel " style="color: rgb(51, 51, 51); fill: rgb(51, 51, 51);"><p style="line-height: 1.8; overflow-wrap: break-word; margin: 0px; font-size: inherit !important; color: rgb(24, 24, 27);">解码器 Decoder</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-1793603885446-flowchart-B6-9" data-look="classic" transform="translate(1135.890625, 43.8984375)"><rect class="basic label-container" style="" x="-110.5234375" y="-29.3984375" width="221.046875" height="58.796875"></rect><g class="label" style="" transform="translate(-80.5234375, -14.3984375)"><rect></rect><foreignObject width="161.046875" height="28.796875"><div xmlns="http://www.w3.org/1999/xhtml" style="color: rgb(51, 51, 51) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel " style="color: rgb(51, 51, 51); fill: rgb(51, 51, 51);"><p style="line-height: 1.8; overflow-wrap: break-word; margin: 0px; font-size: inherit !important; color: rgb(24, 24, 27);">重建输出 x' （近似 x）</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mermaid-1793603885446-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mermaid-1793603885446-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs></svg>
@@ -562,11 +454,7 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 
 ![1793604781463.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2026-11/1793604781463_1793604781487.png)
 
-
-
 ### 生成式对抗网络
-
-
 
 - GAN架构设计
 
@@ -574,13 +462,9 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 
 同一个训练，让生成器和判别器做对抗，生成器负责欺骗判别器，判别器负责鉴别生成器。一方的成功往往代表另一方的失败。在对抗中来训练模型。
 
-
-
 - 纳什均衡
 
-<font color='red'>GAN的理想训练终点是生成器和判别器达到纳什均衡</font>，每个玩家的策略在给定其他玩家策略的前提下是最优的，任何玩家单独改变策略都不会获益。两个人在博弈中各自找到了最佳策略，谁先改变策略谁就会吃亏，达到一种势均力敌的稳定状态。
-
-
+<span class="text-red">GAN的理想训练终点是生成器和判别器达到纳什均衡</span>，每个玩家的策略在给定其他玩家策略的前提下是最优的，任何玩家单独改变策略都不会获益。两个人在博弈中各自找到了最佳策略，谁先改变策略谁就会吃亏，达到一种势均力敌的稳定状态。
 
 **GAN达到纳什均衡的两个条件**：
 
@@ -589,15 +473,11 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 
 ![1793605979796.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/2026-11/1793605979796_1793605979820.png)
 
-
-
 - GAN与VAE对比
 
-**VEA**：学习分布再采样，编码器将数据映射到潜在空间的概率分布，解码器从分布采样重建数据。训练的目标是保证损失最小。<font color='red'>重建的损失具有像素级准确的倾向，会导致生成样本模糊，VAE总是学到数据的平均表示，而非细节特征。</font>
+**VAE**：学习分布再采样，编码器将数据映射到潜在空间的概率分布，解码器从分布采样重建数据。训练的目标是保证损失最小。<span class="text-red">重建的损失具有像素级准确的倾向，会导致生成样本模糊，VAE总是学到数据的平均表示，而非细节特征。</span>
 
-
-
-**GAN**：对抗博弈，学习造假。生成器不需要显示学习分布，只需要欺骗判别器。判别器学习鉴别真假的过程中，间接刻画真实数据的特征。<font color='red'>GAN没有显式的空间结构，很难像VAE那样通过调整编维度控制生成特征（变体一定程度克服了这个缺点）</font>
+**GAN**：对抗博弈，学习造假。生成器不需要显示学习分布，只需要欺骗判别器。判别器学习鉴别真假的过程中，间接刻画真实数据的特征。<span class="text-red">GAN没有显式的空间结构，很难像VAE那样通过调整编维度控制生成特征（变体一定程度克服了这个缺点）</span>
 
 | 特性       | VAE                        | GAN                     |
 | :--------- | :------------------------- | :---------------------- |
@@ -608,21 +488,15 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 | 训练稳定性 | 稳定，容易收敛             | 不稳定，可能崩溃        |
 | 计算开销   | 较低（单网络训练）         | 较高（两网络交替训练）  |
 
-
-
 ## 序列模型
 
 目前为止，所有的模型每次输入的处理都是独立的，本次处理与上一次输入没有关系。（无状态的）
 
 现实中存在一类数据，数据之间存在时间依赖关系。处理序列数据，需要一种具有状态的、能够记住过去信息、根据历史做出当前决策的模型架构。
 
-
-
 ### RNN基础原理
 
 > 循环神经网络通过引入循环连接在时间维度上传递信息，让网络拥有记忆的能力，当前时刻的输出不仅取决于当前输入，还取决于之前所有时刻的输入。
-
-
 
 - 序列建模
 
@@ -630,13 +504,8 @@ CNN 的关键突破在于它不再需要人工卷积核设计，卷积核参数�
 
 > 网络在时刻t的输出，不仅传递给下一层，还传递回网络自身，作为时刻t+1的额外输入。
 
-
-
 - 梯度传递与局限
 
 RNN的训练算法被称为时间反向传播。
 
-
-
 ### LSTM与GRU门控制
-

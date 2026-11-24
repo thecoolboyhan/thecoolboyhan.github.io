@@ -63,25 +63,15 @@ List<String> userList = service.getUsernameList();
 #### 属性
 
 | 属性                     | 解释         |
-
 | ------------------------ | ------------ |
-
 | Class                    | 实例化Bean   |
-
 | Name                     | Bean命名     |
-
 | Scope                    | Bean Scope   |
-
 | Constructor arguments    | 依赖注入     |
-
 | Properties               | 依赖注入     |
-
 | Autowiring mode          | 注入协作者   |
-
 | Lazy initialization mode | 懒加载的Bean |
-
 | Initialization method    | 初始化回调   |
-
 | Destruction method       | 销毁回调     |
 
 > Bean元数据和手动提供的单体实例需要尽早注册，以便容器在自动注入和其他内省步骤中正确推导它们。虽然在某种程度上支持覆盖现有的元数据和现有的单体实例，但<span class="text-red">**官方不推荐在运行时注册新的Bean（与对工厂的实时访问同时进行），这可能会导致并发访问异常**</span>、bean容器中的不一致状态，或者两者都有。
@@ -164,15 +154,10 @@ Spring容器可以自动连接协作Bean之间的关系。你可以让Spring通�
 - 四种自动注入的方式
 
 | 模式        | 解释                                                         |
-
 | ----------- | ------------------------------------------------------------ |
-
 | no          | （默认）没有自动注入。Bean引用必须由ref元素来定义。对于大型部署来说，不建议改变默认设置，因为明确指定协作者会带来更大的控制力和清晰度。在某种程度上，它记录了一个系统的结构。 |
-
 | byName      | 通过属性名称自动注入。Spring寻找一个与需要自动注入的属性同名的Bean。例如，如果一个Bean定义被设置为按名称自动注入，并且包含一个master属性（也就是说，它有一个setMaster（..）方法），Spring会寻找一个名为master的Bean定义并使用它来设置该属性。 |
-
 | byType      | 如果容器中正好有一个property类型的Bean存在，就可以自动注入该属性。如果存在一个以上的bean，就会抛出一个致命的exception，这表明你不能对该bean使用byType自动注入。如果没有匹配的bean，就不会发生任何事情（该属性没有被设置）。 |
-
 | constructor | 类似于byType，但适用于构造函数参数。如果容器中没有一个构造函数参数类型的Bean，就会产生一个致命的错误。 |
 
 #### 自动注入的限制和缺点
@@ -254,19 +239,12 @@ public class CommandManager implements ApplicationContextAware {
 Spring框架支持六个scope
 
 | scope       | 说明                                                         |
-
 | ----------- | ------------------------------------------------------------ |
-
 | singleton   | （默认情况下）为每个Spring IOC容器将单个Bean定义的Scope扩大到单个对象实例。 |
-
 | prototype   | 将单个Bean定义的Scope扩大到任何数量的对象实例。              |
-
 | request     | 将单个Bean定义的Scope扩大到单个HTTP请求的生命周期。也就是说，每个HTTP请求都有自己的Bean实例，该实例是在单个Bean定义的基础上创建的。只在Web感知的Spring ApplicationContext的上下文中有效。 |
-
 | session     | 将单个Bean定义的Scope扩大到一个HTTP Session的生命周期。只在Web感知的Spring ApplicationContext的上下文中有效 |
-
 | Application | 将单个Bean定义的Scope扩大到ServletContext的生命周期中。只在Web感知的Spring ApplicationContext的上下文中有效。 |
-
 | websocket   | 将单个Bean定义的Scope扩大到WebSocket的生命周期。仅在具有Web感知的Spring ApplicationContext的上下文中有效。 |
 
 #### 单例
@@ -528,21 +506,13 @@ public class CachingMovieLister{
 #### Spring组件模型元素和jsr标准的比较
 
 | Spring              | **jakarta.inject.\*** | jakarta.inject 限制 / 说明                                   |
-
 | ------------------- | --------------------- | ------------------------------------------------------------ |
-
 | @Autowired          | @Inject               | @Inject没有‘required’属性。可以用java 8的Optional来代替。    |
-
 | @Component          | @Name/@ManagedBean    | jsr-330没有提供一个可组合的模型，只是提供了一个识别命名组件的方法 |
-
 | @Scope("singleton") | @Singleton            | JSR-330 默认scope就像Spring的prototype。然而，为了与Spring的一般默认值保持一致，在Spring容器中声明的JSR-330Bean 默认是一个Singleton。为了使用Singleton以外的scope，你应该使用Spring的@scope注解。 |
-
 | @Qualifier          | @Qualifier/@Named     | jakarta.inject.Qualifier只是一个用于构建自定义Qualifier的元注解。具体的String Qualifier（像Spring 的@Qualifier一样有一个值）可以通过`jakarta.inject.Named` 来关联。 |
-
 | @Value              | -                     | 没有                                                         |
-
 | @Lazy               | -                     | 没有                                                         |
-
 | ObjectFactory       | provider              | jakarta.inject.Provider 是Spring的ObjectFactory的直接代替品，只是get()方法的名字比较短。它也可以与Spring的@Autowired结合使用，或者与非注解的构造器和setter方法结合使用。 |
 
 ### 基于java的容器配置

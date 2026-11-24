@@ -76,19 +76,12 @@ public void execute(int port) throws IOException {
 Netty的特性总结
 
 | 分类     | Netty的特性                                                  |
-
 | -------- | ------------------------------------------------------------ |
-
 | 设计     | 统一的API，支持多种传输类型，阻塞和非阻塞的 \n 简单而强大的线程模型 \n 真正的无连接数据报套接字支持 \n 链接逻辑组件以支持复用 |
-
 | 易于使用 | 详细的javadoc和大量的示例集 \n                               |
-
 | 性能     | 拥有比java的核心API更高的吞吐量以及更低的延迟\n 得益于池化和复用，拥有更低的资源消耗\n 更小的内存复制 |
-
 | 健壮性   | 不会因为慢速、快速或者超载的连接而导致OutOfMemoryError \n 消除在高速网络中NIO应用程序常见的不公平读写比率 |
-
 | 安全性   | 完整的SSL/TLS 以及StartTLS支持 \n 可用于受限制环境下         |
-
 | 社区驱动 | 发布快速而且频繁                                             |
 
 - **异步和可伸缩性**：异步：我们不必等待一个操作的完成。异步方法会立刻返回，并且在它完成时，会直接或稍后的某个时间点通知用户。 可伸缩性：一种系统、网络或者进程在需要处理的工作不断增长时，可以通过某种可行的方式或扩大它的处理能力来适应这种增长的能力。
@@ -658,23 +651,14 @@ Netty每种传输的实现都暴露相同的API，所以无论选择哪种实现
 - Channel的几个重要方法
 
 | 方法名        | 描述                                                         |
-
 | ------------- | ------------------------------------------------------------ |
-
 | eventLoop     | 返回分配给Channel的EventLoop                                 |
-
 | Pipeline      | 返回分配给Channel的ChannelPipeline                           |
-
 | isActive      | 如果Channel是活动的，返回true。（一个socket传输一旦连接到了远程节点便是活动的，一个Datagram传输一旦被打开就是活动的） |
-
 | localAddress  | 返回本地socketAddress                                        |
-
 | remoteAddress | 返回远程socketAddress                                        |
-
 | write         | 把数据写到远程节点。这个数据将被传递给ChannelPipeline，并且排队直到它被冲刷 |
-
 | flush         | 将之前已写的数据冲刷到底层传输，如一个socket                 |
-
 | writeAndFlush | 先调用write然后调用flush                                     |
 
 ```java
@@ -723,19 +707,12 @@ Netty的Channel是线程安全的，所以无论是提交给一个线程还是�
 - Netty所提供的传输
 
 | 名称     | 包                             | 描述                                                         |
-
 | -------- | ------------------------------ | ------------------------------------------------------------ |
-
 | NIO      | io.netty.channel.socket.nio    | 使用java.nio.channels包作为基础--基于选择器的方式            |
-
 | Epoll    | io.netty.channel.epoll         | 由JNI驱动的epoll和非阻塞IO。这个传输支持只有在linux上 可用的多种特性，如SO_REUSEPORT，比NIO传输更快，而且是完全非阻塞的 |
-
 | OIO      | io.netty.channel.oio（已弃用） | 使用java.net包作为基础--使用阻塞流                           |
-
 | local    | io.netty.channel.local         | 可以在VM内部通过管道进行通信的本地传输                       |
-
 | embedded | io.netty.channel.embedded      | 允许使用ChannelHandler而又不需要一个真正基于网络的传输。     |
-
 | kqueue   |                                |                                                              |
 
 - **NIO----非阻塞IO**：NIO一个所有IO操作完全异步的实现。
@@ -751,15 +728,10 @@ Netty的Channel是线程安全的，所以无论是提交给一个线程还是�
 > 选择操作的位模式
 
 | 名称       | 描述                                            |
-
 | ---------- | ----------------------------------------------- |
-
 | OP_ACCEPT  | 请求在接受新连接并创建Channel时获得通知         |
-
 | OP_CONNECT | 请求在建立一个连接时获得通知                    |
-
 | OP_READ    | 请求当数据已就绪，可以从Channel中读取时获得通知 |
-
 | OP_WRITE   | 请求当可以想Channel中写更多数据时获得通知。     |
 
 ![17213824004291721382399481.png](https://fastly.jsdelivr.net/gh/thecoolboyhan/th_blogs@main/image/17213824004291721382399481.png)
@@ -785,27 +757,18 @@ Netty的Channel是线程安全的，所以无论是提交给一个线程还是�
 #### 传输的用例
 
 | 传输           | TCP  | UDP  | SCTP | UDT  |
-
 | -------------- | ---- | ---- | ---- | ---- |
-
 | NIO            | Y    | Y    | Y    | Y    |
-
 | Epoll(仅linux) | Y    | Y    | N    | N    |
-
 | OIO            | Y    | Y    | Y    | Y    |
 
 - 每种应用程序推荐的传输方式
 
 | 应用程序的需求                     | 推荐的传输                    |
-
 | ---------------------------------- | ----------------------------- |
-
 | 非阻塞代码库或者一个常规代码的起步 | NIO（或者在Linux上使用epoll） |
-
 | 阻塞代码库                         | OIO                           |
-
 | 同一个JVM内部                      | Local                         |
-
 | 测试ChannelHandler的实现           | Embedded                      |
 
 ### 第五章、Bytebuf
@@ -942,13 +905,9 @@ Netty的Channel是线程安全的，所以无论是提交给一个线程还是�
 > Netty用来管理ByteBuf的接口
 
 | 名称      | 描述                                                         |
-
 | --------- | ------------------------------------------------------------ |
-
 | content() | 返回由这个ByteBufholder所持有的ByteBuf                       |
-
 | copy      | 返回ByteBufHolder的一个深拷贝，包括含有一个其包含的ByteBuf的非共享拷贝 |
-
 | duplicate | 返回ByteBufHolder的一个浅拷贝，包括一个其所包含的ByteBuf的共享拷贝 |
 
 #### ByteBuf分配和管理
@@ -1007,15 +966,10 @@ Netty使用ReferenceCounted实现的引用计数，来管理池化ByteBuf中是�
 ##### Channel的生命周期
 
 | 状态                | 描述                                                         |
-
 | ------------------- | ------------------------------------------------------------ |
-
 | ChannelUnregistered | Channel已经被创建，但还未注册到EventLoop                     |
-
 | ChannelRegistered   | Channel已经被注册到了EventLoop                               |
-
 | ChannelActive       | Channel处于活动状态（已经连接到它的远程节点）可以接收和发送数据了 |
-
 | ChannelInactive     | Channel没有连接到远程节点                                    |
 
 ``` mermaid
@@ -1028,13 +982,9 @@ graph TD
 ##### ChannelHandler的生命周期
 
 | 类型            | 描述                                              |
-
 | --------------- | ------------------------------------------------- |
-
 | handlerAdded    | 当把ChannelHandler添加到ChannelPipeline中时被调用 |
-
 | handlerRemoved  | 当从ChannelPipeline中移除ChannelHandler时被调用   |
-
 | exceptionCaught | 当处理过程中在ChannelPipeline中有错误产生时被调用 |
 
 ChannelHandler下有两个重要的子接口
@@ -1093,13 +1043,9 @@ ChannelPipeline的头部和尾部取决于该事件是入站还是出站的。<s
 - 修改ChannelPipeline
 
 | 名称                                 | 描述                                                         |
-
 | ------------------------------------ | ------------------------------------------------------------ |
-
 | addFirstaddBefore \n addAfteraddLast | 将一个ChannelHandler添加到ChannelPipeline中                  |
-
 | remove                               | 将一个ChannelHandler从ChannelPipeline中移除                  |
-
 | replace                              | 将ChannelPipeline中的一个ChannelHandler替换为另一个ChannelHandler |
 
 > 下面举例中每个Handler应为不同的Handler，这里为了方便全部使用相同的了。
