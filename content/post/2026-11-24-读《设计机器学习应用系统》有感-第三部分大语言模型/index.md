@@ -604,4 +604,3 @@ GPU上活跃线程数的比例。
 
 KV Cache从CPU内存传输到GPU显存放到传输Stream上，将一个批次的Decode计算放到计算Stream上。这样可以高效的利用CUDA。
 
-### 工程化实践

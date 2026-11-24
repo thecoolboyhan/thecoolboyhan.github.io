@@ -1,0 +1,26 @@
+{{- /*
+  覆盖主题 article/components/photoswipe.html
+
+  主题原版做两件事：
+    1. gallery.ts —— 把独立成段的图片包成 figure，组成可并排的画廊布局；
+    2. PhotoSwipe —— 从 CDN 加载灯箱，只认带 .gallery-image 的本地图片。
+
+  本项目覆盖的原因：
+    项目的 _markup/render-image.html 让远程图床图片直连且不输出 gallery-image，
+    而站内绝大多数正文图片都是远程图，导致主题灯箱对它们完全不生效。
+
+  做法：保留第 1 步的画廊布局，去掉第 2 步的 CDN 灯箱；
+  所有正文图片的点击查看大图统一由 footer/custom.html 里的轻量灯箱接管，
+  远程 / 本地图片体验一致，也不再依赖外部 CDN。
+*/ -}}
+{{- $opts := dict "minify" hugo.IsProduction "format" "esm" -}}
+{{- $galleryScript := resources.Get "ts/gallery.ts" | js.Build $opts -}}
+
+<script type="module">
+    import gallery from '{{ $galleryScript.RelPermalink }}';
+
+    const articleContent = document.querySelector('.article-content');
+    if (articleContent) {
+        gallery(articleContent);
+    }
+</script>

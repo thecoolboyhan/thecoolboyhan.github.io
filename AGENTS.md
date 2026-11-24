@@ -53,8 +53,9 @@ layouts/
     widget/featured.html # 【自定义】精选文章 widget
     article/components/links.html  # 【覆盖主题】links 页卡片：项目地址（.link-website）+ 可选代码仓库直链（.link-repo）
     article/components/content.html # 【覆盖主题】仅给带 links 的页面加 has-links 类（便于只对该页正文链接做强调）
+    article/components/photoswipe.html # 【覆盖主题】只保留主题 gallery.ts 的画廊布局，移除仅支持本地图的 PhotoSwipe（见「7. 点击图片放大」）
     head/custom.html     # 【自定义】代码字体 JetBrains Mono（jsDelivr CDN）
-    footer/custom.html   # 【自定义】品牌渐变条 / 不蒜子统计 / 阅读进度条 / 返回顶部
+    footer/custom.html   # 【自定义】品牌渐变条 / 不蒜子统计 / 阅读进度条 / 返回顶部 / 图片灯箱 DOM+JS
   shortcodes/
     hint.html            # 【自定义】提示框 {{< hint "tip" >}}
     color.html           # 【自定义】文字颜色 {{< color "red" >}}
@@ -318,7 +319,35 @@ python3 scripts/cover_to_webp.py          # 实际执行
 - 5 张「主要项目」卡片的 `website` 指向本站介绍文章、`repo` 指向对应 GitHub 仓库；「学习 / 其他仓库」的 `website` 本身就是 GitHub 地址，无需 `repo`。
 - 未设置 `repo` 的卡片输出不变。新增或修改卡片时，回到「文章 ↔ 仓库」映射表核对地址，并在正文补一段项目说明与链接清单。
 
+### 7. 点击图片放大（`photoswipe.html` + `footer/custom.html` + `custom.scss` 第 5.1 节）
+
+- **背景**：主题 Stack v4 自带 PhotoSwipe，但 `gallery.ts` 只给带 `.gallery-image` 的**本地图片**
+  加灯箱入口；本项目 `render-image.html` 让远程图床图片直连且不输出该 class，
+  而站内绝大多数正文图是远程图 —— 主题灯箱对它们完全不生效。
+- **做法**：
+  - 覆盖 `layouts/_partials/article/components/photoswipe.html`：保留 `gallery.ts` 的
+    `figure` 画廊布局，**移除** PhotoSwipe 的 CDN 脚本与样式（不再依赖 jsdelivr）。
+  - `footer/custom.html` 末尾新增 `#lightbox` 结构与原生 JS：事件委托监听
+    `.article-content img` 点击 → 打开遮罩显示原图（`img.src` 始终是原图 permalink，
+    srcset 只影响页面内展示）；支持 Esc 关闭、←/→ 切换、点击遮罩关闭、焦点恢复、
+    body 滚动锁定、图注与「第 N / 共 M 张」计数。
+  - `custom.scss` 第 5.1 节：固定深色遮罩上的样式（不随主题切换故不引用主题变量），
+    `@media (hover: hover)` 的 hover、`@media (max-width: 767px)` 与 `@media print` 适配。
+- **注意**：灯箱 DOM 位于 `</footer>` **之后**（`fixed` 定位不受 footer 影响）；
+  事件委托是为了兼容 `gallery.ts` 运行后把 `img` 重构成 `figure > a > img` 的动态 DOM。
+  新增图片只要写在正文 `.article-content` 内就自动可点击放大，无需额外标记。
+
 ## 修改记录（Changelog）
+
+### 2026-11-24 · 正文图片支持点击放大（自研灯箱）
+
+- 主题自带 PhotoSwipe 只认本地 `gallery-image`，远程图床图片（站内绝大多数）点了没反应。
+- 覆盖 `article/components/photoswipe.html`，保留 `gallery.ts` 画廊布局、去掉 CDN 灯箱；
+  在 `footer/custom.html` 加轻量灯箱（DOM + 原生 JS）与 `custom.scss` 第 5.1 节样式。
+- 所有正文图片统一可点击放大：Esc / 点遮罩关闭、←/→ 翻页、图注与计数、移动端适配。
+- 验证：`hugo --quiet -d /tmp/blog-lightbox` 通过；产物中灯箱 DOM/样式/脚本齐备、
+  `photoswipe@5` CDN 引用为 0；抽取生成的灯箱脚本经 `node --check` 语法通过。
+- **未在真实浏览器中做点击验证**（本地无可用浏览器自动化环境）。
 
 ### 2026-11-24 · 文章排版与着色体检（新增 LLM 文章 + 全站表格修复）
 
